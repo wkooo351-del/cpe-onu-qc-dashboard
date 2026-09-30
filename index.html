@@ -336,7 +336,12 @@
             let sumTot = 0, sumPas = 0, sumFai = 0;
 
             deviceNames.forEach(dev => {
-                let dRows = data.filter(row => getVal(row, 'Devices Name').toUpperCase() === dev);
+                let dRows = data.filter(row => {
+                    let rawDev = getVal(row, 'Devices Name');
+                    // စာလုံးအကြီးပြောင်း၊ Space နဲ့ အပိုသင်္ကေတ (` , - _ စသည်) များကို ဖယ်ရှားပြီး စစ်ဆေးခြင်း
+                    let devVal = rawDev.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+                    return devVal === dev;
+                });
                 let dTot = dRows.length;
                 let dPas = dRows.filter(row => getStatus(row, 'Overall Pass/Fail') === 'pass').length;
                 let dFai = dTot - dPas;
