@@ -338,8 +338,9 @@
             deviceNames.forEach(dev => {
                 let dRows = data.filter(row => {
                     let rawDev = getVal(row, 'Devices Name');
-                    // စာလုံးအကြီးပြောင်း၊ Space နဲ့ အပိုသင်္ကေတ (` , - _ စသည်) များကို ဖယ်ရှားပြီး စစ်ဆေးခြင်း
-                    let devVal = rawDev.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+                    if (!rawDev) return false;
+                    // စာလုံးအကြီးပြောင်း၊ Space နဲ့ Backtick လို အပိုသင်္ကေတများအားလုံးကို ဖယ်ရှားခြင်း
+                    let devVal = String(rawDev).replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
                     return devVal === dev;
                 });
                 let dTot = dRows.length;
