@@ -336,28 +336,17 @@
             let sumTot = 0, sumPas = 0, sumFai = 0;
 
             deviceNames.forEach(dev => {
+                // Row ထဲမှာ သက်ဆိုင်ရာ Device နာမည်ပါဝင်မှုကို တိုက်ရိုက်ရှာဖွေခြင်း
                 let dRows = data.filter(row => {
-                    // Column J (Devices Name) ကို တိုက်ရိုက်ရှာဖွေခြင်း
-                    let rawDev = '';
+                    let found = false;
                     for (let key in row) {
-                        if (key.trim().toLowerCase() === 'devices name' || key.trim().toLowerCase() === 'device name' || key.trim().toLowerCase() === 'devices') {
-                            rawDev = row[key];
+                        let val = String(row[key] || '').trim().toUpperCase();
+                        if (val === dev) {
+                            found = true;
                             break;
                         }
                     }
-                    // အကယ်၍ အထက်ပါအတိုင်း တိုက်ရိုက်မတွေ့ရင် key တိုင်းမှာ device ပါတာကို ရှာမယ်
-                    if (!rawDev) {
-                        for (let key in row) {
-                            if (key.toLowerCase().includes('device')) {
-                                rawDev = row[key];
-                                if (rawDev) break;
-                            }
-                        }
-                    }
-                    if (!rawDev) return false;
-
-                    let devVal = String(rawDev).trim().toUpperCase();
-                    return devVal === dev;
+                    return found;
                 });
 
                 let dTot = dRows.length;
