@@ -295,7 +295,7 @@
             });
         }
 
-        function renderTables(data) {
+       function renderTables(data) {
             let rxFail = data.filter(row => getStatus(row, 'Rx Pass/Fail') === 'fail').length;
             let biasFail = data.filter(row => getStatus(row, 'Bias Pass/Fail') === 'fail').length;
             let tempFail = data.filter(row => getStatus(row, 'Temp Pass/Fail') === 'fail').length;
@@ -337,12 +337,21 @@
 
             deviceNames.forEach(dev => {
                 let dRows = data.filter(row => {
-                    // ကော်လံနာမည် အမျိုးမျိုးကို စစ်ဆေးပေးခြင်း (Devices Name သို့မဟုတ် Device Name)
-                    let rawDev = getVal(row, 'Devices Name') || getVal(row, 'Device Name') || getVal(row, 'Device') || '';
+                    // Column J ရှိ Devices Name (သို့မဟုတ် model, device နာမည်ပါသမျှ) ကို နေရာအမျိုးမျိုးကနေ လိုက်ရှာပေးခြင်း
+                    let rawDev = '';
+                    for (let key in row) {
+                        let cleanKey = key.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+                        if (cleanKey.includes('device') || cleanKey.includes('model')) {
+                            rawDev = row[key];
+                            if (rawDev) break;
+                        }
+                    }
                     if (!rawDev) return false;
+
                     let devVal = String(rawDev).replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
-                    return devVal.includes(dev);
+                    return devVal === dev || devVal.includes(dev);
                 });
+
                 let dTot = dRows.length;
                 let dPas = dRows.filter(row => getStatus(row, 'Overall Pass/Fail') === 'pass').length;
                 let dFai = dTot - dPas;
