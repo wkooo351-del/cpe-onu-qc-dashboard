@@ -337,11 +337,11 @@
 
             deviceNames.forEach(dev => {
                 let dRows = data.filter(row => {
-                    let rawDev = getVal(row, 'Devices Name');
+                    // ကော်လံနာမည် အမျိုးမျိုးကို စစ်ဆေးပေးခြင်း (Devices Name သို့မဟုတ် Device Name)
+                    let rawDev = getVal(row, 'Devices Name') || getVal(row, 'Device Name') || getVal(row, 'Device') || '';
                     if (!rawDev) return false;
-                    // စာလုံးအကြီးပြောင်း၊ Space နဲ့ Backtick လို အပိုသင်္ကေတများအားလုံးကို ဖယ်ရှားခြင်း
                     let devVal = String(rawDev).replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
-                    return devVal === dev;
+                    return devVal.includes(dev);
                 });
                 let dTot = dRows.length;
                 let dPas = dRows.filter(row => getStatus(row, 'Overall Pass/Fail') === 'pass').length;
