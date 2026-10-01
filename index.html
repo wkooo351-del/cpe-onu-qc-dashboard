@@ -337,19 +337,27 @@
 
             deviceNames.forEach(dev => {
                 let dRows = data.filter(row => {
-                    // Column J ရှိ Devices Name (သို့မဟုတ် model, device နာမည်ပါသမျှ) ကို နေရာအမျိုးမျိုးကနေ လိုက်ရှာပေးခြင်း
+                    // Column J (Devices Name) ကို တိုက်ရိုက်ရှာဖွေခြင်း
                     let rawDev = '';
                     for (let key in row) {
-                        let cleanKey = key.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
-                        if (cleanKey.includes('device') || cleanKey.includes('model')) {
+                        if (key.trim().toLowerCase() === 'devices name' || key.trim().toLowerCase() === 'device name' || key.trim().toLowerCase() === 'devices') {
                             rawDev = row[key];
-                            if (rawDev) break;
+                            break;
+                        }
+                    }
+                    // အကယ်၍ အထက်ပါအတိုင်း တိုက်ရိုက်မတွေ့ရင် key တိုင်းမှာ device ပါတာကို ရှာမယ်
+                    if (!rawDev) {
+                        for (let key in row) {
+                            if (key.toLowerCase().includes('device')) {
+                                rawDev = row[key];
+                                if (rawDev) break;
+                            }
                         }
                     }
                     if (!rawDev) return false;
 
-                    let devVal = String(rawDev).replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
-                    return devVal === dev || devVal.includes(dev);
+                    let devVal = String(rawDev).trim().toUpperCase();
+                    return devVal === dev;
                 });
 
                 let dTot = dRows.length;
