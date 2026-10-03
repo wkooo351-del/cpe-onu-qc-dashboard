@@ -269,12 +269,11 @@
                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
             });
 
-            // Google Sheet မှလာသော ရက်စွဲများကို လအလိုက် တိကျစွာ ခွဲထုတ်ခြင်း
+            // Google Sheet မှ globalRawData ထဲပါလာသော Date များကို လအလိုက် ခွဲထုတ်ခြင်း
             let sepRows = [], octRows = [], novRows = [], decRows = [];
 
             globalRawData.forEach(row => {
-                let dStr = getVal(row, 'Date');
-                // ရက်စွဲ string ထဲတွင် လနံပါတ်ပါဝင်ပုံကို စစ်ဆေးခြင်း
+                let dStr = String(getVal(row, 'Date') || '');
                 if (dStr.includes('9/') || dStr.includes('-09-') || dStr.includes('/09/')) {
                     sepRows.push(row);
                 } else if (dStr.includes('10/') || dStr.includes('-10-') || dStr.includes('/10/')) {
@@ -288,22 +287,22 @@
 
             // September 
             let sepTot = sepRows.length;
-            let sepPas = sepRows.filter(row => getStatus(row, 'Overall Pass/Fail') === 'pass').length;
+            let sepPas = sepRows.filter(row => String(getStatus(row, 'Overall Pass/Fail')).toLowerCase() === 'pass').length;
             let sepFai = sepTot - sepPas;
 
             // October
             let octTot = octRows.length;
-            let octPas = octRows.filter(row => getStatus(row, 'Overall Pass/Fail') === 'pass').length;
+            let octPas = octRows.filter(row => String(getStatus(row, 'Overall Pass/Fail')).toLowerCase() === 'pass').length;
             let octFai = octTot - octPas;
 
             // November
             let novTot = novRows.length;
-            let novPas = novRows.filter(row => getStatus(row, 'Overall Pass/Fail') === 'pass').length;
+            let novPas = novRows.filter(row => String(getStatus(row, 'Overall Pass/Fail')).toLowerCase() === 'pass').length;
             let novFai = novTot - novPas;
 
             // December
             let decTot = decRows.length;
-            let decPas = decRows.filter(row => getStatus(row, 'Overall Pass/Fail') === 'pass').length;
+            let decPas = decRows.filter(row => String(getStatus(row, 'Overall Pass/Fail')).toLowerCase() === 'pass').length;
             let decFai = decTot - decPas;
 
             if(monthlyChartInstance) monthlyChartInstance.destroy();
@@ -317,6 +316,15 @@
                         { label: 'Failed', data: [sepFai, octFai, novFai, decFai], backgroundColor: '#EF4444', borderRadius: 4 }
                     ]
                 },
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false,
+                    scales: { 
+                        x: { grid: { display: false } },
+                        y: { beginAtZero: true }
+                    } 
+                }
+            });
                 options: { 
                     responsive: true, 
                     maintainAspectRatio: false,
