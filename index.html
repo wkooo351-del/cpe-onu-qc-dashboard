@@ -269,19 +269,53 @@
                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
             });
 
-            let totalAll = globalRawData.length;
-            let passAll = globalRawData.filter(row => getStatus(row, 'Overall Pass/Fail') === 'pass').length;
-            let failAll = totalAll - passAll;
+            // လအလိုက် ဒေတာများ တွက်ချက်ခြင်း (September, October, November, December)
+            let sepRows = globalRawData.filter(row => {
+                let d = getVal(row, 'Date'); 
+                return d.includes('9/');
+            });
+            let octRows = globalRawData.filter(row => {
+                let d = getVal(row, 'Date');
+                return d.includes('10/');
+            });
+            let novRows = globalRawData.filter(row => {
+                let d = getVal(row, 'Date');
+                return d.includes('11/');
+            });
+            let decRows = globalRawData.filter(row => {
+                let d = getVal(row, 'Date');
+                return d.includes('12/');
+            });
+
+            // September 
+            let sepTot = sepRows.length;
+            let sepPas = sepRows.filter(row => getStatus(row, 'Overall Pass/Fail') === 'pass').length;
+            let sepFai = sepTot - sepPas;
+
+            // October
+            let octTot = octRows.length;
+            let octPas = octRows.filter(row => getStatus(row, 'Overall Pass/Fail') === 'pass').length;
+            let octFai = octTot - octPas;
+
+            // November
+            let novTot = novRows.length;
+            let novPas = novRows.filter(row => getStatus(row, 'Overall Pass/Fail') === 'pass').length;
+            let novFai = novTot - novPas;
+
+            // December
+            let decTot = decRows.length;
+            let decPas = decRows.filter(row => getStatus(row, 'Overall Pass/Fail') === 'pass').length;
+            let decFai = decTot - decPas;
 
             if(monthlyChartInstance) monthlyChartInstance.destroy();
             monthlyChartInstance = new Chart(document.getElementById('monthlyChart'), {
                 type: 'bar',
                 data: {
-                    labels: ['September 2026', 'October (Upcoming)', 'November (Upcoming)', 'December (Upcoming)'],
+                    labels: ['September 2026', 'October 2026', 'November (Upcoming)', 'December (Upcoming)'],
                     datasets: [
-                        { label: 'Total Tested', data: [totalAll, 0, 0, 0], backgroundColor: '#3B82F6', borderRadius: 4 },
-                        { label: 'Passed', data: [passAll, 0, 0, 0], backgroundColor: '#10B981', borderRadius: 4 },
-                        { label: 'Failed', data: [failAll, 0, 0, 0], backgroundColor: '#EF4444', borderRadius: 4 }
+                        { label: 'Total Tested', data: [sepTot, octTot, novTot, decTot], backgroundColor: '#3B82F6', borderRadius: 4 },
+                        { label: 'Passed', data: [sepPas, octPas, novPas, decPas], backgroundColor: '#10B981', borderRadius: 4 },
+                        { label: 'Failed', data: [sepFai, octFai, novFai, decFai], backgroundColor: '#EF4444', borderRadius: 4 }
                     ]
                 },
                 options: { 
