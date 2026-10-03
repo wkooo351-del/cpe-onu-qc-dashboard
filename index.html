@@ -178,7 +178,6 @@
             updateDashboard(region);
         }
 
-        // --- Flexible Key Cleaners & Matchers ---
         function cleanKey(k) {
             return k ? k.toString().trim().toLowerCase().replace(/[^a-z0-9]/g, '') : '';
         }
@@ -198,13 +197,17 @@
             return val.toLowerCase();
         }
 
-        function getDateVal(row) {
+        function getDateObj(row) {
             for (let k in row) {
                 if (cleanKey(k).includes('date')) {
-                    return row[k] ? row[k].toString().trim() : '';
+                    let val = row[k];
+                    if (val) {
+                        let d = new Date(val);
+                        if (!isNaN(d.getTime())) return d;
+                    }
                 }
             }
-            return '';
+            return null;
         }
 
         function updateDashboard(region) {
@@ -280,47 +283,44 @@
                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
             });
 
-            // --- Monthly Chart Dynamic Filtering (Sep, Oct, Nov, Dec) ---
-            let sepRows = [], octRows = [], novRows = [], decRows = [];
+            // --- Robust Monthly Chart Grouping (Sep, Oct, Nov, Dec 2026) ---
+            let months = [
+                { name: 'September 2026', monthIndex: 8 },
+                { name: 'October 2026', monthIndex: 9 },
+                { name: 'November 2026', monthIndex: 10 },
+                { name: 'December 2026', monthIndex: 11 }
+            ];
 
-            globalRawData.forEach(row => {
-                let dStr = getDateVal(row);
-                if (dStr.startsWith('9/') || dStr.includes('/9/') || dStr.includes('-09') || dStr.includes('Sep')) {
-                    sepRows.push(row);
-                } else if (dStr.startsWith('10/') || dStr.includes('/10/') || dStr.includes('-10') || dStr.includes('Oct')) {
-                    octRows.push(row);
-                } else if (dStr.startsWith('11/') || dStr.includes('/11/') || dStr.includes('-11') || dStr.includes('Nov')) {
-                    novRows.push(row);
-                } else if (dStr.startsWith('12/') || dStr.includes('/12/') || dStr.includes('-12') || dStr.includes('Dec')) {
-                    decRows.push(row);
-                }
+            let mLabels = [];
+            let mTotals = [];
+            let mPassed = [];
+            let mFailed = [];
+
+            months.forEach(m => {
+                let mRows = globalRawData.filter(row => {
+                    let d = getDateObj(row);
+                    return d && d.getFullYear() === 2026 && d.getMonth() === m.monthIndex;
+                });
+
+                let tot = mRows.length;
+                let pas = mRows.filter(row => getStatus(row, 'Overall Pass/Fail') === 'pass').length;
+                let fai = tot - pas;
+
+                mLabels.push(m.name);
+                mTotals.push(tot);
+                mPassed.push(pas);
+                mFailed.push(fai);
             });
-
-            let sepTot = sepRows.length;
-            let sepPas = sepRows.filter(row => getStatus(row, 'Overall Pass/Fail') === 'pass').length;
-            let sepFai = sepTot - sepPas;
-
-            let octTot = octRows.length;
-            let octPas = octRows.filter(row => getStatus(row, 'Overall Pass/Fail') === 'pass').length;
-            let octFai = octTot - octPas;
-
-            let novTot = novRows.length;
-            let novPas = novRows.filter(row => getStatus(row, 'Overall Pass/Fail') === 'pass').length;
-            let novFai = novTot - novPas;
-
-            let decTot = decRows.length;
-            let decPas = decRows.filter(row => getStatus(row, 'Overall Pass/Fail') === 'pass').length;
-            let decFai = decTot - decPas;
 
             if(monthlyChartInstance) monthlyChartInstance.destroy();
             monthlyChartInstance = new Chart(document.getElementById('monthlyChart'), {
                 type: 'bar',
                 data: {
-                    labels: ['September 2026', 'October 2026', 'November 2026', 'December 2026'],
+                    labels: mLabels,
                     datasets: [
-                        { label: 'Total Tested', data: [sepTot, octTot, novTot, decTot], backgroundColor: '#3B82F6', borderRadius: 4 },
-                        { label: 'Passed', data: [sepPas, octPas, novPas, decPas], backgroundColor: '#10B981', borderRadius: 4 },
-                        { label: 'Failed', data: [sepFai, octFai, novFai, decFai], backgroundColor: '#EF4444', borderRadius: 4 }
+                        { label: 'Total Tested', data: mTotals, backgroundColor: '#3B82F6', borderRadius: 4 },
+                        { label: 'Passed', data: mPassed, backgroundColor: '#10B981', borderRadius: 4 },
+                        { label: 'Failed', data: mFailed, backgroundColor: '#EF4444', borderRadius: 4 }
                     ]
                 },
                 options: { 
