@@ -86,7 +86,7 @@
             </div>
         </div>
 
-        <!-- Monthly Comparison Section (Updated to September - December) -->
+        <!-- Monthly Comparison Section -->
         <div class="bg-white p-6 rounded-xl shadow-sm border border-indigo-100">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-base font-bold text-gray-800">Monthly Comparison Trend (September - December 2026)</h3>
@@ -144,7 +144,7 @@
 
     <!-- JavaScript -->
     <script>
-        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzCxrz8-zRGZ_CI4jA9multVN26I2TiMnDrcwIO691eEViSB2mT28_np4UULyaFGHB_/exec'; // သင်၏ Web App URL
+        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzCxrz8-zRGZ_CI4jA9multVN26I2TiMnDrcwIO691eEViSB2mT28_np4UULyaFGHB_/exec';
 
         let globalRawData = [];
         let currentRegion = 'All';
@@ -178,18 +178,29 @@
             updateDashboard(region);
         }
 
-        function getStatus(row, key) {
+        // --- Flexible Key Cleaners & Matchers ---
+        function cleanKey(k) {
+            return k ? k.toString().trim().toLowerCase().replace(/[^a-z0-9]/g, '') : '';
+        }
+
+        function getVal(row, key) {
+            let target = cleanKey(key);
             for (let k in row) {
-                if (k.trim().toLowerCase() === key.toLowerCase()) {
-                    return row[k] ? row[k].toString().trim().toLowerCase() : '';
+                if (cleanKey(k) === target) {
+                    return row[k] ? row[k].toString().trim() : '';
                 }
             }
             return '';
         }
 
-        function getVal(row, key) {
+        function getStatus(row, key) {
+            let val = getVal(row, key);
+            return val.toLowerCase();
+        }
+
+        function getDateVal(row) {
             for (let k in row) {
-                if (k.trim().toLowerCase() === key.toLowerCase()) {
+                if (cleanKey(k).includes('date')) {
                     return row[k] ? row[k].toString().trim() : '';
                 }
             }
@@ -273,14 +284,14 @@
             let sepRows = [], octRows = [], novRows = [], decRows = [];
 
             globalRawData.forEach(row => {
-                let dStr = String(getVal(row, 'Date') || '');
-                if (dStr.includes('9/') || dStr.includes('-09-') || dStr.includes('/09/')) {
+                let dStr = getDateVal(row);
+                if (dStr.startsWith('9/') || dStr.includes('/9/') || dStr.includes('-09') || dStr.includes('Sep')) {
                     sepRows.push(row);
-                } else if (dStr.includes('10/') || dStr.includes('-10-') || dStr.includes('/10/')) {
+                } else if (dStr.startsWith('10/') || dStr.includes('/10/') || dStr.includes('-10') || dStr.includes('Oct')) {
                     octRows.push(row);
-                } else if (dStr.includes('11/') || dStr.includes('-11-') || dStr.includes('/11/')) {
+                } else if (dStr.startsWith('11/') || dStr.includes('/11/') || dStr.includes('-11') || dStr.includes('Nov')) {
                     novRows.push(row);
-                } else if (dStr.includes('12/') || dStr.includes('-12-') || dStr.includes('/12/')) {
+                } else if (dStr.startsWith('12/') || dStr.includes('/12/') || dStr.includes('-12') || dStr.includes('Dec')) {
                     decRows.push(row);
                 }
             });
