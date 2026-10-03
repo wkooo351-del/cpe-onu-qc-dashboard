@@ -268,8 +268,7 @@
                 },
                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
             });
-
-            let sepRows = [], octRows = [], novRows = [], decRows = [];
+let sepRows = [], octRows = [], novRows = [], decRows = [];
 
             globalRawData.forEach(row => {
                 let dStr = String(getVal(row, 'Date') || '');
@@ -283,46 +282,49 @@
                     decRows.push(row);
                 }
             });
-            // September 
+
             let sepTot = sepRows.length;
-            let sepPas = sepRows.filter(row => String(getStatus(row, 'Overall Pass/Fail')).toLowerCase() === 'pass').length;
+            let sepPas = sepRows.filter(row => String(getStatus(row, 'Overall Pass/Fail') || '').toLowerCase() === 'pass').length;
             let sepFai = sepTot - sepPas;
 
-            // October
             let octTot = octRows.length;
-            let octPas = octRows.filter(row => String(getStatus(row, 'Overall Pass/Fail')).toLowerCase() === 'pass').length;
+            let octPas = octRows.filter(row => String(getStatus(row, 'Overall Pass/Fail') || '').toLowerCase() === 'pass').length;
             let octFai = octTot - octPas;
 
-            // November
             let novTot = novRows.length;
-            let novPas = novRows.filter(row => String(getStatus(row, 'Overall Pass/Fail')).toLowerCase() === 'pass').length;
+            let novPas = novRows.filter(row => String(getStatus(row, 'Overall Pass/Fail') || '').toLowerCase() === 'pass').length;
             let novFai = novTot - novPas;
 
-            // December
             let decTot = decRows.length;
-            let decPas = decRows.filter(row => String(getStatus(row, 'Overall Pass/Fail')).toLowerCase() === 'pass').length;
+            let decPas = decRows.filter(row => String(getStatus(row, 'Overall Pass/Fail') || '').toLowerCase() === 'pass').length;
             let decFai = decTot - decPas;
 
-            if(monthlyChartInstance) monthlyChartInstance.destroy();
-            monthlyChartInstance = new Chart(document.getElementById('monthlyChart'), {
-                type: 'bar',
-                data: {
-                    labels: ['September 2026', 'October 2026', 'November (Upcoming)', 'December (Upcoming)'],
-                    datasets: [
-                        { label: 'Total Tested', data: [sepTot, octTot, novTot, decTot], backgroundColor: '#3B82F6', borderRadius: 4 },
-                        { label: 'Passed', data: [sepPas, octPas, novPas, decPas], backgroundColor: '#10B981', borderRadius: 4 },
-                        { label: 'Failed', data: [sepFai, octFai, novFai, decFai], backgroundColor: '#EF4444', borderRadius: 4 }
-                    ]
-                },
-                options: { 
-                    responsive: true, 
-                    maintainAspectRatio: false,
-                    scales: { 
-                        x: { grid: { display: false } },
-                        y: { beginAtZero: true }
-                    } 
-                }
-            });
+            if (typeof monthlyChartInstance !== 'undefined' && monthlyChartInstance) {
+                monthlyChartInstance.destroy();
+            }
+            
+            const monthlyCanvas = document.getElementById('monthlyChart');
+            if (monthlyCanvas) {
+                monthlyChartInstance = new Chart(monthlyCanvas, {
+                    type: 'bar',
+                    data: {
+                        labels: ['September 2026', 'October 2026', 'November (Upcoming)', 'December (Upcoming)'],
+                        datasets: [
+                            { label: 'Total Tested', data: [sepTot, octTot, novTot, decTot], backgroundColor: '#3B82F6', borderRadius: 4 },
+                            { label: 'Passed', data: [sepPas, octPas, novPas, decPas], backgroundColor: '#10B981', borderRadius: 4 },
+                            { label: 'Failed', data: [sepFai, octFai, novFai, decFai], backgroundColor: '#EF4444', borderRadius: 4 }
+                        ]
+                    },
+                    options: { 
+                        responsive: true, 
+                        maintainAspectRatio: false,
+                        scales: { 
+                            x: { grid: { display: false } },
+                            y: { beginAtZero: true }
+                        } 
+                    }
+                });
+            }
                 options: { 
                     responsive: true, 
                     maintainAspectRatio: false,
