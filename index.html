@@ -144,7 +144,7 @@
 
     <!-- JavaScript -->
     <script>
-        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzCxrz8-zRGZ_CI4jA9multVN26I2TiMnDrcwIO691eEViSB2mT28_np4UULyaFGHB_/exec';
+        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbw6Kf4qRAZDJ_1cKeuqNyr6kFA0UsDo0T1KuAuplULmUfJ3XkpcegupwOTQGnMjMcKc/exec';
 
         let globalRawData = [];
         let currentRegion = 'All';
@@ -198,14 +198,11 @@
         }
 
         function getDateObj(row) {
-            for (let k in row) {
-                if (cleanKey(k).includes('date')) {
-                    let val = row[k];
-                    if (val) {
-                        let d = new Date(val);
-                        if (!isNaN(d.getTime())) return d;
-                    }
-                }
+            // 'Latest Time' ကော်လံကို ဦးစားပေးဖမ်းဆ니다
+            let val = getVal(row, 'Latest Time') || getVal(row, 'Date');
+            if (val) {
+                let d = new Date(val);
+                if (!isNaN(d.getTime())) return d;
             }
             return null;
         }
@@ -283,7 +280,7 @@
                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
             });
 
-            // --- Robust Monthly Chart Grouping (Sep, Oct, Nov, Dec 2026) ---
+            // --- Updated Monthly Chart Grouping using 'Latest Time' ---
             let months = [
                 { name: 'September 2026', monthIndex: 8 },
                 { name: 'October 2026', monthIndex: 9 },
