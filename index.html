@@ -269,22 +269,21 @@
                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
             });
 
-            // လအလိုက် ဒေတာများ တွက်ချက်ခြင်း (September, October, November, December)
-            let sepRows = globalRawData.filter(row => {
-                let d = getVal(row, 'Date'); 
-                return d.includes('9/');
-            });
-            let octRows = globalRawData.filter(row => {
-                let d = getVal(row, 'Date');
-                return d.includes('10/');
-            });
-            let novRows = globalRawData.filter(row => {
-                let d = getVal(row, 'Date');
-                return d.includes('11/');
-            });
-            let decRows = globalRawData.filter(row => {
-                let d = getVal(row, 'Date');
-                return d.includes('12/');
+            // Google Sheet မှလာသော ရက်စွဲများကို လအလိုက် တိကျစွာ ခွဲထုတ်ခြင်း
+            let sepRows = [], octRows = [], novRows = [], decRows = [];
+
+            globalRawData.forEach(row => {
+                let dStr = getVal(row, 'Date');
+                // ရက်စွဲ string ထဲတွင် လနံပါတ်ပါဝင်ပုံကို စစ်ဆေးခြင်း
+                if (dStr.includes('9/') || dStr.includes('-09-') || dStr.includes('/09/')) {
+                    sepRows.push(row);
+                } else if (dStr.includes('10/') || dStr.includes('-10-') || dStr.includes('/10/')) {
+                    octRows.push(row);
+                } else if (dStr.includes('11/') || dStr.includes('-11-') || dStr.includes('/11/')) {
+                    novRows.push(row);
+                } else if (dStr.includes('12/') || dStr.includes('-12-') || dStr.includes('/12/')) {
+                    decRows.push(row);
+                }
             });
 
             // September 
