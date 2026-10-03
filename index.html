@@ -144,7 +144,7 @@
 
     <!-- JavaScript -->
     <script>
-        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzCxrz8-zRGZ_CI4jA9multVN26I2TiMnDrcwIO691eEViSB2mT28_np4UULyaFGHB_/exec'; // သင်၏ Web App URL
+        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbw6Kf4qRAZDJ_1cKeuqNyr6kFA0UsDo0T1KuAuplULmUfJ3XkpcegupwOTQGnMjMcKc/exec'; // သင်၏ Web App URL
 
         let globalRawData = [];
         let currentRegion = 'All';
@@ -268,82 +268,62 @@
                 },
                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
             });
-// --- Monthly Chart Rendering Logic (Complete Block) ---
 
-function renderMonthlyChart() {
-    // globalRawData ရှိမရှိ စစ်ဆေးခြင်း
-    if (typeof globalRawData === 'undefined' || !globalRawData) {
-        console.error('globalRawData is not defined');
-        return;
-    }
+            // --- Monthly Chart Dynamic Filtering (Sep, Oct, Nov, Dec) ---
+            let sepRows = [], octRows = [], novRows = [], decRows = [];
 
-    let sepRows = [], octRows = [], novRows = [], decRows = [];
+            globalRawData.forEach(row => {
+                let dStr = String(getVal(row, 'Date') || '');
+                if (dStr.includes('9/') || dStr.includes('-09-') || dStr.includes('/09/')) {
+                    sepRows.push(row);
+                } else if (dStr.includes('10/') || dStr.includes('-10-') || dStr.includes('/10/')) {
+                    octRows.push(row);
+                } else if (dStr.includes('11/') || dStr.includes('-11-') || dStr.includes('/11/')) {
+                    novRows.push(row);
+                } else if (dStr.includes('12/') || dStr.includes('-12-') || dStr.includes('/12/')) {
+                    decRows.push(row);
+                }
+            });
 
-    // Date ကို စစ်ဆေးပြီး လအလိုက် ခွဲထုတ်ခြင်း
-    globalRawData.forEach(row => {
-        let dStr = String(getVal(row, 'Date') || '');
-        if (dStr.includes('9/') || dStr.includes('-09-') || dStr.includes('/09/')) {
-            sepRows.push(row);
-        } else if (dStr.includes('10/') || dStr.includes('-10-') || dStr.includes('/10/')) {
-            octRows.push(row);
-        } else if (dStr.includes('11/') || dStr.includes('-11-') || dStr.includes('/11/')) {
-            novRows.push(row);
-        } else if (dStr.includes('12/') || dStr.includes('-12-') || dStr.includes('/12/')) {
-            decRows.push(row);
+            let sepTot = sepRows.length;
+            let sepPas = sepRows.filter(row => getStatus(row, 'Overall Pass/Fail') === 'pass').length;
+            let sepFai = sepTot - sepPas;
+
+            let octTot = octRows.length;
+            let octPas = octRows.filter(row => getStatus(row, 'Overall Pass/Fail') === 'pass').length;
+            let octFai = octTot - octPas;
+
+            let novTot = novRows.length;
+            let novPas = novRows.filter(row => getStatus(row, 'Overall Pass/Fail') === 'pass').length;
+            let novFai = novTot - novPas;
+
+            let decTot = decRows.length;
+            let decPas = decRows.filter(row => getStatus(row, 'Overall Pass/Fail') === 'pass').length;
+            let decFai = decTot - decPas;
+
+            if(monthlyChartInstance) monthlyChartInstance.destroy();
+            monthlyChartInstance = new Chart(document.getElementById('monthlyChart'), {
+                type: 'bar',
+                data: {
+                    labels: ['September 2026', 'October 2026', 'November 2026', 'December 2026'],
+                    datasets: [
+                        { label: 'Total Tested', data: [sepTot, octTot, novTot, decTot], backgroundColor: '#3B82F6', borderRadius: 4 },
+                        { label: 'Passed', data: [sepPas, octPas, novPas, decPas], backgroundColor: '#10B981', borderRadius: 4 },
+                        { label: 'Failed', data: [sepFai, octFai, novFai, decFai], backgroundColor: '#EF4444', borderRadius: 4 }
+                    ]
+                },
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false,
+                    scales: { 
+                        x: { grid: { display: false } },
+                        y: { beginAtZero: true }
+                    } 
+                }
+            });
         }
-    });
 
-    // September Calculations
-    let sepTot = sepRows.length;
-    let sepPas = sepRows.filter(row => String(getStatus(row, 'Overall Pass/Fail') || '').toLowerCase() === 'pass').length;
-    let sepFai = sepTot - sepPas;
-
-    // October Calculations
-    let octTot = octRows.length;
-    let octPas = octRows.filter(row => String(getStatus(row, 'Overall Pass/Fail') || '').toLowerCase() === 'pass').length;
-    let octFai = octTot - octPas;
-
-    // November Calculations
-    let novTot = novRows.length;
-    let novPas = novRows.filter(row => String(getStatus(row, 'Overall Pass/Fail') || '').toLowerCase() === 'pass').length;
-    let novFai = novTot - novPas;
-
-    // December Calculations
-    let decTot = decRows.length;
-    let decPas = decRows.filter(row => String(getStatus(row, 'Overall Pass/Fail') || '').toLowerCase() === 'pass').length;
-    let decFai = decTot - decPas;
-
-    // Destroy existing chart instance if any
-    if (typeof monthlyChartInstance !== 'undefined' && monthlyChartInstance) {
-        monthlyChartInstance.destroy();
-    }
-    
-    // Create new Chart.js instance
-    const monthlyCanvas = document.getElementById('monthlyChart');
-    if (monthlyCanvas) {
-        monthlyChartInstance = new Chart(monthlyCanvas, {
-            type: 'bar',
-            data: {
-                labels: ['September 2026', 'October 2026', 'November (Upcoming)', 'December (Upcoming)'],
-                datasets: [
-                    { label: 'Total Tested', data: [sepTot, octTot, novTot, decTot], backgroundColor: '#3B82F6', borderRadius: 4 },
-                    { label: 'Passed', data: [sepPas, octPas, novPas, decPas], backgroundColor: '#10B981', borderRadius: 4 },
-                    { label: 'Failed', data: [sepFai, octFai, novFai, decFai], backgroundColor: '#EF4444', borderRadius: 4 }
-                ]
-            },
-            options: { 
-                responsive: true, 
-                maintainAspectRatio: false,
-                scales: { 
-                    x: { grid: { display: false } },
-                    y: { beginAtZero: true }
-                } 
-            }
-        });
-    }
-}
-
-       function renderTables(data) {
+        function renderTables(data) {
             let rxFail = data.filter(row => getStatus(row, 'Rx Pass/Fail') === 'fail').length;
             let biasFail = data.filter(row => getStatus(row, 'Bias Pass/Fail') === 'fail').length;
             let tempFail = data.filter(row => getStatus(row, 'Temp Pass/Fail') === 'fail').length;
@@ -384,19 +364,7 @@ function renderMonthlyChart() {
             let sumTot = 0, sumPas = 0, sumFai = 0;
 
             deviceNames.forEach(dev => {
-                // Row ထဲမှာ သက်ဆိုင်ရာ Device နာမည်ပါဝင်မှုကို တိုက်ရိုက်ရှာဖွေခြင်း
-                let dRows = data.filter(row => {
-                    let found = false;
-                    for (let key in row) {
-                        let val = String(row[key] || '').trim().toUpperCase();
-                        if (val === dev) {
-                            found = true;
-                            break;
-                        }
-                    }
-                    return found;
-                });
-
+                let dRows = data.filter(row => getVal(row, 'Devices Name').toUpperCase() === dev);
                 let dTot = dRows.length;
                 let dPas = dRows.filter(row => getStatus(row, 'Overall Pass/Fail') === 'pass').length;
                 let dFai = dTot - dPas;
