@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CPE & ONU-QC Dashboard</title>
+    <title>CPE & ONU-QC Multi-Test Dashboard</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Chart.js CDN -->
@@ -15,18 +15,21 @@
 </head>
 <body class="text-gray-800">
 
-    <!-- Header -->
+    <!-- Header with Test Switcher Tabs -->
     <header class="bg-indigo-600 shadow-md">
-        <div class="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 flex justify-between items-center">
+        <div class="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-center gap-4">
             <div class="flex items-center space-x-3">
                 <span class="bg-white p-2 rounded-lg shadow text-indigo-600 font-bold">📊</span>
                 <h1 class="text-xl sm:text-2xl font-bold text-white">ONU Inspection Report Dashboard</h1>
             </div>
+            <!-- Test Switcher Tabs -->
+            <div class="flex bg-indigo-700 p-1 rounded-xl shadow-inner">
+                <button id="tab-first" onclick="switchTestType('first')" class="px-4 py-1.5 rounded-lg text-sm font-semibold transition text-white hover:bg-indigo-600">First Test</button>
+                <button id="tab-second" onclick="switchTestType('second')" class="px-4 py-1.5 rounded-lg text-sm font-semibold transition text-white hover:bg-indigo-600">Second Test</button>
+                <button id="tab-exchange" onclick="switchTestType('exchange')" class="px-4 py-1.5 rounded-lg text-sm font-semibold transition bg-white text-indigo-600 shadow">Exchange Devices</button>
+            </div>
+
             <div class="flex items-center space-x-3">
-                <span class="hidden md:flex items-center space-x-2 bg-indigo-700 px-3 py-1.5 rounded-lg text-white text-xs font-medium">
-                    <span class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
-                    <span>Live Auto-Sync Active</span>
-                </span>
                 <span id="last-updated" class="text-xs text-indigo-200">Connecting...</span>
             </div>
         </div>
@@ -37,7 +40,7 @@
 
         <!-- Region Filter Bar -->
         <div class="bg-white p-4 rounded-xl shadow-sm flex flex-col sm:flex-row justify-between items-center gap-4">
-            <span class="text-sm font-semibold text-gray-600 uppercase tracking-wider">Select Region / OLT Hostname:</span>
+            <span class="text-sm font-semibold text-gray-600 uppercase tracking-wider"><span id="active-test-label">Exchange Devices</span> - Select Region:</span>
             <div class="flex flex-wrap gap-2" id="region-filters">
                 <button onclick="filterRegion('All')" class="px-4 py-2 text-sm font-medium rounded-lg bg-indigo-600 text-white transition shadow" data-region="All">All Regions</button>
                 <button onclick="filterRegion('OVF-Provision-HGAO')" class="px-4 py-2 text-sm font-medium rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition" data-region="OVF-Provision-HGAO">OVF-Provision-HGAO</button>
@@ -97,9 +100,8 @@
             </div>
         </div>
 
-        <!-- Tables Section with Total Rows -->
+        <!-- Tables Section -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <!-- Inspection Parameters Failure Summary -->
             <div class="bg-white rounded-xl shadow-sm overflow-hidden">
                 <div class="px-6 py-4 bg-gray-50 border-b border-gray-100">
                     <h3 class="text-base font-bold text-gray-800">Inspection Parameters Failure Summary</h3>
@@ -118,7 +120,6 @@
                 </div>
             </div>
 
-            <!-- Device Models Performance & Failures -->
             <div class="bg-white rounded-xl shadow-sm overflow-hidden">
                 <div class="px-6 py-4 bg-gray-50 border-b border-gray-100">
                     <h3 class="text-base font-bold text-gray-800">Device Models Performance & Failures</h3>
@@ -142,12 +143,14 @@
 
     </main>
 
-    <!-- JavaScript -->
+    <!-- JavaScript Logic -->
     <script>
-        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyZW0QpWYles2kSShiDzVtIvyu8I4smkT-Rcd2Dz6jq5mVTe4YIdkhZh5z7Xyrwl5U3uQ/exec';
+        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzsvpVmIb9CpHlx8tj-oTpsocUcnKlC-NercxtEsObMW6Hs3mirY8gHNXlxUcL188faIw/exec';
 
-        let globalRawData = [];
+        let allData = { firstTest: [], secondTest: [], exchangeTest: [] };
+        let currentTestType = 'exchange'; // Default to exchange if needed, or 'first'
         let currentRegion = 'All';
+
         let oltChartInstance = null;
         let failureChartInstance = null;
         let monthlyChartInstance = null;
@@ -156,14 +159,47 @@
             fetch(WEB_APP_URL)
                 .then(response => response.json())
                 .then(data => {
-                    globalRawData = data;
+                    allData = {
+                        firstTest: data.firstTest || [],
+                        secondTest: data.secondTest || [],
+                        exchangeTest: data.exchangeTest || []
+                    };
                     document.getElementById('last-updated').innerText = 'Last Synced: ' + new Date().toLocaleTimeString();
-                    updateDashboard(currentRegion);
+                    updateDashboard();
                 })
                 .catch(err => {
                     console.error("Sync Error:", err);
                     document.getElementById('last-updated').innerText = 'Sync Failed';
                 });
+        }
+
+        function switchTestType(type) {
+            currentTestType = type;
+            currentRegion = 'All'; 
+            
+            document.querySelectorAll('#region-filters button').forEach(btn => {
+                if(btn.getAttribute('data-region') === 'All') {
+                    btn.className = 'px-4 py-2 text-sm font-medium rounded-lg bg-indigo-600 text-white transition shadow';
+                } else {
+                    btn.className = 'px-4 py-2 text-sm font-medium rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition';
+                }
+            });
+
+            document.getElementById('tab-first').className = 'px-4 py-1.5 rounded-lg text-sm font-semibold transition text-white hover:bg-indigo-600';
+            document.getElementById('tab-second').className = 'px-4 py-1.5 rounded-lg text-sm font-semibold transition text-white hover:bg-indigo-600';
+            document.getElementById('tab-exchange').className = 'px-4 py-1.5 rounded-lg text-sm font-semibold transition text-white hover:bg-indigo-600';
+
+            if (type === 'first') {
+                document.getElementById('tab-first').className = 'px-4 py-1.5 rounded-lg text-sm font-semibold transition bg-white text-indigo-600 shadow';
+                document.getElementById('active-test-label').innerText = 'First Test';
+            } else if (type === 'second') {
+                document.getElementById('tab-second').className = 'px-4 py-1.5 rounded-lg text-sm font-semibold transition bg-white text-indigo-600 shadow';
+                document.getElementById('active-test-label').innerText = 'Second Test';
+            } else if (type === 'exchange') {
+                document.getElementById('tab-exchange').className = 'px-4 py-1.5 rounded-lg text-sm font-semibold transition bg-white text-indigo-600 shadow';
+                document.getElementById('active-test-label').innerText = 'Exchange Devices';
+            }
+            updateDashboard();
         }
 
         function filterRegion(region) {
@@ -175,7 +211,7 @@
                     btn.className = 'px-4 py-2 text-sm font-medium rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition';
                 }
             });
-            updateDashboard(region);
+            updateDashboard();
         }
 
         function cleanKey(k) {
@@ -198,7 +234,6 @@
         }
 
         function getDateObj(row) {
-            // 'Latest Time' ကော်လံကို ဦးစားပေးဖမ်းဆ니다
             let val = getVal(row, 'Latest Time') || getVal(row, 'Date');
             if (val) {
                 let d = new Date(val);
@@ -207,12 +242,29 @@
             return null;
         }
 
-        function updateDashboard(region) {
-            if (!globalRawData || globalRawData.length === 0) return;
+        function getCurrentActiveDataset() {
+            if (currentTestType === 'first') return allData.firstTest;
+            if (currentTestType === 'exchange') return allData.exchangeTest;
+            return allData.secondTest;
+        }
 
-            let filteredData = globalRawData;
-            if (region !== 'All') {
-                filteredData = globalRawData.filter(row => getVal(row, 'Olt Hostname') === region);
+        function updateDashboard() {
+            let rawDataSet = getCurrentActiveDataset();
+            if (!rawDataSet || rawDataSet.length === 0) {
+                document.getElementById('kpi-total').innerText = '0';
+                document.getElementById('kpi-passed').innerText = '0';
+                document.getElementById('kpi-failed').innerText = '0';
+                document.getElementById('kpi-pass-rate').innerText = '0.00%';
+                document.getElementById('kpi-fail-rate').innerText = '0.00%';
+                
+                renderCharts([], []);
+                renderTables([]);
+                return;
+            }
+
+            let filteredData = rawDataSet;
+            if (currentRegion !== 'All') {
+                filteredData = rawDataSet.filter(row => getVal(row, 'Olt Hostname') === currentRegion);
             }
 
             let totalTested = filteredData.length;
@@ -227,19 +279,20 @@
             document.getElementById('kpi-pass-rate').innerText = passRate;
             document.getElementById('kpi-fail-rate').innerText = failRate;
 
-            document.getElementById('olt-chart-title').innerText = region === 'All' ? 
-                'Pass vs Fail & Total Comparison (All Regions)' : `Pass vs Fail & Total Comparison (${region})`;
+            let testTitlePrefix = currentTestType === 'first' ? 'First Test' : (currentTestType === 'exchange' ? 'Exchange Devices' : 'Second Test');
+            document.getElementById('olt-chart-title').innerText = currentRegion === 'All' ?  
+                `${testTitlePrefix} - Pass vs Fail & Total Comparison (All Regions)` : `${testTitlePrefix} - Pass vs Fail & Total Comparison (${currentRegion})`;
 
-            renderCharts(region, filteredData);
+            renderCharts(rawDataSet, filteredData);
             renderTables(filteredData);
         }
 
-        function renderCharts(region, data) {
+        function renderCharts(rawDataSet, filteredData) {
             let regionsList = ['OVF-Provision-HGAO', 'OVF-Provision-ENUO', 'OVF-Provision-MDY'];
             let oltTotals = [], oltPassed = [], oltFailed = [];
 
             regionsList.forEach(reg => {
-                let rData = globalRawData.filter(row => getVal(row, 'Olt Hostname') === reg);
+                let rData = rawDataSet.filter(row => getVal(row, 'Olt Hostname') === reg);
                 let tot = rData.length;
                 let pas = rData.filter(row => getStatus(row, 'Overall Pass/Fail') === 'pass').length;
                 oltTotals.push(tot);
@@ -261,11 +314,11 @@
                 options: { responsive: true, maintainAspectRatio: false, scales: { x: { grid: { display: false } }, y: { beginAtZero: true } } }
             });
 
-            let rxFail = data.filter(row => getStatus(row, 'Rx Pass/Fail') === 'fail').length;
-            let biasFail = data.filter(row => getStatus(row, 'Bias Pass/Fail') === 'fail').length;
-            let tempFail = data.filter(row => getStatus(row, 'Temp Pass/Fail') === 'fail').length;
-            let txFail = data.filter(row => getStatus(row, 'Tx Pass/Fail') === 'fail').length;
-            let voltFail = data.filter(row => getStatus(row, 'Voltage Pass/Fail') === 'fail').length;
+            let rxFail = filteredData.filter(row => getStatus(row, 'Rx Pass/Fail') === 'fail').length;
+            let biasFail = filteredData.filter(row => getStatus(row, 'Bias Pass/Fail') === 'fail').length;
+            let tempFail = filteredData.filter(row => getStatus(row, 'Temp Pass/Fail') === 'fail').length;
+            let txFail = filteredData.filter(row => getStatus(row, 'Tx Pass/Fail') === 'fail').length;
+            let voltFail = filteredData.filter(row => getStatus(row, 'Voltage Pass/Fail') === 'fail').length;
 
             if(failureChartInstance) failureChartInstance.destroy();
             failureChartInstance = new Chart(document.getElementById('failureChart'), {
@@ -280,7 +333,6 @@
                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
             });
 
-            // --- Updated Monthly Chart Grouping using 'Latest Time' ---
             let months = [
                 { name: 'September 2026', monthIndex: 8 },
                 { name: 'October 2026', monthIndex: 9 },
@@ -288,13 +340,10 @@
                 { name: 'December 2026', monthIndex: 11 }
             ];
 
-            let mLabels = [];
-            let mTotals = [];
-            let mPassed = [];
-            let mFailed = [];
+            let mLabels = [], mTotals = [], mPassed = [], mFailed = [];
 
             months.forEach(m => {
-                let mRows = globalRawData.filter(row => {
+                let mRows = rawDataSet.filter(row => {
                     let d = getDateObj(row);
                     return d && d.getFullYear() === 2026 && d.getMonth() === m.monthIndex;
                 });
@@ -323,10 +372,7 @@
                 options: { 
                     responsive: true, 
                     maintainAspectRatio: false,
-                    scales: { 
-                        x: { grid: { display: false } },
-                        y: { beginAtZero: true }
-                    } 
+                    scales: { x: { grid: { display: false } }, y: { beginAtZero: true } } 
                 }
             });
         }
