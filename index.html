@@ -180,11 +180,13 @@
                 });
         }
 
+        let currentWeek = 'week1'; // လက်ရှိရွေးထားသော Week
+
         function switchTestType(type) {
             currentTestType = type;
             currentRegion = 'All'; 
             
-            // ဒေသ Filter ခလုတ်များကို ပုံမှန်အခြေအနေသို့ ပြန်ပြောင်းရန်
+            // Region filters reset
             document.querySelectorAll('#region-filters button').forEach(btn => {
                 if(btn.getAttribute('data-region') === 'All') {
                     btn.className = 'px-4 py-2 text-sm font-medium rounded-lg bg-indigo-600 text-white transition shadow';
@@ -193,7 +195,6 @@
                 }
             });
 
-            // တက်ဘ်ခလုတ်အားလုံးကို ပုံမှန် Inactive ပုံစံသို့ ဦးစွာပြောင်းမည်
             const inactiveStyle = 'px-4 py-1.5 rounded-lg text-sm font-semibold transition text-white hover:bg-indigo-600';
             const activeStyle = 'px-4 py-1.5 rounded-lg text-sm font-semibold transition bg-white text-indigo-600 shadow';
 
@@ -202,19 +203,24 @@
             document.getElementById('tab-exchange').className = inactiveStyle;
             document.getElementById('tab-weekly').className = inactiveStyle;
 
-            // ရွေးချယ်ထားသော တက်ဘ်အလိုက် Active ပုံစံ (အဖြူရောင်နောက်ခံ) ထည့်သွင်းခြင်း
+            const weeklyContainer = document.getElementById('weekly-container');
+
             if (type === 'first') {
                 document.getElementById('tab-first').className = activeStyle;
                 document.getElementById('active-test-label').innerText = 'First Test';
+                if(weeklyContainer) weeklyContainer.classList.add('hidden');
             } else if (type === 'second') {
                 document.getElementById('tab-second').className = activeStyle;
                 document.getElementById('active-test-label').innerText = 'Second Test';
+                if(weeklyContainer) weeklyContainer.classList.add('hidden');
             } else if (type === 'exchange') {
                 document.getElementById('tab-exchange').className = activeStyle;
                 document.getElementById('active-test-label').innerText = 'Exchange Devices';
+                if(weeklyContainer) weeklyContainer.classList.add('hidden');
             } else if (type === 'weekly') {
                 document.getElementById('tab-weekly').className = activeStyle;
                 document.getElementById('active-test-label').innerText = 'Weekly Analytics';
+                if(weeklyContainer) weeklyContainer.classList.remove('hidden'); // Weekly Sub-tabs များကို ပေါ်စေရန်
             }
             updateDashboard();
         }
