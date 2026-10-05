@@ -3,224 +3,336 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ONU Inspection Report Dashboard</title>
+    <title>CPE & ONU-QC Multi-Test Dashboard</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Chart.js CDN -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- PapaParse for CSV reading -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f4f5f7; }
+    </style>
 </head>
-<body class="bg-gray-50 text-gray-800">
+<body class="text-gray-800">
 
-    <!-- Header & Test Switcher Tabs -->
-    <header class="bg-indigo-700 shadow-lg">
-        <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
+    <!-- Header with Test Switcher Tabs -->
+    <header class="bg-indigo-600 shadow-md">
+        <div class="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-center gap-4">
             <div class="flex items-center space-x-3">
-                <div class="bg-white p-2 rounded-lg text-indigo-700 font-black shadow">ONU</div>
-                <h1 class="text-xl md:text-2xl font-bold text-white tracking-wide">ONU Inspection Report Dashboard</h1>
+                <span class="bg-white p-2 rounded-lg shadow text-indigo-600 font-bold">📊</span>
+                <h1 class="text-xl sm:text-2xl font-bold text-white">ONU Inspection Report Dashboard</h1>
             </div>
-            
             <!-- Test Switcher Tabs -->
-            <div class="flex flex-wrap bg-indigo-900/60 p-1.5 rounded-xl shadow-inner gap-1">
-                <button id="tab-first" onclick="switchTestType('first')" class="px-3 py-1.5 rounded-lg text-xs md:text-sm font-semibold text-white bg-indigo-500 shadow transition">First Test</button>
-                <button id="tab-second" onclick="switchTestType('second')" class="px-3 py-1.5 rounded-lg text-xs md:text-sm font-semibold text-indigo-200 hover:text-white transition">Second Test</button>
-                <button id="tab-exchange" onclick="switchTestType('exchange')" class="px-3 py-1.5 rounded-lg text-xs md:text-sm font-semibold text-indigo-200 hover:text-white transition">Exchange</button>
-                <button id="tab-weekly" onclick="switchTestType('weekly')" class="px-3 py-1.5 rounded-lg text-xs md:text-sm font-semibold text-indigo-200 hover:text-white transition">Weekly</button>
-                <button id="tab-monthly" onclick="switchTestType('monthly')" class="px-3 py-1.5 rounded-lg text-xs md:text-sm font-semibold text-indigo-200 hover:text-white transition">Monthly</button>
+            <div class="flex bg-indigo-700 p-1 rounded-xl shadow-inner">
+                <button id="tab-first" onclick="switchTestType('first')" class="px-4 py-1.5 ...">First Test</button>
+                <button id="tab-second" onclick="switchTestType('second')" class="px-4 py-1.5 ...">Second Test</button>
+                <button id="tab-exchange" onclick="switchTestType('exchange')" class="px-4 py-1.5 ...">Exchange Devices</button>
+                <button id="tab-weekly" onclick="switchTestType('weekly')" class="px-4 py-1.5 rounded-lg text-sm font-semibold transition text-white hover:bg-indigo-600">Weekly</button>
+                <button id="tab-monthly" onclick="switchTestType('monthly')" class="px-4 py-1.5 rounded-lg text-sm font-semibold transition text-white hover:bg-indigo-600">Monthly</button>
+            </div>
+
+            <div class="flex items-center space-x-3">
+                <div class="flex items-center space-x-2 bg-indigo-700/50 px-3 py-1.5 rounded-lg border border-indigo-500/30">
+                    <span class="relative flex h-2.5 w-2.5">
+                      <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                      <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                    </span>
+                    <span id="last-updated" class="text-xs text-indigo-200">Connecting...</span>
+                </div>
             </div>
         </div>
     </header>
 
-    <!-- Main Content Container -->
-    <main class="max-w-7xl mx-auto px-4 py-6">
-
-        <!-- KPI Cards Summary -->
-        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
-            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 border-l-4 border-l-blue-500">
-                <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Total Tested</p>
-                <p id="kpi-total" class="text-2xl font-bold text-gray-800 mt-1">0</p>
-            </div>
-            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 border-l-4 border-l-emerald-500">
-                <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Passed</p>
-                <p id="kpi-passed" class="text-2xl font-bold text-emerald-600 mt-1">0</p>
-            </div>
-            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 border-l-4 border-l-rose-500">
-                <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Failed</p>
-                <p id="kpi-failed" class="text-2xl font-bold text-rose-600 mt-1">0</p>
-            </div>
-            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 border-l-4 border-l-indigo-500">
-                <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Pass Rate</p>
-                <p id="kpi-pass-rate" class="text-2xl font-bold text-indigo-600 mt-1">0.00%</p>
-            </div>
-            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 border-l-4 border-l-amber-500 col-span-2 sm:col-span-1">
-                <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Fail Rate</p>
-                <p id="kpi-fail-rate" class="text-2xl font-bold text-amber-600 mt-1">0.00%</p>
+    <!-- Main Container -->
+    <main class="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8 space-y-6">
+        <!-- Weekly Sub-Tabs Container -->
+        <div id="weekly-container" class="hidden mb-6">
+            <div class="flex space-x-2 border-b border-gray-200 pb-3">
+                <button onclick="switchWeek('week1')" id="subtab-week1" class="px-4 py-2 text-sm font-semibold rounded-lg bg-indigo-600 text-white shadow">Week 1 Test</button>
+                <button onclick="switchWeek('week2')" id="subtab-week2" class="px-4 py-2 text-sm font-semibold rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition">Week 2 Test</button>
+                <button onclick="switchWeek('week3')" id="subtab-week3" class="px-4 py-2 text-sm font-semibold rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition">Week 3 Test</button>
+                <button onclick="switchWeek('week4')" id="subtab-week4" class="px-4 py-2 text-sm font-semibold rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition">Week 4 Test</button>
+                <button onclick="switchWeek('comparison')" id="subtab-comparison" class="px-4 py-2 text-sm font-semibold rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition">📊 Week-by-Week Comparison</button>
             </div>
         </div>
 
-        <!-- Filter Section -->
-        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-            <!-- Region Filter Buttons -->
-            <div class="flex flex-wrap gap-2" id="region-filters">
-                <button onclick="filterByRegion('All')" class="px-3.5 py-2 bg-indigo-600 text-white rounded-lg shadow-sm font-medium text-xs tracking-wide">All Regions</button>
-                <button onclick="filterByRegion('OVF-Provision-HGAO')" class="px-3.5 py-2 bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-lg font-medium text-xs tracking-wide transition">HGAO</button>
-                <button onclick="filterByRegion('OVF-Provision-ENUO')" class="px-3.5 py-2 bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-lg font-medium text-xs tracking-wide transition">ENUO</button>
-                <button onclick="filterByRegion('OVF-Provision-MDY')" class="px-3.5 py-2 bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-lg font-medium text-xs tracking-wide transition">MDY</button>
+        <!-- Monthly Sub-Tabs Container (12 Months + Comparison) -->
+        <div id="monthly-container" class="hidden mb-6 overflow-x-auto">
+            <div class="flex space-x-2 border-b border-gray-200 pb-3 whitespace-nowrap">
+                <button onclick="switchMonth('jan')" id="subtab-jan" class="px-3 py-1.5 text-sm font-semibold rounded-lg bg-indigo-600 text-white shadow">Jan</button>
+                <button onclick="switchMonth('feb')" id="subtab-feb" class="px-3 py-1.5 text-sm font-semibold rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition">Feb</button>
+                <button onclick="switchMonth('mar')" id="subtab-mar" class="px-3 py-1.5 text-sm font-semibold rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition">Mar</button>
+                <button onclick="switchMonth('apr')" id="subtab-apr" class="px-3 py-1.5 text-sm font-semibold rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition">Apr</button>
+                <button onclick="switchMonth('may')" id="subtab-may" class="px-3 py-1.5 text-sm font-semibold rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition">May</button>
+                <button onclick="switchMonth('jun')" id="subtab-jun" class="px-3 py-1.5 text-sm font-semibold rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition">Jun</button>
+                <button onclick="switchMonth('jul')" id="subtab-jul" class="px-3 py-1.5 text-sm font-semibold rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition">Jul</button>
+                <button onclick="switchMonth('aug')" id="subtab-aug" class="px-3 py-1.5 text-sm font-semibold rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition">Aug</button>
+                <button onclick="switchMonth('sep')" id="subtab-sep" class="px-3 py-1.5 text-sm font-semibold rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition">Sep</button>
+                <button onclick="switchMonth('oct')" id="subtab-oct" class="px-3 py-1.5 text-sm font-semibold rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition">Oct</button>
+                <button onclick="switchMonth('nov')" id="subtab-nov" class="px-3 py-1.5 text-sm font-semibold rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition">Nov</button>
+                <button onclick="switchMonth('dec')" id="subtab-dec" class="px-3 py-1.5 text-sm font-semibold rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition">Dec</button>
+                <button onclick="switchMonth('comparison')" id="subtab-monthly-comparison" class="px-3 py-1.5 text-sm font-semibold rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition">📊 Comparison</button>
             </div>
-            <!-- Dynamic Sub-filters (Monthly/Weekly options) -->
-            <div id="sub-filter-container" class="flex flex-wrap gap-1.5"></div>
+        </div>
+
+        <!-- Region Filter Bar -->
+        <div class="bg-white p-4 rounded-xl shadow-sm flex flex-col sm:flex-row justify-between items-center gap-4">
+            <span class="text-sm font-semibold text-gray-600 uppercase tracking-wider"><span id="active-test-label">Exchange Devices</span> - Select Region:</span>
+            <div class="flex flex-wrap gap-2" id="region-filters">
+                <button onclick="filterRegion('All')" class="px-4 py-2 text-sm font-medium rounded-lg bg-indigo-600 text-white transition shadow" data-region="All">All Regions</button>
+                <button onclick="filterRegion('OVF-Provision-HGAO')" class="px-4 py-2 text-sm font-medium rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition" data-region="OVF-Provision-HGAO">OVF-Provision-HGAO</button>
+                <button onclick="filterRegion('OVF-Provision-ENUO')" class="px-4 py-2 text-sm font-medium rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition" data-region="OVF-Provision-ENUO">OVF-Provision-ENUO</button>
+                <button onclick="filterRegion('OVF-Provision-MDY')" class="px-4 py-2 text-sm font-medium rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition" data-region="OVF-Provision-MDY">OVF-Provision-MDY</button>
+            </div>
+        </div>
+
+        <!-- KPI Cards -->
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+            <div class="bg-white p-5 rounded-xl shadow-sm border-t-4 border-indigo-500">
+                <p class="text-xs font-semibold text-gray-400 uppercase">Total Tested</p>
+                <p id="kpi-total" class="mt-2 text-2xl sm:text-3xl font-bold text-gray-900">0</p>
+            </div>
+            <div class="bg-white p-5 rounded-xl shadow-sm border-t-4 border-emerald-500">
+                <p class="text-xs font-semibold text-gray-400 uppercase">Passed Units</p>
+                <p id="kpi-passed" class="mt-2 text-2xl sm:text-3xl font-bold text-emerald-600">0</p>
+            </div>
+            <div class="bg-white p-5 rounded-xl shadow-sm border-t-4 border-rose-500">
+                <p class="text-xs font-semibold text-gray-400 uppercase">Failed Units</p>
+                <p id="kpi-failed" class="mt-2 text-2xl sm:text-3xl font-bold text-rose-600">0</p>
+            </div>
+            <div class="bg-white p-5 rounded-xl shadow-sm border-t-4 border-blue-500">
+                <p class="text-xs font-semibold text-gray-400 uppercase">Pass Rate</p>
+                <p id="kpi-pass-rate" class="mt-2 text-2xl sm:text-3xl font-bold text-blue-600">0.00%</p>
+            </div>
+            <div class="bg-white p-5 rounded-xl shadow-sm border-t-4 border-amber-500 col-span-2 sm:col-span-1">
+                <p class="text-xs font-semibold text-gray-400 uppercase">Fail Rate</p>
+                <p id="kpi-fail-rate" class="mt-2 text-2xl sm:text-3xl font-bold text-amber-600">0.00%</p>
+            </div>
         </div>
 
         <!-- Charts Section -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-            <!-- OLT / Monthly Comparison Chart Container -->
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                <h3 id="olt-chart-title" class="text-base font-bold text-gray-800 mb-4">Pass vs Fail & Total Comparison</h3>
-                <div class="relative h-72"><canvas id="oltChart"></canvas></div>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="bg-white p-6 rounded-xl shadow-sm">
+                <h3 id="olt-chart-title" class="text-base font-bold text-gray-800 mb-4">Pass vs Fail & Total Comparison (All Regions)</h3>
+                <div class="relative h-72">
+                    <canvas id="oltChart"></canvas>
+                </div>
             </div>
-
-            <!-- Failure Reasons Doughnut Chart Container -->
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+            <div class="bg-white p-6 rounded-xl shadow-sm">
                 <h3 class="text-base font-bold text-gray-800 mb-4">Failure Reasons Breakdown</h3>
-                <div class="relative h-72"><canvas id="failureChart"></canvas></div>
+                <div class="relative h-72 flex justify-center">
+                    <canvas id="failureChart"></canvas>
+                </div>
             </div>
         </div>
 
         <!-- Tables Section -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <!-- Parameter Failure Table -->
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 overflow-x-auto">
-                <h3 class="text-base font-bold text-gray-800 mb-4">Parameter Failure Breakdown</h3>
-                <table class="w-full text-left text-sm text-gray-600">
-                    <thead class="bg-gray-50 text-gray-700 uppercase text-xs tracking-wider">
-                        <tr>
-                            <th class="px-4 py-3">Parameter</th>
-                            <th class="px-4 py-3 text-right">Failure Count</th>
-                            <th class="px-4 py-3 text-right">Share (%)</th>
-                        </tr>
-                    </thead>
-                    <tbody id="parameter-table-body" class="divide-y divide-gray-100"></tbody>
-                </table>
+            <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                <div class="px-6 py-4 bg-gray-50 border-b border-gray-100">
+                    <h3 class="text-base font-bold text-gray-800">Inspection Parameters Failure Summary</h3>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200 text-sm">
+                        <thead class="bg-gray-50 text-gray-500 uppercase text-xs">
+                            <tr>
+                                <th class="px-6 py-3 text-left font-semibold">Parameter</th>
+                                <th class="px-6 py-3 text-right font-semibold">Failed Count</th>
+                                <th class="px-6 py-3 text-right font-semibold">Share (%)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="parameter-table-body" class="divide-y divide-gray-200 bg-white"></tbody>
+                    </table>
+                </div>
             </div>
 
-            <!-- Summary Table -->
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 overflow-x-auto">
-                <h3 class="text-base font-bold text-gray-800 mb-4">Summary Breakdown</h3>
-                <table class="w-full text-left text-sm text-gray-600">
-                    <thead class="bg-gray-50 text-gray-700 uppercase text-xs tracking-wider">
-                        <tr>
-                            <th class="px-4 py-3">Category</th>
-                            <th class="px-4 py-3 text-right">Total</th>
-                            <th class="px-4 py-3 text-right">Passed</th>
-                            <th class="px-4 py-3 text-right">Failed</th>
-                            <th class="px-4 py-3 text-right">Fail Rate</th>
-                        </tr>
-                    </thead>
-                    <tbody id="device-table-body" class="divide-y divide-gray-100"></tbody>
-                </table>
+            <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                <div class="px-6 py-4 bg-gray-50 border-b border-gray-100">
+                    <h3 class="text-base font-bold text-gray-800">Device Models Performance & Failures</h3>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200 text-sm">
+                        <thead class="bg-gray-50 text-gray-500 uppercase text-xs">
+                            <tr>
+                                <th class="px-6 py-3 text-left font-semibold">Device Name</th>
+                                <th class="px-6 py-3 text-right font-semibold">Total Tested</th>
+                                <th class="px-6 py-3 text-right font-semibold">Passed</th>
+                                <th class="px-6 py-3 text-right font-semibold">Failed</th>
+                                <th class="px-6 py-3 text-right font-semibold">Fail Rate</th>
+                            </tr>
+                        </thead>
+                        <tbody id="device-table-body" class="divide-y divide-gray-200 bg-white"></tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
     </main>
 
-    <!-- JavaScript Execution Block -->
+    <!-- JavaScript Logic -->
     <script>
-        // Global State Variables
-        let allData = {
-            first: [],
-            second: [],
-            exchange: [],
-            weekly: [],
-            monthly: [],
-            summary: []
-        };
-        
-        let currentTestType = 'first';
+        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbwsI5qlj5n-jBgneiEC7dbiHY2ap6TnbR2fqrU93EV3JsyoUMjNB1fklF2P-fa0VxPeyw/exec';
+
+        let allData = { firstTest: [], secondTest: [], exchangeTest: [], summary: [] };
+        let currentTestType = 'exchange'; 
         let currentRegion = 'All';
-        let currentWeek = 'comparison';
-        let currentMonth = 'comparison';
+        let currentWeek = 'week1';
+        let currentMonth = 'jan';
 
         let oltChartInstance = null;
         let failureChartInstance = null;
 
-        // Helper Functions
-        function getVal(row, key) {
-            return row[key] !== undefined && row[key] !== null ? String(row[key]).trim() : '';
+        function fetchSheetData() {
+            fetch(WEB_APP_URL)
+                .then(response => response.json())
+                .then(data => {
+                   allData = {
+                        firstTest: data.firstTest || [],
+                        secondTest: data.secondTest || [],
+                        exchangeTest: data.exchangeTest || [],
+                        summary: data.summary || []
+                   };
+                    document.getElementById('last-updated').innerText = 'Last Synced: ' + new Date().toLocaleTimeString();
+                    updateDashboard();
+                })
+                .catch(err => {
+                    console.error("Sync Error:", err);
+                    document.getElementById('last-updated').innerText = 'Sync Failed';
+                });
         }
 
-        function getStatus(row, key) {
-            return getVal(row, key).toLowerCase();
-        }
-
-        function getDateObj(row) {
-            let dateStr = getVal(row, 'Date') || getVal(row, 'Timestamp');
-            return dateStr ? new Date(dateStr) : null;
-        }
-
-        function monthNames_getCode(d) {
-            const monthNames = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
-            return monthNames[d.getMonth()];
-        }
-
-        function getCurrentActiveDataset() {
-            return allData[currentTestType] || [];
-        }
-
-        // Switch Test Type Tab Function
         function switchTestType(type) {
             currentTestType = type;
-            currentWeek = 'comparison';
-            currentMonth = 'comparison';
+            currentRegion = 'All'; 
             
-            // Update Tab Active Styles
-            ['first', 'second', 'exchange', 'weekly', 'monthly'].forEach(t => {
-                let btn = document.getElementById('tab-' + t);
-                if (btn) {
-                    if (t === type) {
-                        btn.className = "px-3 py-1.5 rounded-lg text-xs md:text-sm font-semibold text-white bg-indigo-500 shadow transition";
-                    } else {
-                        btn.className = "px-3 py-1.5 rounded-lg text-xs md:text-sm font-semibold text-indigo-200 hover:text-white transition";
-                    }
+            document.querySelectorAll('#region-filters button').forEach(btn => {
+                if(btn.getAttribute('data-region') === 'All') {
+                    btn.className = 'px-4 py-2 text-sm font-medium rounded-lg bg-indigo-600 text-white transition shadow';
+                } else {
+                    btn.className = 'px-4 py-2 text-sm font-medium rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition';
                 }
             });
 
-            renderSubFilters();
-            updateDashboard();
-        }
+            const inactiveStyle = 'px-4 py-1.5 rounded-lg text-sm font-semibold transition text-white hover:bg-indigo-600';
+            const activeStyle = 'px-4 py-1.5 rounded-lg text-sm font-semibold transition bg-white text-indigo-600 shadow';
 
-        // Render Sub-filters for Monthly/Weekly
-        function renderSubFilters() {
-            const container = document.getElementById('sub-filter-container');
-            container.innerHTML = '';
+            document.getElementById('tab-first').className = inactiveStyle;
+            document.getElementById('tab-second').className = inactiveStyle;
+            document.getElementById('tab-exchange').className = inactiveStyle;
+            document.getElementById('tab-weekly').className = inactiveStyle;
+            document.getElementById('tab-monthly').className = inactiveStyle;
 
-            if (currentTestType === 'monthly') {
-                const months = [
-                    { id: 'comparison', label: 'Jan-Dec Comparison' },
-                    { id: 'jan', label: 'Jan' }, { id: 'feb', label: 'Feb' }, { id: 'mar', label: 'Mar' },
-                    { id: 'apr', label: 'Apr' }, { id: 'may', label: 'May' }, { id: 'jun', label: 'Jun' },
-                    { id: 'jul', label: 'Jul' }, { id: 'aug', label: 'Aug' }, { id: 'sep', label: 'Sep' },
-                    { id: 'oct', label: 'Oct' }, { id: 'nov', label: 'Nov' }, { id: 'dec', label: 'Dec' }
-                ];
-                months.forEach(m => {
-                    let isActive = currentMonth === m.id;
-                    container.innerHTML += `<button onclick="setMonthlyView('${m.id}')" class="px-2.5 py-1 ${isActive ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'} rounded-lg text-xs font-medium shadow-sm transition">${m.label}</button>`;
-                });
+            const weeklyContainer = document.getElementById('weekly-container');
+            const monthlyContainer = document.getElementById('monthly-container');
+
+            if(weeklyContainer) weeklyContainer.classList.add('hidden');
+            if(monthlyContainer) monthlyContainer.classList.add('hidden');
+
+            if (type === 'first') {
+                document.getElementById('tab-first').className = activeStyle;
+                document.getElementById('active-test-label').innerText = 'First Test';
+            } else if (type === 'second') {
+                document.getElementById('tab-second').className = activeStyle;
+                document.getElementById('active-test-label').innerText = 'Second Test';
+            } else if (type === 'exchange') {
+                document.getElementById('tab-exchange').className = activeStyle;
+                document.getElementById('active-test-label').innerText = 'Exchange Devices';
+            } else if (type === 'weekly') {
+                document.getElementById('tab-weekly').className = activeStyle;
+                document.getElementById('active-test-label').innerText = 'Weekly Analytics';
+                if(weeklyContainer) weeklyContainer.classList.remove('hidden');
+            } else if (type === 'monthly') {
+                document.getElementById('tab-monthly').className = activeStyle;
+                document.getElementById('active-test-label').innerText = 'Monthly Analytics';
+                if(monthlyContainer) monthlyContainer.classList.remove('hidden');
             }
-        }
-
-        function setMonthlyView(m) {
-            currentMonth = m;
-            renderSubFilters();
             updateDashboard();
         }
 
-        function filterByRegion(region) {
+        function switchWeek(week) {
+            currentWeek = week;
+            ['week1', 'week2', 'week3', 'week4', 'comparison'].forEach(w => {
+                const btn = document.getElementById(`subtab-${w}`);
+                if (btn) {
+                    if (w === week) {
+                        btn.className = 'px-4 py-2 text-sm font-semibold rounded-lg bg-indigo-600 text-white shadow';
+                    } else {
+                        btn.className = 'px-4 py-2 text-sm font-semibold rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition';
+                    }
+                }
+            });
+            updateDashboard();
+        }
+
+        function switchMonth(month) {
+            currentMonth = month;
+            const months = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec', 'comparison'];
+            months.forEach(m => {
+                const btn = document.getElementById(`subtab-${m}`);
+                if (btn) {
+                    if (m === month) {
+                        btn.className = 'px-3 py-1.5 text-sm font-semibold rounded-lg bg-indigo-600 text-white shadow';
+                    } else {
+                        btn.className = 'px-3 py-1.5 text-sm font-semibold rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition';
+                    }
+                }
+            });
+            updateDashboard();
+        }
+
+        function filterRegion(region) {
             currentRegion = region;
+            document.querySelectorAll('#region-filters button').forEach(btn => {
+                if(btn.getAttribute('data-region') === region) {
+                    btn.className = 'px-4 py-2 text-sm font-medium rounded-lg bg-indigo-600 text-white transition shadow';
+                } else {
+                    btn.className = 'px-4 py-2 text-sm font-medium rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition';
+                }
+            });
             updateDashboard();
         }
 
-        // Core Update Dashboard Function
+        function cleanKey(k) {
+            return k ? k.toString().trim().toLowerCase().replace(/[^a-z0-9]/g, '') : '';
+        }
+
+        function getVal(row, key) {
+            let target = cleanKey(key);
+            for (let k in row) {
+                if (cleanKey(k) === target) {
+                    return row[k] ? row[k].toString().trim() : '';
+                }
+            }
+            return '';
+        }
+
+        function getStatus(row, key) {
+            let val = getVal(row, key);
+            return val.toLowerCase();
+        }
+
+        function getDateObj(row) {
+            let val = getVal(row, 'Latest Time') || getVal(row, 'Date');
+            if (val) {
+                let d = new Date(val);
+                if (!isNaN(d.getTime())) return d;
+            }
+            return null;
+        }
+
+        function getCurrentActiveDataset() {
+            if (currentTestType === 'first') return allData.firstTest;
+            if (currentTestType === 'exchange') return allData.exchangeTest;
+            if (currentTestType === 'second') return allData.secondTest;
+            
+            // Weekly သို့မဟုတ် Monthly ဖြစ်နေလျှင် Summary ဒေတာကို သုံးမည်
+            if (currentTestType === 'weekly' || currentTestType === 'monthly') {
+                return allData.summary;
+            }
+            
+            return allData.secondTest;
+        }
+
         function updateDashboard() {
             let rawDataSet = getCurrentActiveDataset();
 
@@ -238,12 +350,21 @@
 
             let filteredData = rawDataSet;
 
-            if (currentTestType === 'monthly') {
+            if (currentTestType === 'weekly') {
+                if (currentWeek !== 'comparison') {
+                    filteredData = rawDataSet.filter(row => {
+                        let weekVal = getVal(row, 'Week') || getVal(row, 'Week Name');
+                        return weekVal.toLowerCase().replace(/\s+/g, '') === currentWeek.toLowerCase();
+                    });
+                }
+            } else if (currentTestType === 'monthly') {
                 if (currentMonth !== 'comparison') {
                     filteredData = rawDataSet.filter(row => {
                         let d = getDateObj(row);
                         if (d) {
-                            return monthNames_getCode(d) === currentMonth;
+                            const monthNames = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+                            let rowMonthCode = monthNames[d.getMonth()];
+                            return rowMonthCode === currentMonth;
                         }
                         return false;
                     });
@@ -266,86 +387,42 @@
             document.getElementById('kpi-pass-rate').innerText = passRate;
             document.getElementById('kpi-fail-rate').innerText = failRate;
 
-            let testTitlePrefix = currentTestType === 'first' ? 'First Test' : 
-                                  (currentTestType === 'exchange' ? 'Exchange Devices' : 
-                                  (currentTestType === 'weekly' ? `Weekly` : 
-                                  (currentTestType === 'monthly' ? (currentMonth === 'comparison' ? 'Monthly Comparison (Jan - Dec)' : `Monthly (${currentMonth.toUpperCase()})`) : 'Second Test')));
+            let testTitlePrefix = currentTestType === 'first' ? 'First Test' : (currentTestType === 'exchange' ? 'Exchange Devices' : (currentTestType === 'weekly' ? `Weekly (${currentWeek.toUpperCase()})` : (currentTestType === 'monthly' ? `Monthly (${currentMonth.toUpperCase()})` : 'Second Test')));
             
             document.getElementById('olt-chart-title').innerText = currentRegion === 'All' ?  
-                `${testTitlePrefix} - Pass vs Fail Comparison` : `${testTitlePrefix} (${currentRegion})`;
+                `${testTitlePrefix} - Pass vs Fail & Total Comparison (All Regions)` : `${testTitlePrefix} - Pass vs Fail & Total Comparison (${currentRegion})`;
 
             renderCharts(rawDataSet, filteredData);
             renderTables(filteredData);
         }
 
-        // Render Charts Function
         function renderCharts(rawDataSet, filteredData) {
-            if (currentTestType === 'monthly' && currentMonth === 'comparison') {
-                let monthsLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-                let monthCodes = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
-                let mTotals = [], mPassed = [], mFailed = [];
+            let regionsList = ['OVF-Provision-HGAO', 'OVF-Provision-ENUO', 'OVF-Provision-MDY'];
+            let oltTotals = [], oltPassed = [], oltFailed = [];
 
-                monthCodes.forEach(mCode => {
-                    let mData = rawDataSet.filter(row => {
-                        let d = getDateObj(row);
-                        if (d) {
-                            return monthNames_getCode(d) === mCode;
-                        }
-                        return false;
-                    });
-                    if (currentRegion !== 'All') {
-                        mData = mData.filter(row => getVal(row, 'Olt Hostname') === currentRegion);
-                    }
-                    let tot = mData.length;
-                    let pas = mData.filter(row => getStatus(row, 'Overall Pass/Fail') === 'pass').length;
-                    mTotals.push(tot);
-                    mPassed.push(pas);
-                    mFailed.push(tot - pas);
-                });
+            regionsList.forEach(reg => {
+                let rData = rawDataSet.filter(row => getVal(row, 'Olt Hostname') === reg);
+                let tot = rData.length;
+                let pas = rData.filter(row => getStatus(row, 'Overall Pass/Fail') === 'pass').length;
+                oltTotals.push(tot);
+                oltPassed.push(pas);
+                oltFailed.push(tot - pas);
+            });
 
-                if(oltChartInstance) oltChartInstance.destroy();
-                oltChartInstance = new Chart(document.getElementById('oltChart'), {
-                    type: 'bar',
-                    data: {
-                        labels: monthsLabels,
-                        datasets: [
-                            { label: 'Total Tested', data: mTotals, backgroundColor: '#3B82F6', borderRadius: 4 },
-                            { label: 'Passed', data: mPassed, backgroundColor: '#10B981', borderRadius: 4 },
-                            { label: 'Failed', data: mFailed, backgroundColor: '#EF4444', borderRadius: 4 }
-                        ]
-                    },
-                    options: { responsive: true, maintainAspectRatio: false, scales: { x: { grid: { display: false } }, y: { beginAtZero: true } } }
-                });
+            if(oltChartInstance) oltChartInstance.destroy();
+            oltChartInstance = new Chart(document.getElementById('oltChart'), {
+                type: 'bar',
+                data: {
+                    labels: regionsList,
+                    datasets: [
+                        { label: 'Total Tested', data: oltTotals, backgroundColor: '#3B82F6', borderRadius: 4 },
+                        { label: 'Passed', data: oltPassed, backgroundColor: '#10B981', borderRadius: 4 },
+                        { label: 'Failed', data: oltFailed, backgroundColor: '#EF4444', borderRadius: 4 }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false, scales: { x: { grid: { display: false } }, y: { beginAtZero: true } } }
+            });
 
-            } else {
-                let regionsList = ['OVF-Provision-HGAO', 'OVF-Provision-ENUO', 'OVF-Provision-MDY'];
-                let oltTotals = [], oltPassed = [], oltFailed = [];
-
-                regionsList.forEach(reg => {
-                    let rData = filteredData.filter(row => getVal(row, 'Olt Hostname') === reg);
-                    let tot = rData.length;
-                    let pas = rData.filter(row => getStatus(row, 'Overall Pass/Fail') === 'pass').length;
-                    oltTotals.push(tot);
-                    oltPassed.push(pas);
-                    oltFailed.push(tot - pas);
-                });
-
-                if(oltChartInstance) oltChartInstance.destroy();
-                oltChartInstance = new Chart(document.getElementById('oltChart'), {
-                    type: 'bar',
-                    data: {
-                        labels: ['HGAO', 'ENUO', 'MDY'],
-                        datasets: [
-                            { label: 'Total Tested', data: oltTotals, backgroundColor: '#3B82F6', borderRadius: 4 },
-                            { label: 'Passed', data: oltPassed, backgroundColor: '#10B981', borderRadius: 4 },
-                            { label: 'Failed', data: oltFailed, backgroundColor: '#EF4444', borderRadius: 4 }
-                        ]
-                    },
-                    options: { responsive: true, maintainAspectRatio: false, scales: { x: { grid: { display: false } }, y: { beginAtZero: true } } }
-                });
-            }
-
-            // Failure Doughnut Chart
             let rxFail = filteredData.filter(row => getStatus(row, 'Rx Pass/Fail') === 'fail').length;
             let biasFail = filteredData.filter(row => getStatus(row, 'Bias Pass/Fail') === 'fail').length;
             let tempFail = filteredData.filter(row => getStatus(row, 'Temp Pass/Fail') === 'fail').length;
@@ -366,176 +443,79 @@
             });
         }
 
-        // Render Tables Function
         function renderTables(data) {
+            let rxFail = data.filter(row => getStatus(row, 'Rx Pass/Fail') === 'fail').length;
+            let biasFail = data.filter(row => getStatus(row, 'Bias Pass/Fail') === 'fail').length;
+            let tempFail = data.filter(row => getStatus(row, 'Temp Pass/Fail') === 'fail').length;
+            let txFail = data.filter(row => getStatus(row, 'Tx Pass/Fail') === 'fail').length;
+            let voltFail = data.filter(row => getStatus(row, 'Voltage Pass/Fail') === 'fail').length;
+            
+            let totalParamFail = rxFail + biasFail + tempFail + txFail + voltFail;
+
+            let params = [
+                { name: 'Rx Power', count: rxFail, share: totalParamFail ? ((rxFail/totalParamFail)*100).toFixed(2) + '%' : '0%' },
+                { name: 'Bias Current', count: biasFail, share: totalParamFail ? ((biasFail/totalParamFail)*100).toFixed(2) + '%' : '0%' },
+                { name: 'Temperature', count: tempFail, share: totalParamFail ? ((tempFail/totalParamFail)*100).toFixed(2) + '%' : '0%' },
+                { name: 'Tx Power', count: txFail, share: totalParamFail ? ((txFail/totalParamFail)*100).toFixed(2) + '%' : '0%' },
+                { name: 'Voltage', count: voltFail, share: totalParamFail ? ((voltFail/totalParamFail)*100).toFixed(2) + '%' : '0%' }
+            ];
+
             const paramTable = document.getElementById('parameter-table-body');
+            paramTable.innerHTML = '';
+            params.forEach(p => {
+                paramTable.innerHTML += `
+                    <tr>
+                        <td class="px-6 py-3 font-medium text-gray-900">${p.name}</td>
+                        <td class="px-6 py-3 text-right text-rose-600 font-semibold">${p.count}</td>
+                        <td class="px-6 py-3 text-right text-gray-600">${p.share}</td>
+                    </tr>`;
+            });
+            paramTable.innerHTML += `
+                <tr class="bg-gray-50 font-bold">
+                    <td class="px-6 py-3 text-gray-900">Total</td>
+                    <td class="px-6 py-3 text-right text-rose-600">${totalParamFail}</td>
+                    <td class="px-6 py-3 text-right text-gray-900">100.00%</td>
+                </tr>`;
+
+            let deviceNames = ['FFO', 'FFG', 'SCP', 'FFA', 'BFFA'];
             const deviceTable = document.getElementById('device-table-body');
+            deviceTable.innerHTML = '';
 
-            if (currentTestType === 'monthly' && currentMonth === 'comparison') {
-                paramTable.innerHTML = '';
-                deviceTable.innerHTML = '';
+            let sumTot = 0, sumPas = 0, sumFai = 0;
 
-                let monthCodes = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
-                let monthLabels = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-                
-                let grandTotal = 0, grandPassed = 0, grandFailed = 0;
+            deviceNames.forEach(dev => {
+                let dRows = data.filter(row => getVal(row, 'Devices Name').toUpperCase() === dev);
+                let dTot = dRows.length;
+                let dPas = dRows.filter(row => getStatus(row, 'Overall Pass/Fail') === 'pass').length;
+                let dFai = dTot - dPas;
+                let dRate = dTot > 0 ? ((dFai / dTot) * 100).toFixed(2) + '%' : '0.00%';
 
-                monthCodes.forEach((mCode, idx) => {
-                    let mRows = allData.monthly.filter(row => {
-                        let d = getDateObj(row);
-                        return d && monthNames_getCode(d) === mCode;
-                    });
-                    if (currentRegion !== 'All') {
-                        mRows = mRows.filter(row => getVal(row, 'Olt Hostname') === currentRegion);
-                    }
+                sumTot += dTot;
+                sumPas += dPas;
+                sumFai += dFai;
 
-                    let mTot = mRows.length;
-                    let mPas = mRows.filter(row => getStatus(row, 'Overall Pass/Fail') === 'pass').length;
-                    let mFai = mTot - mPas;
-                    let mRate = mTot > 0 ? ((mFai / mTot) * 100).toFixed(2) + '%' : '0.00%';
-
-                    grandTotal += mTot;
-                    grandPassed += mPas;
-                    grandFailed += mFai;
-
-                    deviceTable.innerHTML += `
-                        <tr class="hover:bg-gray-50/50">
-                            <td class="px-4 py-3 font-medium text-gray-900">${monthLabels[idx]}</td>
-                            <td class="px-4 py-3 text-right text-gray-700">${mTot.toLocaleString()}</td>
-                            <td class="px-4 py-3 text-right text-emerald-600 font-medium">${mPas.toLocaleString()}</td>
-                            <td class="px-4 py-3 text-right text-rose-600 font-medium">${mFai.toLocaleString()}</td>
-                            <td class="px-4 py-3 text-right text-gray-600 font-semibold">${mRate}</td>
-                        </tr>`;
-                });
-
-                let overallRate = grandTotal > 0 ? ((grandFailed / grandTotal) * 100).toFixed(2) + '%' : '0.00%';
                 deviceTable.innerHTML += `
-                    <tr class="bg-gray-50/80 font-bold border-t border-gray-200">
-                        <td class="px-4 py-3 text-gray-900">Total (Yearly)</td>
-                        <td class="px-4 py-3 text-right text-gray-900">${grandTotal.toLocaleString()}</td>
-                        <td class="px-4 py-3 text-right text-emerald-600">${grandPassed.toLocaleString()}</td>
-                        <td class="px-4 py-3 text-right text-rose-600">${grandFailed.toLocaleString()}</td>
-                        <td class="px-4 py-3 text-right text-gray-900">${overallRate}</td>
+                    <tr>
+                        <td class="px-6 py-3 font-medium text-gray-900">${dev}</td>
+                        <td class="px-6 py-3 text-right text-gray-700">${dTot.toLocaleString()}</td>
+                        <td class="px-6 py-3 text-right text-emerald-600 font-medium">${dPas.toLocaleString()}</td>
+                        <td class="px-6 py-3 text-right text-rose-600 font-medium">${dFai}</td>
+                        <td class="px-6 py-3 text-right text-gray-600 font-semibold">${dRate}</td>
                     </tr>`;
+            });
 
-                let rxFail = allData.monthly.filter(row => getStatus(row, 'Rx Pass/Fail') === 'fail').length;
-                let biasFail = allData.monthly.filter(row => getStatus(row, 'Bias Pass/Fail') === 'fail').length;
-                let tempFail = allData.monthly.filter(row => getStatus(row, 'Temp Pass/Fail') === 'fail').length;
-                let txFail = allData.monthly.filter(row => getStatus(row, 'Tx Pass/Fail') === 'fail').length;
-                let voltFail = allData.monthly.filter(row => getStatus(row, 'Voltage Pass/Fail') === 'fail').length;
-                
-                let totalParamFail = rxFail + biasFail + tempFail + txFail + voltFail;
-                let params = [
-                    { name: 'Rx Power', count: rxFail, share: totalParamFail ? ((rxFail/totalParamFail)*100).toFixed(2) + '%' : '0%' },
-                    { name: 'Bias Current', count: biasFail, share: totalParamFail ? ((biasFail/totalParamFail)*100).toFixed(2) + '%' : '0%' },
-                    { name: 'Temperature', count: tempFail, share: totalParamFail ? ((tempFail/totalParamFail)*100).toFixed(2) + '%' : '0%' },
-                    { name: 'Tx Power', count: txFail, share: totalParamFail ? ((txFail/totalParamFail)*100).toFixed(2) + '%' : '0%' },
-                    { name: 'Voltage', count: voltFail, share: totalParamFail ? ((voltFail/totalParamFail)*100).toFixed(2) + '%' : '0%' }
-                ];
-
-                params.forEach(p => {
-                    paramTable.innerHTML += `
-                        <tr class="hover:bg-gray-50/50">
-                            <td class="px-4 py-3 font-medium text-gray-900">${p.name}</td>
-                            <td class="px-4 py-3 text-right text-rose-600 font-semibold">${p.count}</td>
-                            <td class="px-4 py-3 text-right text-gray-600">${p.share}</td>
-                        </tr>`;
-                });
-                paramTable.innerHTML += `
-                    <tr class="bg-gray-50/80 font-bold border-t border-gray-200">
-                        <td class="px-4 py-3 text-gray-900">Total</td>
-                        <td class="px-4 py-3 text-right text-rose-600">${totalParamFail}</td>
-                        <td class="px-4 py-3 text-right text-gray-900">100.00%</td>
-                    </tr>`;
-
-            } else {
-                let rxFail = data.filter(row => getStatus(row, 'Rx Pass/Fail') === 'fail').length;
-                let biasFail = data.filter(row => getStatus(row, 'Bias Pass/Fail') === 'fail').length;
-                let tempFail = data.filter(row => getStatus(row, 'Temp Pass/Fail') === 'fail').length;
-                let txFail = data.filter(row => getStatus(row, 'Tx Pass/Fail') === 'fail').length;
-                let voltFail = data.filter(row => getStatus(row, 'Voltage Pass/Fail') === 'fail').length;
-                
-                let totalParamFail = rxFail + biasFail + tempFail + txFail + voltFail;
-
-                let params = [
-                    { name: 'Rx Power', count: rxFail, share: totalParamFail ? ((rxFail/totalParamFail)*100).toFixed(2) + '%' : '0%' },
-                    { name: 'Bias Current', count: biasFail, share: totalParamFail ? ((biasFail/totalParamFail)*100).toFixed(2) + '%' : '0%' },
-                    { name: 'Temperature', count: tempFail, share: totalParamFail ? ((tempFail/totalParamFail)*100).toFixed(2) + '%' : '0%' },
-                    { name: 'Tx Power', count: txFail, share: totalParamFail ? ((txFail/totalParamFail)*100).toFixed(2) + '%' : '0%' },
-                    { name: 'Voltage', count: voltFail, share: totalParamFail ? ((voltFail/totalParamFail)*100).toFixed(2) + '%' : '0%' }
-                ];
-
-                paramTable.innerHTML = '';
-                params.forEach(p => {
-                    paramTable.innerHTML += `
-                        <tr class="hover:bg-gray-50/50">
-                            <td class="px-4 py-3 font-medium text-gray-900">${p.name}</td>
-                            <td class="px-4 py-3 text-right text-rose-600 font-semibold">${p.count}</td>
-                            <td class="px-4 py-3 text-right text-gray-600">${p.share}</td>
-                        </tr>`;
-                });
-                paramTable.innerHTML += `
-                    <tr class="bg-gray-50/80 font-bold border-t border-gray-200">
-                        <td class="px-4 py-3 text-gray-900">Total</td>
-                        <td class="px-4 py-3 text-right text-rose-600">${totalParamFail}</td>
-                        <td class="px-4 py-3 text-right text-gray-900">100.00%</td>
-                    </tr>`;
-
-                let deviceNames = ['FFO', 'FFG', 'SCP', 'FFA', 'BFFA'];
-                deviceTable.innerHTML = '';
-
-                let sumTot = 0, sumPas = 0, sumFai = 0;
-                deviceNames.forEach(dev => {
-                    let dRows = data.filter(row => getVal(row, 'Devices Name').toUpperCase() === dev);
-                    let dTot = dRows.length;
-                    let dPas = dRows.filter(row => getStatus(row, 'Overall Pass/Fail') === 'pass').length;
-                    let dFai = dTot - dPas;
-                    let dRate = dTot > 0 ? ((dFai / dTot) * 100).toFixed(2) + '%' : '0.00%';
-
-                    sumTot += dTot;
-                    sumPas += dPas;
-                    sumFai += dFai;
-
-                    deviceTable.innerHTML += `
-                        <tr class="hover:bg-gray-50/50">
-                            <td class="px-4 py-3 font-medium text-gray-900">${dev}</td>
-                            <td class="px-4 py-3 text-right text-gray-700">${dTot.toLocaleString()}</td>
-                            <td class="px-4 py-3 text-right text-emerald-600 font-medium">${dPas.toLocaleString()}</td>
-                            <td class="px-4 py-3 text-right text-rose-600 font-medium">${dFai}</td>
-                            <td class="px-4 py-3 text-right text-gray-600 font-semibold">${dRate}</td>
-                        </tr>`;
-                });
-
-                let overallFailRate = sumTot > 0 ? ((sumFai / sumTot) * 100).toFixed(2) + '%' : '0.00%';
-                deviceTable.innerHTML += `
-                    <tr class="bg-gray-50/80 font-bold border-t border-gray-200">
-                        <td class="px-4 py-3 text-gray-900">Total</td>
-                        <td class="px-4 py-3 text-right text-gray-900">${sumTot.toLocaleString()}</td>
-                        <td class="px-4 py-3 text-right text-emerald-600">${sumPas.toLocaleString()}</td>
-                        <td class="px-4 py-3 text-right text-rose-600">${sumFai}</td>
-                        <td class="px-4 py-3 text-right text-gray-900">${overallFailRate}</td>
-                    </tr>`;
-            }
+            let overallFailRate = sumTot > 0 ? ((sumFai / sumTot) * 100).toFixed(2) + '%' : '0.00%';
+            deviceTable.innerHTML += `
+                <tr class="bg-gray-50 font-bold">
+                    <td class="px-6 py-3 text-gray-900">Total</td>
+                    <td class="px-6 py-3 text-right text-gray-900">${sumTot.toLocaleString()}</td>
+                    <td class="px-6 py-3 text-right text-emerald-600">${sumPas.toLocaleString()}</td>
+                    <td class="px-6 py-3 text-right text-rose-600">${sumFai}</td>
+                    <td class="px-6 py-3 text-right text-gray-900">${overallFailRate}</td>
+                </tr>`;
         }
 
-        // Initialize Sample Data on Page Load
-        window.onload = function() {
-            allData.first = [
-                { 'Date': '2026-01-15', 'Olt Hostname': 'OVF-Provision-HGAO', 'Devices Name': 'FFO', 'Overall Pass/Fail': 'pass', 'Rx Pass/Fail': 'pass', 'Bias Pass/Fail': 'pass', 'Temp Pass/Fail': 'pass', 'Tx Pass/Fail': 'pass', 'Voltage Pass/Fail': 'pass' },
-                { 'Date': '2026-02-20', 'Olt Hostname': 'OVF-Provision-ENUO', 'Devices Name': 'FFG', 'Overall Pass/Fail': 'fail', 'Rx Pass/Fail': 'fail', 'Bias Pass/Fail': 'pass', 'Temp Pass/Fail': 'pass', 'Tx Pass/Fail': 'pass', 'Voltage Pass/Fail': 'pass' },
-                { 'Date': '2026-03-10', 'Olt Hostname': 'OVF-Provision-MDY', 'Devices Name': 'SCP', 'Overall Pass/Fail': 'pass', 'Rx Pass/Fail': 'pass', 'Bias Pass/Fail': 'pass', 'Temp Pass/Fail': 'pass', 'Tx Pass/Fail': 'pass', 'Voltage Pass/Fail': 'pass' }
-            ];
-            allData.monthly = [
-                { 'Date': '2026-01-10', 'Olt Hostname': 'OVF-Provision-HGAO', 'Overall Pass/Fail': 'pass', 'Rx Pass/Fail': 'pass', 'Bias Pass/Fail': 'pass', 'Temp Pass/Fail': 'pass', 'Tx Pass/Fail': 'pass', 'Voltage Pass/Fail': 'pass' },
-                { 'Date': '2026-02-15', 'Olt Hostname': 'OVF-Provision-ENUO', 'Overall Pass/Fail': 'fail', 'Rx Pass/Fail': 'fail', 'Bias Pass/Fail': 'pass', 'Temp Pass/Fail': 'pass', 'Tx Pass/Fail': 'pass', 'Voltage Pass/Fail': 'pass' },
-                { 'Date': '2026-03-20', 'Olt Hostname': 'OVF-Provision-MDY', 'Overall Pass/Fail': 'pass', 'Rx Pass/Fail': 'pass', 'Bias Pass/Fail': 'pass', 'Temp Pass/Fail': 'pass', 'Tx Pass/Fail': 'pass', 'Voltage Pass/Fail': 'pass' }
-            ];
-            allData.second = [...allData.first];
-            allData.exchange = [...allData.first];
-            allData.weekly = [...allData.first];
-
-            switchTestType('first');
-        };
+        fetchSheetData();
     </script>
 </body>
 </html>
