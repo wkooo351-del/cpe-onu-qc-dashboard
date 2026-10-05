@@ -187,11 +187,11 @@
                 .then(response => response.json())
                 .then(data => {
                    allData = {
-    firstTest: data.firstTest || [],
-    secondTest: data.secondTest || [],
-    exchangeTest: data.exchangeTest || [],
-    summary: data.summary || []
-};
+                        firstTest: data.firstTest || [],
+                        secondTest: data.secondTest || [],
+                        exchangeTest: data.exchangeTest || [],
+                        summary: data.summary || []
+                   };
                     document.getElementById('last-updated').innerText = 'Last Synced: ' + new Date().toLocaleTimeString();
                     updateDashboard();
                 })
@@ -321,18 +321,34 @@
         }
 
         function getCurrentActiveDataset() {
-    if (currentTestType === 'first') return allData.firstTest;
-    if (currentTestType === 'exchange') return allData.exchangeTest;
-    if (currentTestType === 'second') return allData.secondTest;
-    
-    // Weekly သို့မဟုတ် Monthly ဖြစ်နေလျှင် Summary ဒေတာကို သုံးမည်
-    if (currentTestType === 'weekly' || currentTestType === 'monthly') {
-        return allData.summary;
-    }
-    
-    return allData.secondTest;
-}
-let filteredData = rawDataSet;
+            if (currentTestType === 'first') return allData.firstTest;
+            if (currentTestType === 'exchange') return allData.exchangeTest;
+            if (currentTestType === 'second') return allData.secondTest;
+            
+            // Weekly သို့မဟုတ် Monthly ဖြစ်နေလျှင် Summary ဒေတာကို သုံးမည်
+            if (currentTestType === 'weekly' || currentTestType === 'monthly') {
+                return allData.summary;
+            }
+            
+            return allData.secondTest;
+        }
+
+        function updateDashboard() {
+            let rawDataSet = getCurrentActiveDataset();
+
+            if (!rawDataSet || rawDataSet.length === 0) {
+                document.getElementById('kpi-total').innerText = '0';
+                document.getElementById('kpi-passed').innerText = '0';
+                document.getElementById('kpi-failed').innerText = '0';
+                document.getElementById('kpi-pass-rate').innerText = '0.00%';
+                document.getElementById('kpi-fail-rate').innerText = '0.00%';
+                
+                renderCharts([], []);
+                renderTables([]);
+                return;
+            }
+
+            let filteredData = rawDataSet;
 
             if (currentTestType === 'weekly') {
                 if (currentWeek !== 'comparison') {
@@ -354,23 +370,9 @@ let filteredData = rawDataSet;
                     });
                 }
             }
-       
 
-            if (!rawDataSet || rawDataSet.length === 0) {
-                document.getElementById('kpi-total').innerText = '0';
-                document.getElementById('kpi-passed').innerText = '0';
-                document.getElementById('kpi-failed').innerText = '0';
-                document.getElementById('kpi-pass-rate').innerText = '0.00%';
-                document.getElementById('kpi-fail-rate').innerText = '0.00%';
-                
-                renderCharts([], []);
-                renderTables([]);
-                return;
-            }
-
-            let filteredData = rawDataSet;
             if (currentRegion !== 'All') {
-                filteredData = rawDataSet.filter(row => getVal(row, 'Olt Hostname') === currentRegion);
+                filteredData = filteredData.filter(row => getVal(row, 'Olt Hostname') === currentRegion);
             }
 
             let totalTested = filteredData.length;
