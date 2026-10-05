@@ -333,7 +333,7 @@
             return allData.secondTest;
         }
 
-        function updateDashboard() {
+function updateDashboard() {
             let rawDataSet = getCurrentActiveDataset();
 
             if (!rawDataSet || rawDataSet.length === 0) {
@@ -350,21 +350,12 @@
 
             let filteredData = rawDataSet;
 
-            if (currentTestType === 'weekly') {
-                if (currentWeek !== 'comparison') {
-                    filteredData = rawDataSet.filter(row => {
-                        let weekVal = getVal(row, 'Week') || getVal(row, 'Week Name');
-                        return weekVal.toLowerCase().replace(/\s+/g, '') === currentWeek.toLowerCase();
-                    });
-                }
-            } else if (currentTestType === 'monthly') {
+            if (currentTestType === 'monthly') {
                 if (currentMonth !== 'comparison') {
                     filteredData = rawDataSet.filter(row => {
                         let d = getDateObj(row);
                         if (d) {
-                            const monthNames = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
-                            let rowMonthCode = monthNames[d.getMonth()];
-                            return rowMonthCode === currentMonth;
+                            return monthNames_getCode(d) === currentMonth;
                         }
                         return false;
                     });
@@ -387,10 +378,13 @@
             document.getElementById('kpi-pass-rate').innerText = passRate;
             document.getElementById('kpi-fail-rate').innerText = failRate;
 
-            let testTitlePrefix = currentTestType === 'first' ? 'First Test' : (currentTestType === 'exchange' ? 'Exchange Devices' : (currentTestType === 'weekly' ? `Weekly (${currentWeek.toUpperCase()})` : (currentTestType === 'monthly' ? `Monthly (${currentMonth.toUpperCase()})` : 'Second Test')));
+            let testTitlePrefix = currentTestType === 'first' ? 'First Test' : 
+                                  (currentTestType === 'exchange' ? 'Exchange Devices' : 
+                                  (currentTestType === 'weekly' ? `Weekly` : 
+                                  (currentTestType === 'monthly' ? (currentMonth === 'comparison' ? 'Monthly Comparison (Jan - Dec)' : `Monthly (${currentMonth.toUpperCase()})`) : 'Second Test')));
             
             document.getElementById('olt-chart-title').innerText = currentRegion === 'All' ?  
-                `${testTitlePrefix} - Pass vs Fail & Total Comparison (All Regions)` : `${testTitlePrefix} - Pass vs Fail & Total Comparison (${currentRegion})`;
+                `${testTitlePrefix} - Pass vs Fail & Total Comparison` : `${testTitlePrefix} - Pass vs Fail & Total Comparison (${currentRegion})`;
 
             renderCharts(rawDataSet, filteredData);
             renderTables(filteredData);
