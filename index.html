@@ -14,7 +14,31 @@
     </style>
 </head>
 <body class="text-gray-800">
+<!-- HTML Body / UI Section ထဲမှာ ထည့်ရမည့် နေရာ -->
+<div class="container mx-auto p-4">
+    
+    <!-- ဒီနေရာမှာ လအလိုက် Comparison Chart အတွက် HTML ကို ထည့်ပါ -->
+    <div class="bg-white p-6 rounded-xl shadow-md mb-6">
+        <h3 class="text-lg font-bold text-gray-800 mb-4">Monthly Comparison (Jan - Dec) - Pass vs Fail</h3>
+        <div style="height: 300px;"><canvas id="monthlyComparisonChart"></canvas></div>
+    </div>
 
+    <!-- ပြီးတော့မှ မူလ OLT Region Chart အတွက် HTML ကို ဆက်ထည့်ပါ -->
+    <div class="bg-white p-6 rounded-xl shadow-md">
+        <h3 id="olt-chart-title" class="text-lg font-bold text-gray-800 mb-4">OLT Region Performance</h3>
+        <div style="height: 300px;"><canvas id="oltChart"></canvas></div>
+    </div>
+
+</div>
+
+<!-- JavaScript Script Tag ကတော့ ဒီအောက်မှာမှ စရပါမယ် -->
+<script>
+    // ဒီထဲမှာတော့ JavaScript ကုဒ်တွေ (function တွေ၊ chart render တာတွေ) သီးသန့်ပဲ ရှိရပါမယ်
+    let monthlyComparisonChartInstance = null;
+    function renderCharts(...) {
+        ...
+    }
+</script>
     <!-- Header with Test Switcher Tabs -->
     <header class="bg-indigo-600 shadow-md">
         <div class="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-center gap-4">
@@ -485,17 +509,7 @@ function renderCharts(rawDataSet, filteredData) {
         options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
     });
 }
-<!-- ၁။ လအလိုက် (Yearly Monthly Comparison) Chart အတွက် -->
-<div class="bg-white p-6 rounded-xl shadow-md mb-6">
-    <h3 class="text-lg font-bold text-gray-800 mb-4">Monthly Comparison (Jan - Dec) - Pass vs Fail</h3>
-    <div style="height: 300px;"><canvas id="monthlyComparisonChart"></canvas></div>
-</div>
 
-<!-- ၂။ မူလ OLT Region အလိုက် Chart အတွက် -->
-<div class="bg-white p-6 rounded-xl shadow-md">
-    <h3 id="olt-chart-title" class="text-lg font-bold text-gray-800 mb-4">OLT Region Performance</h3>
-    <div style="height: 300px;"><canvas id="oltChart"></canvas></div>
-</div>
             } else {
                 let regionsList = ['OVF-Provision-HGAO', 'OVF-Provision-ENUO', 'OVF-Provision-MDY'];
                 let oltTotals = [], oltPassed = [], oltFailed = [];
