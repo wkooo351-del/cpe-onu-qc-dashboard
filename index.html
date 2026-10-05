@@ -173,7 +173,7 @@
     <script>
         const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbwsI5qlj5n-jBgneiEC7dbiHY2ap6TnbR2fqrU93EV3JsyoUMjNB1fklF2P-fa0VxPeyw/exec';
 
-        let allData = { firstTest: [], secondTest: [], exchangeTest: [] };
+        let allData = { firstTest: [], secondTest: [], exchangeTest: [], summary: [] };
         let currentTestType = 'exchange'; 
         let currentRegion = 'All';
         let currentWeek = 'week1';
@@ -186,11 +186,12 @@
             fetch(WEB_APP_URL)
                 .then(response => response.json())
                 .then(data => {
-                    allData = {
-                        firstTest: data.firstTest || [],
-                        secondTest: data.secondTest || [],
-                        exchangeTest: data.exchangeTest || []
-                    };
+                   allData = {
+    firstTest: data.firstTest || [],
+    secondTest: data.secondTest || [],
+    exchangeTest: data.exchangeTest || [],
+    summary: data.summary || []
+};
                     document.getElementById('last-updated').innerText = 'Last Synced: ' + new Date().toLocaleTimeString();
                     updateDashboard();
                 })
@@ -320,24 +321,40 @@
         }
 
         function getCurrentActiveDataset() {
-            if (currentTestType === 'first') return allData.firstTest;
-            if (currentTestType === 'exchange') return allData.exchangeTest;
-            if (currentTestType === 'second') return allData.secondTest;
-            
-            // Weekly သို့မဟုတ် Monthly tab ရွေးထားလျှင် ဒေတာများကို သီးသန့်စစ်ထုတ်ရန် သို့မဟုတ် Second Test ဒေတာကို အသုံးပြုရန်
-            // လိုအပ်သလို အောက်တွင် ထပ်မံပြင်ဆင်နိုင်ပါသည် (ဥပမာ: allData.secondTest ကို အခြေခံ၍ ရက်အလိုက်ခွဲမည်)
-            return allData.secondTest; 
-        }
+    if (currentTestType === 'first') return allData.firstTest;
+    if (currentTestType === 'exchange') return allData.exchangeTest;
+    if (currentTestType === 'second') return allData.secondTest;
+    
+    // Weekly သို့မဟုတ် Monthly ဖြစ်နေလျှင် Summary ဒေတာကို သုံးမည်
+    if (currentTestType === 'weekly' || currentTestType === 'monthly') {
+        return allData.summary;
+    }
+    
+    return allData.secondTest;
+}
+let filteredData = rawDataSet;
 
-        function updateDashboard() {
-            let rawDataSet = getCurrentActiveDataset();
-            
-            // Weekly သို့မဟုတ် Monthly အတွက် သီးသန့် Sub-tab အလိုက် filter လုပ်လိုပါက ဤနေရာတွင် ထည့်နိုင်ပါသည်
             if (currentTestType === 'weekly') {
-                // ဥပမာ - currentWeek အပေါ်မူတည်၍ rawDataSet ကို ထပ်မံ စစ်ထုတ်နိုင်သည်
+                if (currentWeek !== 'comparison') {
+                    filteredData = rawDataSet.filter(row => {
+                        let weekVal = getVal(row, 'Week') || getVal(row, 'Week Name');
+                        return weekVal.toLowerCase().replace(/\s+/g, '') === currentWeek.toLowerCase();
+                    });
+                }
             } else if (currentTestType === 'monthly') {
-                // ဥပမာ - currentMonth အပေါ်မူတည်၍ rawDataSet ကို ထပ်မံ စစ်ထုတ်နိုင်သည်
+                if (currentMonth !== 'comparison') {
+                    filteredData = rawDataSet.filter(row => {
+                        let d = getDateObj(row);
+                        if (d) {
+                            const monthNames = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+                            let rowMonthCode = monthNames[d.getMonth()];
+                            return rowMonthCode === currentMonth;
+                        }
+                        return false;
+                    });
+                }
             }
+       
 
             if (!rawDataSet || rawDataSet.length === 0) {
                 document.getElementById('kpi-total').innerText = '0';
