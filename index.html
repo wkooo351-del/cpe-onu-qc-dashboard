@@ -22,12 +22,12 @@
             </div>
             
             <!-- Test Switcher Tabs -->
-            <div class="flex bg-indigo-700 p-1 rounded-xl shadow-inner">
-                <button id="tab-first" onclick="switchTestType('first')" class="px-4 py-1.5 rounded-lg text-sm font-semibold text-white bg-indigo-500 shadow transition">First Test</button>
-                <button id="tab-second" onclick="switchTestType('second')" class="px-4 py-1.5 rounded-lg text-sm font-semibold text-indigo-200 hover:text-white transition">Second Test</button>
-                <button id="tab-exchange" onclick="switchTestType('exchange')" class="px-4 py-1.5 rounded-lg text-sm font-semibold text-indigo-200 hover:text-white transition">Exchange Devices</button>
-                <button id="tab-weekly" onclick="switchTestType('weekly')" class="px-4 py-1.5 rounded-lg text-sm font-semibold text-indigo-200 hover:text-white transition">Weekly</button>
-                <button id="tab-monthly" onclick="switchTestType('monthly')" class="px-4 py-1.5 rounded-lg text-sm font-semibold text-indigo-200 hover:text-white transition">Monthly</button>
+            <div class="flex flex-wrap bg-indigo-700 p-1 rounded-xl shadow-inner gap-1">
+                <button id="tab-first" onclick="switchTestType('first')" class="px-3 py-1.5 rounded-lg text-sm font-semibold text-white bg-indigo-500 shadow transition">First Test</button>
+                <button id="tab-second" onclick="switchTestType('second')" class="px-3 py-1.5 rounded-lg text-sm font-semibold text-indigo-200 hover:text-white transition">Second Test</button>
+                <button id="tab-exchange" onclick="switchTestType('exchange')" class="px-3 py-1.5 rounded-lg text-sm font-semibold text-indigo-200 hover:text-white transition">Exchange</button>
+                <button id="tab-weekly" onclick="switchTestType('weekly')" class="px-3 py-1.5 rounded-lg text-sm font-semibold text-indigo-200 hover:text-white transition">Weekly</button>
+                <button id="tab-monthly" onclick="switchTestType('monthly')" class="px-3 py-1.5 rounded-lg text-sm font-semibold text-indigo-200 hover:text-white transition">Monthly</button>
             </div>
         </div>
     </header>
@@ -35,47 +35,116 @@
     <!-- Main Content Layout -->
     <main class="max-w-7xl mx-auto px-4 py-6">
 
-        <!-- Region Filter Buttons -->
-        <div class="flex flex-wrap gap-2 mb-6" id="region-filters">
-            <button onclick="filterByRegion('All')" class="px-4 py-2 bg-indigo-600 text-white rounded-lg shadow font-medium text-sm">All Regions</button>
-            <button onclick="filterByRegion('OVF-Provision-HGAO')" class="px-4 py-2 bg-white text-gray-700 hover:bg-gray-50 rounded-lg shadow font-medium text-sm">OVF-Provision-HGAO</button>
-            <button onclick="filterByRegion('OVF-Provision-ENUO')" class="px-4 py-2 bg-white text-gray-700 hover:bg-gray-50 rounded-lg shadow font-medium text-sm">OVF-Provision-ENUO</button>
-            <button onclick="filterByRegion('OVF-Provision-MDY')" class="px-4 py-2 bg-white text-gray-700 hover:bg-gray-50 rounded-lg shadow font-medium text-sm">OVF-Provision-MDY</button>
+        <!-- KPI Cards Summary -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+            <div class="bg-white p-4 rounded-xl shadow-md border-l-4 border-blue-500">
+                <p class="text-sm font-medium text-gray-500">Total Tested</p>
+                <p id="kpi-total" class="text-2xl font-bold text-gray-800">0</p>
+            </div>
+            <div class="bg-white p-4 rounded-xl shadow-md border-l-4 border-emerald-500">
+                <p class="text-sm font-medium text-gray-500">Passed</p>
+                <p id="kpi-passed" class="text-2xl font-bold text-emerald-600">0</p>
+            </div>
+            <div class="bg-white p-4 rounded-xl shadow-md border-l-4 border-rose-500">
+                <p class="text-sm font-medium text-gray-500">Failed</p>
+                <p id="kpi-failed" class="text-2xl font-bold text-rose-600">0</p>
+            </div>
+            <div class="bg-white p-4 rounded-xl shadow-md border-l-4 border-indigo-500">
+                <p class="text-sm font-medium text-gray-500">Pass Rate</p>
+                <p id="kpi-pass-rate" class="text-2xl font-bold text-indigo-600">0.00%</p>
+            </div>
+            <div class="bg-white p-4 rounded-xl shadow-md border-l-4 border-amber-500">
+                <p class="text-sm font-medium text-gray-500">Fail Rate</p>
+                <p id="kpi-fail-rate" class="text-2xl font-bold text-amber-600">0.00%</p>
+            </div>
         </div>
 
-        <!-- ၁။ လအလိုက် (Yearly Monthly Comparison) Chart -->
-        <div class="bg-white p-6 rounded-xl shadow-md mb-6">
-            <h3 class="text-lg font-bold text-gray-800 mb-4">Monthly Comparison (Jan - Dec) - Pass vs Fail</h3>
-            <div style="height: 300px;"><canvas id="monthlyComparisonChart"></canvas></div>
+        <!-- Region Filter & Sub-filters -->
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 bg-white p-4 rounded-xl shadow-md">
+            <!-- Region Buttons -->
+            <div class="flex flex-wrap gap-2" id="region-filters">
+                <button onclick="filterByRegion('All')" class="px-3 py-1.5 bg-indigo-600 text-white rounded-lg shadow font-medium text-sm">All Regions</button>
+                <button onclick="filterByRegion('OVF-Provision-HGAO')" class="px-3 py-1.5 bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-lg shadow font-medium text-sm">HGAO</button>
+                <button onclick="filterByRegion('OVF-Provision-ENUO')" class="px-3 py-1.5 bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-lg shadow font-medium text-sm">ENUO</button>
+                <button onclick="filterByRegion('OVF-Provision-MDY')" class="px-3 py-1.5 bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-lg shadow font-medium text-sm">MDY</button>
+            </div>
+            <!-- Sub-filters container for Monthly/Weekly options -->
+            <div id="sub-filter-container" class="flex flex-wrap gap-2"></div>
         </div>
 
-        <!-- ၂။ မူလ OLT Region အလိုက် Chart -->
-        <div class="bg-white p-6 rounded-xl shadow-md mb-6">
-            <h3 id="olt-chart-title" class="text-lg font-bold text-gray-800 mb-4">OLT Region Performance</h3>
-            <div style="height: 300px;"><canvas id="oltChart"></canvas></div>
+        <!-- Charts Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <!-- OLT / Monthly Comparison Chart -->
+            <div class="bg-white p-6 rounded-xl shadow-md">
+                <h3 id="olt-chart-title" class="text-lg font-bold text-gray-800 mb-4">Pass vs Fail & Total Comparison</h3>
+                <div style="height: 300px;"><canvas id="oltChart"></canvas></div>
+            </div>
+
+            <!-- Failure Reasons Doughnut Chart -->
+            <div class="bg-white p-6 rounded-xl shadow-md">
+                <h3 class="text-lg font-bold text-gray-800 mb-4">Failure Reasons Breakdown</h3>
+                <div style="height: 300px;"><canvas id="failureChart"></canvas></div>
+            </div>
         </div>
 
-        <!-- ၃။ Failure Reasons Doughnut Chart -->
-        <div class="bg-white p-6 rounded-xl shadow-md">
-            <h3 class="text-lg font-bold text-gray-800 mb-4">Failure Reasons Breakdown</h3>
-            <div style="height: 300px;"><canvas id="failureChart"></canvas></div>
+        <!-- Tables Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Parameter Failure Breakdown Table -->
+            <div class="bg-white p-6 rounded-xl shadow-md overflow-x-auto">
+                <h3 class="text-lg font-bold text-gray-800 mb-4">Parameter Failure Breakdown</h3>
+                <table class="w-full text-left text-sm text-gray-600">
+                    <thead class="bg-gray-50 text-gray-700 uppercase text-xs">
+                        <tr>
+                            <th class="px-6 py-3">Parameter</th>
+                            <th class="px-6 py-3 text-right">Failure Count</th>
+                            <th class="px-6 py-3 text-right">Share (%)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="parameter-table-body"></tbody>
+                </table>
+            </div>
+
+            <!-- Device / Monthly Summary Table -->
+            <div class="bg-white p-6 rounded-xl shadow-md overflow-x-auto">
+                <h3 class="text-lg font-bold text-gray-800 mb-4">Summary Breakdown</h3>
+                <table class="w-full text-left text-sm text-gray-600">
+                    <thead class="bg-gray-50 text-gray-700 uppercase text-xs">
+                        <tr>
+                            <th class="px-6 py-3">Category</th>
+                            <th class="px-6 py-3 text-right">Total</th>
+                            <th class="px-6 py-3 text-right">Passed</th>
+                            <th class="px-6 py-3 text-right">Failed</th>
+                            <th class="px-6 py-3 text-right">Fail Rate</th>
+                        </tr>
+                    </thead>
+                    <tbody id="device-table-body"></tbody>
+                </table>
+            </div>
         </div>
 
     </main>
 
     <!-- JavaScript Execution Block -->
     <script>
-        // Global Variables
-        let rawDataSet = [];
-        let filteredData = [];
+        // Global State Variables
+        let allData = {
+            first: [],
+            second: [],
+            exchange: [],
+            weekly: [],
+            monthly: [],
+            summary: []
+        };
+        
         let currentTestType = 'first';
         let currentRegion = 'All';
+        let currentWeek = 'comparison';
+        let currentMonth = 'comparison';
 
-        let monthlyComparisonChartInstance = null;
         let oltChartInstance = null;
         let failureChartInstance = null;
 
-        // Helper Functions for Data Parsing
+        // Helper Functions
         function getVal(row, key) {
             return row[key] !== undefined && row[key] !== null ? String(row[key]).trim() : '';
         }
@@ -89,129 +158,205 @@
             return dateStr ? new Date(dateStr) : null;
         }
 
-        function monthNames_getCode(dateObj) {
-            const codes = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
-            return codes[dateObj.getMonth()];
+        function monthNames_getCode(d) {
+            const monthNames = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+            return monthNames[d.getMonth()];
+        }
+
+        function getCurrentActiveDataset() {
+            return allData[currentTestType] || [];
         }
 
         // Switch Test Type Tab Function
         function switchTestType(type) {
             currentTestType = type;
+            currentWeek = 'comparison';
+            currentMonth = 'comparison';
             
-            // Update active tab styling
+            // Update Tab Active Styles
             ['first', 'second', 'exchange', 'weekly', 'monthly'].forEach(t => {
                 let btn = document.getElementById('tab-' + t);
                 if (btn) {
                     if (t === type) {
-                        btn.className = "px-4 py-1.5 rounded-lg text-sm font-semibold text-white bg-indigo-500 shadow transition";
+                        btn.className = "px-3 py-1.5 rounded-lg text-sm font-semibold text-white bg-indigo-500 shadow transition";
                     } else {
-                        btn.className = "px-4 py-1.5 rounded-lg text-sm font-semibold text-indigo-200 hover:text-white transition";
+                        btn.className = "px-3 py-1.5 rounded-lg text-sm font-semibold text-indigo-200 hover:text-white transition";
                     }
                 }
             });
 
-            loadDataForActiveTest();
+            renderSubFilters();
+            updateDashboard();
         }
 
-        // Filter By Region Function
+        // Render Sub-filters for Weekly/Monthly
+        function renderSubFilters() {
+            const container = document.getElementById('sub-filter-container');
+            container.innerHTML = '';
+
+            if (currentTestType === 'monthly') {
+                container.innerHTML = `
+                    <button onclick="setMonthlyView('comparison')" class="px-3 py-1.5 ${currentMonth === 'comparison' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-700'} rounded-lg text-xs font-semibold shadow">Jan-Dec Comparison</button>
+                    <button onclick="setMonthlyView('jan')" class="px-3 py-1.5 ${currentMonth === 'jan' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-700'} rounded-lg text-xs font-semibold shadow">Jan</button>
+                    <button onclick="setMonthlyView('feb')" class="px-3 py-1.5 ${currentMonth === 'feb' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-700'} rounded-lg text-xs font-semibold shadow">Feb</button>
+                    <button onclick="setMonthlyView('mar')" class="px-3 py-1.5 ${currentMonth === 'mar' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-700'} rounded-lg text-xs font-semibold shadow">Mar</button>
+                    <button onclick="setMonthlyView('apr')" class="px-3 py-1.5 ${currentMonth === 'apr' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-700'} rounded-lg text-xs font-semibold shadow">Apr</button>
+                    <button onclick="setMonthlyView('may')" class="px-3 py-1.5 ${currentMonth === 'may' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-700'} rounded-lg text-xs font-semibold shadow">May</button>
+                    <button onclick="setMonthlyView('jun')" class="px-3 py-1.5 ${currentMonth === 'jun' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-700'} rounded-lg text-xs font-semibold shadow">Jun</button>
+                    <button onclick="setMonthlyView('jul')" class="px-3 py-1.5 ${currentMonth === 'jul' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-700'} rounded-lg text-xs font-semibold shadow">Jul</button>
+                    <button onclick="setMonthlyView('aug')" class="px-3 py-1.5 ${currentMonth === 'aug' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-700'} rounded-lg text-xs font-semibold shadow">Aug</button>
+                    <button onclick="setMonthlyView('sep')" class="px-3 py-1.5 ${currentMonth === 'sep' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-700'} rounded-lg text-xs font-semibold shadow">Sep</button>
+                    <button onclick="setMonthlyView('oct')" class="px-3 py-1.5 ${currentMonth === 'oct' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-700'} rounded-lg text-xs font-semibold shadow">Oct</button>
+                    <button onclick="setMonthlyView('nov')" class="px-3 py-1.5 ${currentMonth === 'nov' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-700'} rounded-lg text-xs font-semibold shadow">Nov</button>
+                    <button onclick="setMonthlyView('dec')" class="px-3 py-1.5 ${currentMonth === 'dec' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-700'} rounded-lg text-xs font-semibold shadow">Dec</button>
+                `;
+            }
+        }
+
+        function setMonthlyView(m) {
+            currentMonth = m;
+            renderSubFilters();
+            updateDashboard();
+        }
+
         function filterByRegion(region) {
             currentRegion = region;
-            if (region === 'All') {
-                filteredData = [...rawDataSet];
-            } else {
-                filteredData = rawDataSet.filter(row => getVal(row, 'Olt Hostname') === region);
-            }
-            renderCharts(rawDataSet, filteredData);
+            updateDashboard();
         }
 
-        // Load Data Source based on Test Type
-        function loadDataForActiveTest() {
-            // Sample test data for initial load and smooth rendering
-            if (rawDataSet.length === 0) {
-                rawDataSet = [
-                    { 'Date': '2026-01-15', 'Olt Hostname': 'OVF-Provision-HGAO', 'Overall Pass/Fail': 'pass', 'Rx Pass/Fail': 'pass', 'Bias Pass/Fail': 'pass', 'Temp Pass/Fail': 'pass', 'Tx Pass/Fail': 'pass', 'Voltage Pass/Fail': 'pass' },
-                    { 'Date': '2026-02-20', 'Olt Hostname': 'OVF-Provision-ENUO', 'Overall Pass/Fail': 'fail', 'Rx Pass/Fail': 'fail', 'Bias Pass/Fail': 'pass', 'Temp Pass/Fail': 'pass', 'Tx Pass/Fail': 'pass', 'Voltage Pass/Fail': 'pass' },
-                    { 'Date': '2026-03-10', 'Olt Hostname': 'OVF-Provision-MDY', 'Overall Pass/Fail': 'pass', 'Rx Pass/Fail': 'pass', 'Bias Pass/Fail': 'pass', 'Temp Pass/Fail': 'pass', 'Tx Pass/Fail': 'pass', 'Voltage Pass/Fail': 'pass' }
-                ];
+        // Core Update Dashboard Function
+        function updateDashboard() {
+            let rawDataSet = getCurrentActiveDataset();
+
+            if (!rawDataSet || rawDataSet.length === 0) {
+                document.getElementById('kpi-total').innerText = '0';
+                document.getElementById('kpi-passed').innerText = '0';
+                document.getElementById('kpi-failed').innerText = '0';
+                document.getElementById('kpi-pass-rate').innerText = '0.00%';
+                document.getElementById('kpi-fail-rate').innerText = '0.00%';
+                
+                renderCharts([], []);
+                renderTables([]);
+                return;
             }
-            filteredData = [...rawDataSet];
-            renderCharts(rawDataSet, filteredData);
-        }
 
-        // Render Charts Function (Monthly Comparison + OLT + Failure)
-        function renderCharts(rawDataSet, filteredData) {
-            
-            // ၁။ လအလိုက် Comparison Chart (Jan - Dec)
-            let monthsLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-            let monthCodes = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
-            let mTotals = [], mPassed = [], mFailed = [];
+            let filteredData = rawDataSet;
 
-            monthCodes.forEach(mCode => {
-                let mData = rawDataSet.filter(row => {
-                    let d = getDateObj(row);
-                    return d && monthNames_getCode(d) === mCode;
-                });
-                if (currentRegion !== 'All') {
-                    mData = mData.filter(row => getVal(row, 'Olt Hostname') === currentRegion);
+            if (currentTestType === 'monthly') {
+                if (currentMonth !== 'comparison') {
+                    filteredData = rawDataSet.filter(row => {
+                        let d = getDateObj(row);
+                        if (d) {
+                            return monthNames_getCode(d) === currentMonth;
+                        }
+                        return false;
+                    });
                 }
-                let tot = mData.length;
-                let pas = mData.filter(row => getStatus(row, 'Overall Pass/Fail') === 'pass').length;
-                mTotals.push(tot);
-                mPassed.push(pas);
-                mFailed.push(tot - pas);
-            });
+            }
 
-            if (monthlyComparisonChartInstance) monthlyComparisonChartInstance.destroy();
-            monthlyComparisonChartInstance = new Chart(document.getElementById('monthlyComparisonChart'), {
-                type: 'bar',
-                data: {
-                    labels: monthsLabels,
-                    datasets: [
-                        { label: 'Total Tested', data: mTotals, backgroundColor: '#3B82F6', borderRadius: 4 },
-                        { label: 'Passed', data: mPassed, backgroundColor: '#10B981', borderRadius: 4 },
-                        { label: 'Failed', data: mFailed, backgroundColor: '#EF4444', borderRadius: 4 }
-                    ]
-                },
-                options: { responsive: true, maintainAspectRatio: false, scales: { x: { grid: { display: false } }, y: { beginAtZero: true } } }
-            });
+            if (currentRegion !== 'All') {
+                filteredData = filteredData.filter(row => getVal(row, 'Olt Hostname') === currentRegion);
+            }
 
+            let totalTested = filteredData.length;
+            let passedCount = filteredData.filter(row => getStatus(row, 'Overall Pass/Fail') === 'pass').length;
+            let failedCount = totalTested - passedCount;
+            let passRate = totalTested > 0 ? ((passedCount / totalTested) * 100).toFixed(2) + '%' : '0.00%';
+            let failRate = totalTested > 0 ? ((failedCount / totalTested) * 100).toFixed(2) + '%' : '0.00%';
 
-            // ၂။ မူလ OLT Region Chart
-            let regionsList = ['OVF-Provision-HGAO', 'OVF-Provision-ENUO', 'OVF-Provision-MDY'];
-            let oltTotals = [], oltPassed = [], oltFailed = [];
+            document.getElementById('kpi-total').innerText = totalTested.toLocaleString();
+            document.getElementById('kpi-passed').innerText = passedCount.toLocaleString();
+            document.getElementById('kpi-failed').innerText = failedCount.toLocaleString();
+            document.getElementById('kpi-pass-rate').innerText = passRate;
+            document.getElementById('kpi-fail-rate').innerText = failRate;
 
-            regionsList.forEach(reg => {
-                let rData = filteredData.filter(row => getVal(row, 'Olt Hostname') === reg);
-                let tot = rData.length;
-                let pas = rData.filter(row => getStatus(row, 'Overall Pass/Fail') === 'pass').length;
-                oltTotals.push(tot);
-                oltPassed.push(pas);
-                oltFailed.push(tot - pas);
-            });
+            let testTitlePrefix = currentTestType === 'first' ? 'First Test' : 
+                                  (currentTestType === 'exchange' ? 'Exchange Devices' : 
+                                  (currentTestType === 'weekly' ? `Weekly` : 
+                                  (currentTestType === 'monthly' ? (currentMonth === 'comparison' ? 'Monthly Comparison (Jan - Dec)' : `Monthly (${currentMonth.toUpperCase()})`) : 'Second Test')));
+            
+            document.getElementById('olt-chart-title').innerText = currentRegion === 'All' ?  
+                `${testTitlePrefix} - Pass vs Fail Comparison` : `${testTitlePrefix} (${currentRegion})`;
 
-            if (oltChartInstance) oltChartInstance.destroy();
-            oltChartInstance = new Chart(document.getElementById('oltChart'), {
-                type: 'bar',
-                data: {
-                    labels: regionsList,
-                    datasets: [
-                        { label: 'Total Tested', data: oltTotals, backgroundColor: '#3B82F6', borderRadius: 4 },
-                        { label: 'Passed', data: oltPassed, backgroundColor: '#10B981', borderRadius: 4 },
-                        { label: 'Failed', data: oltFailed, backgroundColor: '#EF4444', borderRadius: 4 }
-                    ]
-                },
-                options: { responsive: true, maintainAspectRatio: false, scales: { x: { grid: { display: false } }, y: { beginAtZero: true } } }
-            });
+            renderCharts(rawDataSet, filteredData);
+            renderTables(filteredData);
+        }
 
+        // Render Charts Function
+        function renderCharts(rawDataSet, filteredData) {
+            if (currentTestType === 'monthly' && currentMonth === 'comparison') {
+                let monthsLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                let monthCodes = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+                let mTotals = [], mPassed = [], mFailed = [];
 
-            // ၃။ Failure Reasons Doughnut Chart
+                monthCodes.forEach(mCode => {
+                    let mData = rawDataSet.filter(row => {
+                        let d = getDateObj(row);
+                        if (d) {
+                            return monthNames_getCode(d) === mCode;
+                        }
+                        return false;
+                    });
+                    if (currentRegion !== 'All') {
+                        mData = mData.filter(row => getVal(row, 'Olt Hostname') === currentRegion);
+                    }
+                    let tot = mData.length;
+                    let pas = mData.filter(row => getStatus(row, 'Overall Pass/Fail') === 'pass').length;
+                    mTotals.push(tot);
+                    mPassed.push(pas);
+                    mFailed.push(tot - pas);
+                });
+
+                if(oltChartInstance) oltChartInstance.destroy();
+                oltChartInstance = new Chart(document.getElementById('oltChart'), {
+                    type: 'bar',
+                    data: {
+                        labels: monthsLabels,
+                        datasets: [
+                            { label: 'Total Tested', data: mTotals, backgroundColor: '#3B82F6', borderRadius: 4 },
+                            { label: 'Passed', data: mPassed, backgroundColor: '#10B981', borderRadius: 4 },
+                            { label: 'Failed', data: mFailed, backgroundColor: '#EF4444', borderRadius: 4 }
+                        ]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, scales: { x: { grid: { display: false } }, y: { beginAtZero: true } } }
+                });
+
+            } else {
+                let regionsList = ['OVF-Provision-HGAO', 'OVF-Provision-ENUO', 'OVF-Provision-MDY'];
+                let oltTotals = [], oltPassed = [], oltFailed = [];
+
+                regionsList.forEach(reg => {
+                    let rData = filteredData.filter(row => getVal(row, 'Olt Hostname') === reg);
+                    let tot = rData.length;
+                    let pas = rData.filter(row => getStatus(row, 'Overall Pass/Fail') === 'pass').length;
+                    oltTotals.push(tot);
+                    oltPassed.push(pas);
+                    oltFailed.push(tot - pas);
+                });
+
+                if(oltChartInstance) oltChartInstance.destroy();
+                oltChartInstance = new Chart(document.getElementById('oltChart'), {
+                    type: 'bar',
+                    data: {
+                        labels: ['HGAO', 'ENUO', 'MDY'],
+                        datasets: [
+                            { label: 'Total Tested', data: oltTotals, backgroundColor: '#3B82F6', borderRadius: 4 },
+                            { label: 'Passed', data: oltPassed, backgroundColor: '#10B981', borderRadius: 4 },
+                            { label: 'Failed', data: oltFailed, backgroundColor: '#EF4444', borderRadius: 4 }
+                        ]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, scales: { x: { grid: { display: false } }, y: { beginAtZero: true } } }
+                });
+            }
+
+            // Failure Doughnut Chart
             let rxFail = filteredData.filter(row => getStatus(row, 'Rx Pass/Fail') === 'fail').length;
             let biasFail = filteredData.filter(row => getStatus(row, 'Bias Pass/Fail') === 'fail').length;
             let tempFail = filteredData.filter(row => getStatus(row, 'Temp Pass/Fail') === 'fail').length;
             let txFail = filteredData.filter(row => getStatus(row, 'Tx Pass/Fail') === 'fail').length;
             let voltFail = filteredData.filter(row => getStatus(row, 'Voltage Pass/Fail') === 'fail').length;
 
-            if (failureChartInstance) failureChartInstance.destroy();
+            if(failureChartInstance) failureChartInstance.destroy();
             failureChartInstance = new Chart(document.getElementById('failureChart'), {
                 type: 'doughnut',
                 data: {
@@ -225,9 +370,176 @@
             });
         }
 
-        // Initialize on page load
+        // Render Tables Function
+        function renderTables(data) {
+            const paramTable = document.getElementById('parameter-table-body');
+            const deviceTable = document.getElementById('device-table-body');
+
+            if (currentTestType === 'monthly' && currentMonth === 'comparison') {
+                paramTable.innerHTML = '';
+                deviceTable.innerHTML = '';
+
+                let monthCodes = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+                let monthLabels = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+                
+                let grandTotal = 0, grandPassed = 0, grandFailed = 0;
+
+                monthCodes.forEach((mCode, idx) => {
+                    let mRows = allData.monthly.filter(row => {
+                        let d = getDateObj(row);
+                        return d && monthNames_getCode(d) === mCode;
+                    });
+                    if (currentRegion !== 'All') {
+                        mRows = mRows.filter(row => getVal(row, 'Olt Hostname') === currentRegion);
+                    }
+
+                    let mTot = mRows.length;
+                    let mPas = mRows.filter(row => getStatus(row, 'Overall Pass/Fail') === 'pass').length;
+                    let mFai = mTot - mPas;
+                    let mRate = mTot > 0 ? ((mFai / mTot) * 100).toFixed(2) + '%' : '0.00%';
+
+                    grandTotal += mTot;
+                    grandPassed += mPas;
+                    grandFailed += mFai;
+
+                    deviceTable.innerHTML += `
+                        <tr>
+                            <td class="px-6 py-3 font-medium text-gray-900">${monthLabels[idx]}</td>
+                            <td class="px-6 py-3 text-right text-gray-700">${mTot.toLocaleString()}</td>
+                            <td class="px-6 py-3 text-right text-emerald-600 font-medium">${mPas.toLocaleString()}</td>
+                            <td class="px-6 py-3 text-right text-rose-600 font-medium">${mFai.toLocaleString()}</td>
+                            <td class="px-6 py-3 text-right text-gray-600 font-semibold">${mRate}</td>
+                        </tr>`;
+                });
+
+                let overallRate = grandTotal > 0 ? ((grandFailed / grandTotal) * 100).toFixed(2) + '%' : '0.00%';
+                deviceTable.innerHTML += `
+                    <tr class="bg-gray-50 font-bold">
+                        <td class="px-6 py-3 text-gray-900">Total (Yearly)</td>
+                        <td class="px-6 py-3 text-right text-gray-900">${grandTotal.toLocaleString()}</td>
+                        <td class="px-6 py-3 text-right text-emerald-600">${grandPassed.toLocaleString()}</td>
+                        <td class="px-6 py-3 text-right text-rose-600">${grandFailed.toLocaleString()}</td>
+                        <td class="px-6 py-3 text-right text-gray-900">${overallRate}</td>
+                    </tr>`;
+
+                let rxFail = allData.monthly.filter(row => getStatus(row, 'Rx Pass/Fail') === 'fail').length;
+                let biasFail = allData.monthly.filter(row => getStatus(row, 'Bias Pass/Fail') === 'fail').length;
+                let tempFail = allData.monthly.filter(row => getStatus(row, 'Temp Pass/Fail') === 'fail').length;
+                let txFail = allData.monthly.filter(row => getStatus(row, 'Tx Pass/Fail') === 'fail').length;
+                let voltFail = allData.monthly.filter(row => getStatus(row, 'Voltage Pass/Fail') === 'fail').length;
+                
+                let totalParamFail = rxFail + biasFail + tempFail + txFail + voltFail;
+                let params = [
+                    { name: 'Rx Power', count: rxFail, share: totalParamFail ? ((rxFail/totalParamFail)*100).toFixed(2) + '%' : '0%' },
+                    { name: 'Bias Current', count: biasFail, share: totalParamFail ? ((biasFail/totalParamFail)*100).toFixed(2) + '%' : '0%' },
+                    { name: 'Temperature', count: tempFail, share: totalParamFail ? ((tempFail/totalParamFail)*100).toFixed(2) + '%' : '0%' },
+                    { name: 'Tx Power', count: txFail, share: totalParamFail ? ((txFail/totalParamFail)*100).toFixed(2) + '%' : '0%' },
+                    { name: 'Voltage', count: voltFail, share: totalParamFail ? ((voltFail/totalParamFail)*100).toFixed(2) + '%' : '0%' }
+                ];
+
+                params.forEach(p => {
+                    paramTable.innerHTML += `
+                        <tr>
+                            <td class="px-6 py-3 font-medium text-gray-900">${p.name}</td>
+                            <td class="px-6 py-3 text-right text-rose-600 font-semibold">${p.count}</td>
+                            <td class="px-6 py-3 text-right text-gray-600">${p.share}</td>
+                        </tr>`;
+                });
+                paramTable.innerHTML += `
+                    <tr class="bg-gray-50 font-bold">
+                        <td class="px-6 py-3 text-gray-900">Total</td>
+                        <td class="px-6 py-3 text-right text-rose-600">${totalParamFail}</td>
+                        <td class="px-6 py-3 text-right text-gray-900">100.00%</td>
+                    </tr>`;
+
+            } else {
+                let rxFail = data.filter(row => getStatus(row, 'Rx Pass/Fail') === 'fail').length;
+                let biasFail = data.filter(row => getStatus(row, 'Bias Pass/Fail') === 'fail').length;
+                let tempFail = data.filter(row => getStatus(row, 'Temp Pass/Fail') === 'fail').length;
+                let txFail = data.filter(row => getStatus(row, 'Tx Pass/Fail') === 'fail').length;
+                let voltFail = data.filter(row => getStatus(row, 'Voltage Pass/Fail') === 'fail').length;
+                
+                let totalParamFail = rxFail + biasFail + tempFail + txFail + voltFail;
+
+                let params = [
+                    { name: 'Rx Power', count: rxFail, share: totalParamFail ? ((rxFail/totalParamFail)*100).toFixed(2) + '%' : '0%' },
+                    { name: 'Bias Current', count: biasFail, share: totalParamFail ? ((biasFail/totalParamFail)*100).toFixed(2) + '%' : '0%' },
+                    { name: 'Temperature', count: tempFail, share: totalParamFail ? ((tempFail/totalParamFail)*100).toFixed(2) + '%' : '0%' },
+                    { name: 'Tx Power', count: txFail, share: totalParamFail ? ((txFail/totalParamFail)*100).toFixed(2) + '%' : '0%' },
+                    { name: 'Voltage', count: voltFail, share: totalParamFail ? ((voltFail/totalParamFail)*100).toFixed(2) + '%' : '0%' }
+                ];
+
+                paramTable.innerHTML = '';
+                params.forEach(p => {
+                    paramTable.innerHTML += `
+                        <tr>
+                            <td class="px-6 py-3 font-medium text-gray-900">${p.name}</td>
+                            <td class="px-6 py-3 text-right text-rose-600 font-semibold">${p.count}</td>
+                            <td class="px-6 py-3 text-right text-gray-600">${p.share}</td>
+                        </tr>`;
+                });
+                paramTable.innerHTML += `
+                    <tr class="bg-gray-50 font-bold">
+                        <td class="px-6 py-3 text-gray-900">Total</td>
+                        <td class="px-6 py-3 text-right text-rose-600">${totalParamFail}</td>
+                        <td class="px-6 py-3 text-right text-gray-900">100.00%</td>
+                    </tr>`;
+
+                let deviceNames = ['FFO', 'FFG', 'SCP', 'FFA', 'BFFA'];
+                deviceTable.innerHTML = '';
+
+                let sumTot = 0, sumPas = 0, sumFai = 0;
+                deviceNames.forEach(dev => {
+                    let dRows = data.filter(row => getVal(row, 'Devices Name').toUpperCase() === dev);
+                    let dTot = dRows.length;
+                    let dPas = dRows.filter(row => getStatus(row, 'Overall Pass/Fail') === 'pass').length;
+                    let dFai = dTot - dPas;
+                    let dRate = dTot > 0 ? ((dFai / dTot) * 100).toFixed(2) + '%' : '0.00%';
+
+                    sumTot += dTot;
+                    sumPas += dPas;
+                    sumFai += dFai;
+
+                    deviceTable.innerHTML += `
+                        <tr>
+                            <td class="px-6 py-3 font-medium text-gray-900">${dev}</td>
+                            <td class="px-6 py-3 text-right text-gray-700">${dTot.toLocaleString()}</td>
+                            <td class="px-6 py-3 text-right text-emerald-600 font-medium">${dPas.toLocaleString()}</td>
+                            <td class="px-6 py-3 text-right text-rose-600 font-medium">${dFai}</td>
+                            <td class="px-6 py-3 text-right text-gray-600 font-semibold">${dRate}</td>
+                        </tr>`;
+                });
+
+                let overallFailRate = sumTot > 0 ? ((sumFai / sumTot) * 100).toFixed(2) + '%' : '0.00%';
+                deviceTable.innerHTML += `
+                    <tr class="bg-gray-50 font-bold">
+                        <td class="px-6 py-3 text-gray-900">Total</td>
+                        <td class="px-6 py-3 text-right text-gray-900">${sumTot.toLocaleString()}</td>
+                        <td class="px-6 py-3 text-right text-emerald-600">${sumPas.toLocaleString()}</td>
+                        <td class="px-6 py-3 text-right text-rose-600">${sumFai}</td>
+                        <td class="px-6 py-3 text-right text-gray-900">${overallFailRate}</td>
+                    </tr>`;
+            }
+        }
+
+        // Initialize Sample Data on Page Load
         window.onload = function() {
-            loadDataForActiveTest();
+            // Sample Initial Data for testing dashboard immediately
+            allData.first = [
+                { 'Date': '2026-01-15', 'Olt Hostname': 'OVF-Provision-HGAO', 'Devices Name': 'FFO', 'Overall Pass/Fail': 'pass', 'Rx Pass/Fail': 'pass', 'Bias Pass/Fail': 'pass', 'Temp Pass/Fail': 'pass', 'Tx Pass/Fail': 'pass', 'Voltage Pass/Fail': 'pass' },
+                { 'Date': '2026-02-20', 'Olt Hostname': 'OVF-Provision-ENUO', 'Devices Name': 'FFG', 'Overall Pass/Fail': 'fail', 'Rx Pass/Fail': 'fail', 'Bias Pass/Fail': 'pass', 'Temp Pass/Fail': 'pass', 'Tx Pass/Fail': 'pass', 'Voltage Pass/Fail': 'pass' },
+                { 'Date': '2026-03-10', 'Olt Hostname': 'OVF-Provision-MDY', 'Devices Name': 'SCP', 'Overall Pass/Fail': 'pass', 'Rx Pass/Fail': 'pass', 'Bias Pass/Fail': 'pass', 'Temp Pass/Fail': 'pass', 'Tx Pass/Fail': 'pass', 'Voltage Pass/Fail': 'pass' }
+            ];
+            allData.monthly = [
+                { 'Date': '2026-01-10', 'Olt Hostname': 'OVF-Provision-HGAO', 'Overall Pass/Fail': 'pass', 'Rx Pass/Fail': 'pass', 'Bias Pass/Fail': 'pass', 'Temp Pass/Fail': 'pass', 'Tx Pass/Fail': 'pass', 'Voltage Pass/Fail': 'pass' },
+                { 'Date': '2026-02-15', 'Olt Hostname': 'OVF-Provision-ENUO', 'Overall Pass/Fail': 'fail', 'Rx Pass/Fail': 'fail', 'Bias Pass/Fail': 'pass', 'Temp Pass/Fail': 'pass', 'Tx Pass/Fail': 'pass', 'Voltage Pass/Fail': 'pass' },
+                { 'Date': '2026-03-20', 'Olt Hostname': 'OVF-Provision-MDY', 'Overall Pass/Fail': 'pass', 'Rx Pass/Fail': 'pass', 'Bias Pass/Fail': 'pass', 'Temp Pass/Fail': 'pass', 'Tx Pass/Fail': 'pass', 'Voltage Pass/Fail': 'pass' }
+            ];
+            allData.second = [...allData.first];
+            allData.exchange = [...allData.first];
+            allData.weekly = [...allData.first];
+
+            switchTestType('first');
         };
     </script>
 </body>
