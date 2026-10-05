@@ -399,44 +399,103 @@
             renderTables(filteredData);
         }
 
-        function renderCharts(rawDataSet, filteredData) {
-            if (currentTestType === 'monthly' && currentMonth === 'comparison') {
-                let monthsLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-                let monthCodes = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
-                let mTotals = [], mPassed = [], mFailed = [];
+        let monthlyComparisonChartInstance = null; // Variable အသစ် ထပ်ထည့်ပါ
 
-                monthCodes.forEach(mCode => {
-                    let mData = rawDataSet.filter(row => {
-                        let d = getDateObj(row);
-                        if (d) {
-                            return monthNames_getCode(d) === mCode;
-                        }
-                        return false;
-                    });
-                    if (currentRegion !== 'All') {
-                        mData = mData.filter(row => getVal(row, 'Olt Hostname') === currentRegion);
-                    }
-                    let tot = mData.length;
-                    let pas = mData.filter(row => getStatus(row, 'Overall Pass/Fail') === 'pass').length;
-                    mTotals.push(tot);
-                    mPassed.push(pas);
-                    mFailed.push(tot - pas);
-                });
+function renderCharts(rawDataSet, filteredData) {
+    // ၁။ လအလိုက် Comparison Chart (Jan - Dec) ကို အမြဲတမ်း အပေါ်ဆုံးမှာ ဆွဲပေးမည်
+    let monthsLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    let monthCodes = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+    let mTotals = [], mPassed = [], mFailed = [];
 
-                if(oltChartInstance) oltChartInstance.destroy();
-                oltChartInstance = new Chart(document.getElementById('oltChart'), {
-                    type: 'bar',
-                    data: {
-                        labels: monthsLabels,
-                        datasets: [
-                            { label: 'Total Tested', data: mTotals, backgroundColor: '#3B82F6', borderRadius: 4 },
-                            { label: 'Passed', data: mPassed, backgroundColor: '#10B981', borderRadius: 4 },
-                            { label: 'Failed', data: mFailed, backgroundColor: '#EF4444', borderRadius: 4 }
-                        ]
-                    },
-                    options: { responsive: true, maintainAspectRatio: false, scales: { x: { grid: { display: false } }, y: { beginAtZero: true } } }
-                });
+    monthCodes.forEach(mCode => {
+        let mData = rawDataSet.filter(row => {
+            let d = getDateObj(row);
+            return d && monthNames_getCode(d) === mCode;
+        });
+        if (currentRegion !== 'All') {
+            mData = mData.filter(row => getVal(row, 'Olt Hostname') === currentRegion);
+        }
+        let tot = mData.length;
+        let pas = mData.filter(row => getStatus(row, 'Overall Pass/Fail') === 'pass').length;
+        mTotals.push(tot);
+        mPassed.push(pas);
+        mFailed.push(tot - pas);
+    });
 
+    if(monthlyComparisonChartInstance) monthlyComparisonChartInstance.destroy();
+    monthlyComparisonChartInstance = new Chart(document.getElementById('monthlyComparisonChart'), {
+        type: 'bar',
+        data: {
+            labels: monthsLabels,
+            datasets: [
+                { label: 'Total Tested', data: mTotals, backgroundColor: '#3B82F6', borderRadius: 4 },
+                { label: 'Passed', data: mPassed, backgroundColor: '#10B981', borderRadius: 4 },
+                { label: 'Failed', data: mFailed, backgroundColor: '#EF4444', borderRadius: 4 }
+            ]
+        },
+        options: { responsive: true, maintainAspectRatio: false, scales: { x: { grid: { display: false } }, y: { beginAtZero: true } } }
+    });
+
+
+    // ၂။ မူလ OLT Region Chart ကို အောက်ဘက်တွင် ဆက်လက် ဆွဲပေးမည်
+    let regionsList = ['OVF-Provision-HGAO', 'OVF-Provision-ENUO', 'OVF-Provision-MDY'];
+    let oltTotals = [], oltPassed = [], oltFailed = [];
+
+    regionsList.forEach(reg => {
+        let rData = filteredData.filter(row => getVal(row, 'Olt Hostname') === reg);
+        let tot = rData.length;
+        let pas = rData.filter(row => getStatus(row, 'Overall Pass/Fail') === 'pass').length;
+        oltTotals.push(tot);
+        oltPassed.push(pas);
+        oltFailed.push(tot - pas);
+    });
+
+    if(oltChartInstance) oltChartInstance.destroy();
+    oltChartInstance = new Chart(document.getElementById('oltChart'), {
+        type: 'bar',
+        data: {
+            labels: regionsList,
+            datasets: [
+                { label: 'Total Tested', data: oltTotals, backgroundColor: '#3B82F6', borderRadius: 4 },
+                { label: 'Passed', data: oltPassed, backgroundColor: '#10B981', borderRadius: 4 },
+                { label: 'Failed', data: oltFailed, backgroundColor: '#EF4444', borderRadius: 4 }
+            ]
+        },
+        options: { responsive: true, maintainAspectRatio: false, scales: { x: { grid: { display: false } }, y: { beginAtZero: true } } }
+    });
+
+
+    // ၃။ Failure Reasons Doughnut Chart
+    let rxFail = filteredData.filter(row => getStatus(row, 'Rx Pass/Fail') === 'fail').length;
+    let biasFail = filteredData.filter(row => getStatus(row, 'Bias Pass/Fail') === 'fail').length;
+    let tempFail = filteredData.filter(row => getStatus(row, 'Temp Pass/Fail') === 'fail').length;
+    let txFail = filteredData.filter(row => getStatus(row, 'Tx Pass/Fail') === 'fail').length;
+    let voltFail = filteredData.filter(row => getStatus(row, 'Voltage Pass/Fail') === 'fail').length;
+
+    if(failureChartInstance) failureChartInstance.destroy();
+    failureChartInstance = new Chart(document.getElementById('failureChart'), {
+        type: 'doughnut',
+        data: {
+            labels: ['Rx Power', 'Bias Current', 'Temperature', 'Tx Power', 'Voltage'],
+            datasets: [{
+                data: [rxFail, biasFail, tempFail, txFail, voltFail],
+                backgroundColor: ['#3B82F6', '#8B5CF6', '#10B981', '#F59E0B', '#EC4899']
+            }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+    });
+}
+<!-- ၁။ လအလိုက် (Yearly Monthly Comparison) Chart အတွက် -->
+<div class="bg-white p-6 rounded-xl shadow-md mb-6">
+    <h3 class="text-lg font-bold text-gray-800 mb-4">Monthly Comparison (Jan - Dec) - Pass vs Fail</h3>
+    <div style="height: 300px;"><canvas id="monthlyComparisonChart"></canvas></div>
+</div>
+
+<!-- ၂။ မူလ OLT Region အလိုက် Chart အတွက် -->
+<div class="bg-white p-6 rounded-xl shadow-md">
+    <h3 id="olt-chart-title" class="text-lg font-bold text-gray-800 mb-4">OLT Region Performance</h3>
+    <div style="height: 300px;"><canvas id="oltChart"></canvas></div>
+</div>
             } else {
                 let regionsList = ['OVF-Provision-HGAO', 'OVF-Provision-ENUO', 'OVF-Provision-MDY'];
                 let oltTotals = [], oltPassed = [], oltFailed = [];
