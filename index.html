@@ -395,33 +395,70 @@
             renderCharts(rawDataSet, filteredData);
             renderTables(filteredData);
         }
+function renderCharts(rawDataSet, filteredData) {
+            // Monthly Tab မှာ Comparison ကို ရွေးထားမှသာ လအလိုက် Jan-Dec Chart ကိုပြမယ်
+            if (currentTestType === 'monthly' && currentMonth === 'comparison') {
+                let monthsLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                let monthCodes = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+                let mTotals = [], mPassed = [], mFailed = [];
 
-        function renderCharts(rawDataSet, filteredData) {
-            let regionsList = ['OVF-Provision-HGAO', 'OVF-Provision-ENUO', 'OVF-Provision-MDY'];
-            let oltTotals = [], oltPassed = [], oltFailed = [];
+                monthCodes.forEach(mCode => {
+                    let mData = rawDataSet.filter(row => {
+                        let d = getDateObj(row);
+                        return d && monthNames_getCode(d) === mCode;
+                    });
+                    if (currentRegion !== 'All') {
+                        mData = mData.filter(row => getVal(row, 'Olt Hostname') === currentRegion);
+                    }
+                    let tot = mData.length;
+                    let pas = mData.filter(row => getStatus(row, 'Overall Pass/Fail') === 'pass').length;
+                    mTotals.push(tot);
+                    mPassed.push(pas);
+                    mFailed.push(tot - pas);
+                });
 
-            regionsList.forEach(reg => {
-                let rData = rawDataSet.filter(row => getVal(row, 'Olt Hostname') === reg);
-                let tot = rData.length;
-                let pas = rData.filter(row => getStatus(row, 'Overall Pass/Fail') === 'pass').length;
-                oltTotals.push(tot);
-                oltPassed.push(pas);
-                oltFailed.push(tot - pas);
-            });
+                if (oltChartInstance) oltChartInstance.destroy();
+                oltChartInstance = new Chart(document.getElementById('oltChart'), {
+                    type: 'bar',
+                    data: {
+                        labels: monthsLabels,
+                        datasets: [
+                            { label: 'Total Tested', data: mTotals, backgroundColor: '#3B82F6', borderRadius: 4 },
+                            { label: 'Passed', data: mPassed, backgroundColor: '#10B981', borderRadius: 4 },
+                            { label: 'Failed', data: mFailed, backgroundColor: '#EF4444', borderRadius: 4 }
+                        ]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, scales: { x: { grid: { display: false } }, y: { beginAtZero: true } } }
+                });
+            } else {
+                // ကျန်တဲ့ Tab တွေနဲ့ အခြားအခြေအနေတွေမှာ မူလ Region အလိုက် Chart ကိုပဲ ဆက်ပြမယ်
+                let regionsList = ['OVF-Provision-HGAO', 'OVF-Provision-ENUO', 'OVF-Provision-MDY'];
+                let oltTotals = [], oltPassed = [], oltFailed = [];
 
-            if(oltChartInstance) oltChartInstance.destroy();
-            oltChartInstance = new Chart(document.getElementById('oltChart'), {
-                type: 'bar',
-                data: {
-                    labels: regionsList,
-                    datasets: [
-                        { label: 'Total Tested', data: oltTotals, backgroundColor: '#3B82F6', borderRadius: 4 },
-                        { label: 'Passed', data: oltPassed, backgroundColor: '#10B981', borderRadius: 4 },
-                        { label: 'Failed', data: oltFailed, backgroundColor: '#EF4444', borderRadius: 4 }
-                    ]
-                },
-                options: { responsive: true, maintainAspectRatio: false, scales: { x: { grid: { display: false } }, y: { beginAtZero: true } } }
-            });
+                regionsList.forEach(reg => {
+                    let rData = filteredData.filter(row => getVal(row, 'Olt Hostname') === reg);
+                    let tot = rData.length;
+                    let pas = rData.filter(row => getStatus(row, 'Overall Pass/Fail') === 'pass').length;
+                    oltTotals.push(tot);
+                    oltPassed.push(pas);
+                    oltFailed.push(tot - pas);
+                });
+
+                if (oltChartInstance) oltChartInstance.destroy();
+                oltChartInstance = new Chart(document.getElementById('oltChart'), {
+                    type: 'bar',
+                    data: {
+                        labels: ['HGAO', 'ENUO', 'MDY'],
+                        datasets: [
+                            { label: 'Total Tested', data: oltTotals, backgroundColor: '#3B82F6', borderRadius: 4 },
+                            { label: 'Passed', data: oltPassed, backgroundColor: '#10B981', borderRadius: 4 },
+                            { label: 'Failed', data: oltFailed, backgroundColor: '#EF4444', borderRadius: 4 }
+                        ]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, scales: { x: { grid: { display: false } }, y: { beginAtZero: true } } }
+                });
+            }
+        
 
             let rxFail = filteredData.filter(row => getStatus(row, 'Rx Pass/Fail') === 'fail').length;
             let biasFail = filteredData.filter(row => getStatus(row, 'Bias Pass/Fail') === 'fail').length;
