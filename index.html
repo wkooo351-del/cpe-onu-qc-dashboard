@@ -190,7 +190,7 @@
                         firstTest: data.firstTest || [],
                         secondTest: data.secondTest || [],
                         exchangeTest: data.exchangeTest || [],
-                        summary: data.summary || []
+                        summary: data.summary || data.Summary || []
                    };
                     document.getElementById('last-updated').innerText = 'Last Synced: ' + new Date().toLocaleTimeString();
                     updateDashboard();
