@@ -11,113 +11,113 @@
     <!-- PapaParse for CSV reading -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
 </head>
-<body class="bg-gray-100 text-gray-800">
+<body class="bg-gray-50 text-gray-800">
 
-    <!-- Header Section with Test Switcher Tabs -->
-    <header class="bg-indigo-600 shadow-md">
-        <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+    <!-- Header & Test Switcher Tabs -->
+    <header class="bg-indigo-700 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
             <div class="flex items-center space-x-3">
-                <span class="bg-white p-2 rounded-lg shadow text-indigo-600 font-bold">ONU</span>
-                <h1 class="text-xl sm:text-2xl font-bold text-white">ONU Inspection Report Dashboard</h1>
+                <div class="bg-white p-2 rounded-lg text-indigo-700 font-black shadow">ONU</div>
+                <h1 class="text-xl md:text-2xl font-bold text-white tracking-wide">ONU Inspection Report Dashboard</h1>
             </div>
             
             <!-- Test Switcher Tabs -->
-            <div class="flex flex-wrap bg-indigo-700 p-1 rounded-xl shadow-inner gap-1">
-                <button id="tab-first" onclick="switchTestType('first')" class="px-3 py-1.5 rounded-lg text-sm font-semibold text-white bg-indigo-500 shadow transition">First Test</button>
-                <button id="tab-second" onclick="switchTestType('second')" class="px-3 py-1.5 rounded-lg text-sm font-semibold text-indigo-200 hover:text-white transition">Second Test</button>
-                <button id="tab-exchange" onclick="switchTestType('exchange')" class="px-3 py-1.5 rounded-lg text-sm font-semibold text-indigo-200 hover:text-white transition">Exchange</button>
-                <button id="tab-weekly" onclick="switchTestType('weekly')" class="px-3 py-1.5 rounded-lg text-sm font-semibold text-indigo-200 hover:text-white transition">Weekly</button>
-                <button id="tab-monthly" onclick="switchTestType('monthly')" class="px-3 py-1.5 rounded-lg text-sm font-semibold text-indigo-200 hover:text-white transition">Monthly</button>
+            <div class="flex flex-wrap bg-indigo-900/60 p-1.5 rounded-xl shadow-inner gap-1">
+                <button id="tab-first" onclick="switchTestType('first')" class="px-3 py-1.5 rounded-lg text-xs md:text-sm font-semibold text-white bg-indigo-500 shadow transition">First Test</button>
+                <button id="tab-second" onclick="switchTestType('second')" class="px-3 py-1.5 rounded-lg text-xs md:text-sm font-semibold text-indigo-200 hover:text-white transition">Second Test</button>
+                <button id="tab-exchange" onclick="switchTestType('exchange')" class="px-3 py-1.5 rounded-lg text-xs md:text-sm font-semibold text-indigo-200 hover:text-white transition">Exchange</button>
+                <button id="tab-weekly" onclick="switchTestType('weekly')" class="px-3 py-1.5 rounded-lg text-xs md:text-sm font-semibold text-indigo-200 hover:text-white transition">Weekly</button>
+                <button id="tab-monthly" onclick="switchTestType('monthly')" class="px-3 py-1.5 rounded-lg text-xs md:text-sm font-semibold text-indigo-200 hover:text-white transition">Monthly</button>
             </div>
         </div>
     </header>
 
-    <!-- Main Content Layout -->
+    <!-- Main Content Container -->
     <main class="max-w-7xl mx-auto px-4 py-6">
 
         <!-- KPI Cards Summary -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
-            <div class="bg-white p-4 rounded-xl shadow-md border-l-4 border-blue-500">
-                <p class="text-sm font-medium text-gray-500">Total Tested</p>
-                <p id="kpi-total" class="text-2xl font-bold text-gray-800">0</p>
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 border-l-4 border-l-blue-500">
+                <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Total Tested</p>
+                <p id="kpi-total" class="text-2xl font-bold text-gray-800 mt-1">0</p>
             </div>
-            <div class="bg-white p-4 rounded-xl shadow-md border-l-4 border-emerald-500">
-                <p class="text-sm font-medium text-gray-500">Passed</p>
-                <p id="kpi-passed" class="text-2xl font-bold text-emerald-600">0</p>
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 border-l-4 border-l-emerald-500">
+                <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Passed</p>
+                <p id="kpi-passed" class="text-2xl font-bold text-emerald-600 mt-1">0</p>
             </div>
-            <div class="bg-white p-4 rounded-xl shadow-md border-l-4 border-rose-500">
-                <p class="text-sm font-medium text-gray-500">Failed</p>
-                <p id="kpi-failed" class="text-2xl font-bold text-rose-600">0</p>
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 border-l-4 border-l-rose-500">
+                <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Failed</p>
+                <p id="kpi-failed" class="text-2xl font-bold text-rose-600 mt-1">0</p>
             </div>
-            <div class="bg-white p-4 rounded-xl shadow-md border-l-4 border-indigo-500">
-                <p class="text-sm font-medium text-gray-500">Pass Rate</p>
-                <p id="kpi-pass-rate" class="text-2xl font-bold text-indigo-600">0.00%</p>
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 border-l-4 border-l-indigo-500">
+                <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Pass Rate</p>
+                <p id="kpi-pass-rate" class="text-2xl font-bold text-indigo-600 mt-1">0.00%</p>
             </div>
-            <div class="bg-white p-4 rounded-xl shadow-md border-l-4 border-amber-500">
-                <p class="text-sm font-medium text-gray-500">Fail Rate</p>
-                <p id="kpi-fail-rate" class="text-2xl font-bold text-amber-600">0.00%</p>
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 border-l-4 border-l-amber-500 col-span-2 sm:col-span-1">
+                <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Fail Rate</p>
+                <p id="kpi-fail-rate" class="text-2xl font-bold text-amber-600 mt-1">0.00%</p>
             </div>
         </div>
 
-        <!-- Region Filter & Sub-filters -->
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 bg-white p-4 rounded-xl shadow-md">
-            <!-- Region Buttons -->
+        <!-- Filter Section -->
+        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <!-- Region Filter Buttons -->
             <div class="flex flex-wrap gap-2" id="region-filters">
-                <button onclick="filterByRegion('All')" class="px-3 py-1.5 bg-indigo-600 text-white rounded-lg shadow font-medium text-sm">All Regions</button>
-                <button onclick="filterByRegion('OVF-Provision-HGAO')" class="px-3 py-1.5 bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-lg shadow font-medium text-sm">HGAO</button>
-                <button onclick="filterByRegion('OVF-Provision-ENUO')" class="px-3 py-1.5 bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-lg shadow font-medium text-sm">ENUO</button>
-                <button onclick="filterByRegion('OVF-Provision-MDY')" class="px-3 py-1.5 bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-lg shadow font-medium text-sm">MDY</button>
+                <button onclick="filterByRegion('All')" class="px-3.5 py-2 bg-indigo-600 text-white rounded-lg shadow-sm font-medium text-xs tracking-wide">All Regions</button>
+                <button onclick="filterByRegion('OVF-Provision-HGAO')" class="px-3.5 py-2 bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-lg font-medium text-xs tracking-wide transition">HGAO</button>
+                <button onclick="filterByRegion('OVF-Provision-ENUO')" class="px-3.5 py-2 bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-lg font-medium text-xs tracking-wide transition">ENUO</button>
+                <button onclick="filterByRegion('OVF-Provision-MDY')" class="px-3.5 py-2 bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-lg font-medium text-xs tracking-wide transition">MDY</button>
             </div>
-            <!-- Sub-filters container for Monthly/Weekly options -->
-            <div id="sub-filter-container" class="flex flex-wrap gap-2"></div>
+            <!-- Dynamic Sub-filters (Monthly/Weekly options) -->
+            <div id="sub-filter-container" class="flex flex-wrap gap-1.5"></div>
         </div>
 
         <!-- Charts Section -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-            <!-- OLT / Monthly Comparison Chart -->
-            <div class="bg-white p-6 rounded-xl shadow-md">
-                <h3 id="olt-chart-title" class="text-lg font-bold text-gray-800 mb-4">Pass vs Fail & Total Comparison</h3>
-                <div style="height: 300px;"><canvas id="oltChart"></canvas></div>
+            <!-- OLT / Monthly Comparison Chart Container -->
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                <h3 id="olt-chart-title" class="text-base font-bold text-gray-800 mb-4">Pass vs Fail & Total Comparison</h3>
+                <div class="relative h-72"><canvas id="oltChart"></canvas></div>
             </div>
 
-            <!-- Failure Reasons Doughnut Chart -->
-            <div class="bg-white p-6 rounded-xl shadow-md">
-                <h3 class="text-lg font-bold text-gray-800 mb-4">Failure Reasons Breakdown</h3>
-                <div style="height: 300px;"><canvas id="failureChart"></canvas></div>
+            <!-- Failure Reasons Doughnut Chart Container -->
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                <h3 class="text-base font-bold text-gray-800 mb-4">Failure Reasons Breakdown</h3>
+                <div class="relative h-72"><canvas id="failureChart"></canvas></div>
             </div>
         </div>
 
         <!-- Tables Section -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <!-- Parameter Failure Breakdown Table -->
-            <div class="bg-white p-6 rounded-xl shadow-md overflow-x-auto">
-                <h3 class="text-lg font-bold text-gray-800 mb-4">Parameter Failure Breakdown</h3>
+            <!-- Parameter Failure Table -->
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 overflow-x-auto">
+                <h3 class="text-base font-bold text-gray-800 mb-4">Parameter Failure Breakdown</h3>
                 <table class="w-full text-left text-sm text-gray-600">
-                    <thead class="bg-gray-50 text-gray-700 uppercase text-xs">
+                    <thead class="bg-gray-50 text-gray-700 uppercase text-xs tracking-wider">
                         <tr>
-                            <th class="px-6 py-3">Parameter</th>
-                            <th class="px-6 py-3 text-right">Failure Count</th>
-                            <th class="px-6 py-3 text-right">Share (%)</th>
+                            <th class="px-4 py-3">Parameter</th>
+                            <th class="px-4 py-3 text-right">Failure Count</th>
+                            <th class="px-4 py-3 text-right">Share (%)</th>
                         </tr>
                     </thead>
-                    <tbody id="parameter-table-body"></tbody>
+                    <tbody id="parameter-table-body" class="divide-y divide-gray-100"></tbody>
                 </table>
             </div>
 
-            <!-- Device / Monthly Summary Table -->
-            <div class="bg-white p-6 rounded-xl shadow-md overflow-x-auto">
-                <h3 class="text-lg font-bold text-gray-800 mb-4">Summary Breakdown</h3>
+            <!-- Summary Table -->
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 overflow-x-auto">
+                <h3 class="text-base font-bold text-gray-800 mb-4">Summary Breakdown</h3>
                 <table class="w-full text-left text-sm text-gray-600">
-                    <thead class="bg-gray-50 text-gray-700 uppercase text-xs">
+                    <thead class="bg-gray-50 text-gray-700 uppercase text-xs tracking-wider">
                         <tr>
-                            <th class="px-6 py-3">Category</th>
-                            <th class="px-6 py-3 text-right">Total</th>
-                            <th class="px-6 py-3 text-right">Passed</th>
-                            <th class="px-6 py-3 text-right">Failed</th>
-                            <th class="px-6 py-3 text-right">Fail Rate</th>
+                            <th class="px-4 py-3">Category</th>
+                            <th class="px-4 py-3 text-right">Total</th>
+                            <th class="px-4 py-3 text-right">Passed</th>
+                            <th class="px-4 py-3 text-right">Failed</th>
+                            <th class="px-4 py-3 text-right">Fail Rate</th>
                         </tr>
                     </thead>
-                    <tbody id="device-table-body"></tbody>
+                    <tbody id="device-table-body" class="divide-y divide-gray-100"></tbody>
                 </table>
             </div>
         </div>
@@ -178,9 +178,9 @@
                 let btn = document.getElementById('tab-' + t);
                 if (btn) {
                     if (t === type) {
-                        btn.className = "px-3 py-1.5 rounded-lg text-sm font-semibold text-white bg-indigo-500 shadow transition";
+                        btn.className = "px-3 py-1.5 rounded-lg text-xs md:text-sm font-semibold text-white bg-indigo-500 shadow transition";
                     } else {
-                        btn.className = "px-3 py-1.5 rounded-lg text-sm font-semibold text-indigo-200 hover:text-white transition";
+                        btn.className = "px-3 py-1.5 rounded-lg text-xs md:text-sm font-semibold text-indigo-200 hover:text-white transition";
                     }
                 }
             });
@@ -189,27 +189,23 @@
             updateDashboard();
         }
 
-        // Render Sub-filters for Weekly/Monthly
+        // Render Sub-filters for Monthly/Weekly
         function renderSubFilters() {
             const container = document.getElementById('sub-filter-container');
             container.innerHTML = '';
 
             if (currentTestType === 'monthly') {
-                container.innerHTML = `
-                    <button onclick="setMonthlyView('comparison')" class="px-3 py-1.5 ${currentMonth === 'comparison' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-700'} rounded-lg text-xs font-semibold shadow">Jan-Dec Comparison</button>
-                    <button onclick="setMonthlyView('jan')" class="px-3 py-1.5 ${currentMonth === 'jan' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-700'} rounded-lg text-xs font-semibold shadow">Jan</button>
-                    <button onclick="setMonthlyView('feb')" class="px-3 py-1.5 ${currentMonth === 'feb' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-700'} rounded-lg text-xs font-semibold shadow">Feb</button>
-                    <button onclick="setMonthlyView('mar')" class="px-3 py-1.5 ${currentMonth === 'mar' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-700'} rounded-lg text-xs font-semibold shadow">Mar</button>
-                    <button onclick="setMonthlyView('apr')" class="px-3 py-1.5 ${currentMonth === 'apr' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-700'} rounded-lg text-xs font-semibold shadow">Apr</button>
-                    <button onclick="setMonthlyView('may')" class="px-3 py-1.5 ${currentMonth === 'may' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-700'} rounded-lg text-xs font-semibold shadow">May</button>
-                    <button onclick="setMonthlyView('jun')" class="px-3 py-1.5 ${currentMonth === 'jun' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-700'} rounded-lg text-xs font-semibold shadow">Jun</button>
-                    <button onclick="setMonthlyView('jul')" class="px-3 py-1.5 ${currentMonth === 'jul' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-700'} rounded-lg text-xs font-semibold shadow">Jul</button>
-                    <button onclick="setMonthlyView('aug')" class="px-3 py-1.5 ${currentMonth === 'aug' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-700'} rounded-lg text-xs font-semibold shadow">Aug</button>
-                    <button onclick="setMonthlyView('sep')" class="px-3 py-1.5 ${currentMonth === 'sep' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-700'} rounded-lg text-xs font-semibold shadow">Sep</button>
-                    <button onclick="setMonthlyView('oct')" class="px-3 py-1.5 ${currentMonth === 'oct' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-700'} rounded-lg text-xs font-semibold shadow">Oct</button>
-                    <button onclick="setMonthlyView('nov')" class="px-3 py-1.5 ${currentMonth === 'nov' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-700'} rounded-lg text-xs font-semibold shadow">Nov</button>
-                    <button onclick="setMonthlyView('dec')" class="px-3 py-1.5 ${currentMonth === 'dec' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-700'} rounded-lg text-xs font-semibold shadow">Dec</button>
-                `;
+                const months = [
+                    { id: 'comparison', label: 'Jan-Dec Comparison' },
+                    { id: 'jan', label: 'Jan' }, { id: 'feb', label: 'Feb' }, { id: 'mar', label: 'Mar' },
+                    { id: 'apr', label: 'Apr' }, { id: 'may', label: 'May' }, { id: 'jun', label: 'Jun' },
+                    { id: 'jul', label: 'Jul' }, { id: 'aug', label: 'Aug' }, { id: 'sep', label: 'Sep' },
+                    { id: 'oct', label: 'Oct' }, { id: 'nov', label: 'Nov' }, { id: 'dec', label: 'Dec' }
+                ];
+                months.forEach(m => {
+                    let isActive = currentMonth === m.id;
+                    container.innerHTML += `<button onclick="setMonthlyView('${m.id}')" class="px-2.5 py-1 ${isActive ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'} rounded-lg text-xs font-medium shadow-sm transition">${m.label}</button>`;
+                });
             }
         }
 
@@ -403,23 +399,23 @@
                     grandFailed += mFai;
 
                     deviceTable.innerHTML += `
-                        <tr>
-                            <td class="px-6 py-3 font-medium text-gray-900">${monthLabels[idx]}</td>
-                            <td class="px-6 py-3 text-right text-gray-700">${mTot.toLocaleString()}</td>
-                            <td class="px-6 py-3 text-right text-emerald-600 font-medium">${mPas.toLocaleString()}</td>
-                            <td class="px-6 py-3 text-right text-rose-600 font-medium">${mFai.toLocaleString()}</td>
-                            <td class="px-6 py-3 text-right text-gray-600 font-semibold">${mRate}</td>
+                        <tr class="hover:bg-gray-50/50">
+                            <td class="px-4 py-3 font-medium text-gray-900">${monthLabels[idx]}</td>
+                            <td class="px-4 py-3 text-right text-gray-700">${mTot.toLocaleString()}</td>
+                            <td class="px-4 py-3 text-right text-emerald-600 font-medium">${mPas.toLocaleString()}</td>
+                            <td class="px-4 py-3 text-right text-rose-600 font-medium">${mFai.toLocaleString()}</td>
+                            <td class="px-4 py-3 text-right text-gray-600 font-semibold">${mRate}</td>
                         </tr>`;
                 });
 
                 let overallRate = grandTotal > 0 ? ((grandFailed / grandTotal) * 100).toFixed(2) + '%' : '0.00%';
                 deviceTable.innerHTML += `
-                    <tr class="bg-gray-50 font-bold">
-                        <td class="px-6 py-3 text-gray-900">Total (Yearly)</td>
-                        <td class="px-6 py-3 text-right text-gray-900">${grandTotal.toLocaleString()}</td>
-                        <td class="px-6 py-3 text-right text-emerald-600">${grandPassed.toLocaleString()}</td>
-                        <td class="px-6 py-3 text-right text-rose-600">${grandFailed.toLocaleString()}</td>
-                        <td class="px-6 py-3 text-right text-gray-900">${overallRate}</td>
+                    <tr class="bg-gray-50/80 font-bold border-t border-gray-200">
+                        <td class="px-4 py-3 text-gray-900">Total (Yearly)</td>
+                        <td class="px-4 py-3 text-right text-gray-900">${grandTotal.toLocaleString()}</td>
+                        <td class="px-4 py-3 text-right text-emerald-600">${grandPassed.toLocaleString()}</td>
+                        <td class="px-4 py-3 text-right text-rose-600">${grandFailed.toLocaleString()}</td>
+                        <td class="px-4 py-3 text-right text-gray-900">${overallRate}</td>
                     </tr>`;
 
                 let rxFail = allData.monthly.filter(row => getStatus(row, 'Rx Pass/Fail') === 'fail').length;
@@ -439,17 +435,17 @@
 
                 params.forEach(p => {
                     paramTable.innerHTML += `
-                        <tr>
-                            <td class="px-6 py-3 font-medium text-gray-900">${p.name}</td>
-                            <td class="px-6 py-3 text-right text-rose-600 font-semibold">${p.count}</td>
-                            <td class="px-6 py-3 text-right text-gray-600">${p.share}</td>
+                        <tr class="hover:bg-gray-50/50">
+                            <td class="px-4 py-3 font-medium text-gray-900">${p.name}</td>
+                            <td class="px-4 py-3 text-right text-rose-600 font-semibold">${p.count}</td>
+                            <td class="px-4 py-3 text-right text-gray-600">${p.share}</td>
                         </tr>`;
                 });
                 paramTable.innerHTML += `
-                    <tr class="bg-gray-50 font-bold">
-                        <td class="px-6 py-3 text-gray-900">Total</td>
-                        <td class="px-6 py-3 text-right text-rose-600">${totalParamFail}</td>
-                        <td class="px-6 py-3 text-right text-gray-900">100.00%</td>
+                    <tr class="bg-gray-50/80 font-bold border-t border-gray-200">
+                        <td class="px-4 py-3 text-gray-900">Total</td>
+                        <td class="px-4 py-3 text-right text-rose-600">${totalParamFail}</td>
+                        <td class="px-4 py-3 text-right text-gray-900">100.00%</td>
                     </tr>`;
 
             } else {
@@ -472,17 +468,17 @@
                 paramTable.innerHTML = '';
                 params.forEach(p => {
                     paramTable.innerHTML += `
-                        <tr>
-                            <td class="px-6 py-3 font-medium text-gray-900">${p.name}</td>
-                            <td class="px-6 py-3 text-right text-rose-600 font-semibold">${p.count}</td>
-                            <td class="px-6 py-3 text-right text-gray-600">${p.share}</td>
+                        <tr class="hover:bg-gray-50/50">
+                            <td class="px-4 py-3 font-medium text-gray-900">${p.name}</td>
+                            <td class="px-4 py-3 text-right text-rose-600 font-semibold">${p.count}</td>
+                            <td class="px-4 py-3 text-right text-gray-600">${p.share}</td>
                         </tr>`;
                 });
                 paramTable.innerHTML += `
-                    <tr class="bg-gray-50 font-bold">
-                        <td class="px-6 py-3 text-gray-900">Total</td>
-                        <td class="px-6 py-3 text-right text-rose-600">${totalParamFail}</td>
-                        <td class="px-6 py-3 text-right text-gray-900">100.00%</td>
+                    <tr class="bg-gray-50/80 font-bold border-t border-gray-200">
+                        <td class="px-4 py-3 text-gray-900">Total</td>
+                        <td class="px-4 py-3 text-right text-rose-600">${totalParamFail}</td>
+                        <td class="px-4 py-3 text-right text-gray-900">100.00%</td>
                     </tr>`;
 
                 let deviceNames = ['FFO', 'FFG', 'SCP', 'FFA', 'BFFA'];
@@ -501,30 +497,29 @@
                     sumFai += dFai;
 
                     deviceTable.innerHTML += `
-                        <tr>
-                            <td class="px-6 py-3 font-medium text-gray-900">${dev}</td>
-                            <td class="px-6 py-3 text-right text-gray-700">${dTot.toLocaleString()}</td>
-                            <td class="px-6 py-3 text-right text-emerald-600 font-medium">${dPas.toLocaleString()}</td>
-                            <td class="px-6 py-3 text-right text-rose-600 font-medium">${dFai}</td>
-                            <td class="px-6 py-3 text-right text-gray-600 font-semibold">${dRate}</td>
+                        <tr class="hover:bg-gray-50/50">
+                            <td class="px-4 py-3 font-medium text-gray-900">${dev}</td>
+                            <td class="px-4 py-3 text-right text-gray-700">${dTot.toLocaleString()}</td>
+                            <td class="px-4 py-3 text-right text-emerald-600 font-medium">${dPas.toLocaleString()}</td>
+                            <td class="px-4 py-3 text-right text-rose-600 font-medium">${dFai}</td>
+                            <td class="px-4 py-3 text-right text-gray-600 font-semibold">${dRate}</td>
                         </tr>`;
                 });
 
                 let overallFailRate = sumTot > 0 ? ((sumFai / sumTot) * 100).toFixed(2) + '%' : '0.00%';
                 deviceTable.innerHTML += `
-                    <tr class="bg-gray-50 font-bold">
-                        <td class="px-6 py-3 text-gray-900">Total</td>
-                        <td class="px-6 py-3 text-right text-gray-900">${sumTot.toLocaleString()}</td>
-                        <td class="px-6 py-3 text-right text-emerald-600">${sumPas.toLocaleString()}</td>
-                        <td class="px-6 py-3 text-right text-rose-600">${sumFai}</td>
-                        <td class="px-6 py-3 text-right text-gray-900">${overallFailRate}</td>
+                    <tr class="bg-gray-50/80 font-bold border-t border-gray-200">
+                        <td class="px-4 py-3 text-gray-900">Total</td>
+                        <td class="px-4 py-3 text-right text-gray-900">${sumTot.toLocaleString()}</td>
+                        <td class="px-4 py-3 text-right text-emerald-600">${sumPas.toLocaleString()}</td>
+                        <td class="px-4 py-3 text-right text-rose-600">${sumFai}</td>
+                        <td class="px-4 py-3 text-right text-gray-900">${overallFailRate}</td>
                     </tr>`;
             }
         }
 
         // Initialize Sample Data on Page Load
         window.onload = function() {
-            // Sample Initial Data for testing dashboard immediately
             allData.first = [
                 { 'Date': '2026-01-15', 'Olt Hostname': 'OVF-Provision-HGAO', 'Devices Name': 'FFO', 'Overall Pass/Fail': 'pass', 'Rx Pass/Fail': 'pass', 'Bias Pass/Fail': 'pass', 'Temp Pass/Fail': 'pass', 'Tx Pass/Fail': 'pass', 'Voltage Pass/Fail': 'pass' },
                 { 'Date': '2026-02-20', 'Olt Hostname': 'OVF-Provision-ENUO', 'Devices Name': 'FFG', 'Overall Pass/Fail': 'fail', 'Rx Pass/Fail': 'fail', 'Bias Pass/Fail': 'pass', 'Temp Pass/Fail': 'pass', 'Tx Pass/Fail': 'pass', 'Voltage Pass/Fail': 'pass' },
