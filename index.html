@@ -8,32 +8,54 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Chart.js CDN -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- PapaParse for CSV reading -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
 </head>
 <body class="bg-gray-100 text-gray-800">
 
-    <!-- Header Section -->
+    <!-- Header Section with Test Switcher Tabs -->
     <header class="bg-indigo-600 shadow-md">
-        <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-            <h1 class="text-xl font-bold text-white">ONU Inspection Report Dashboard</h1>
+        <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div class="flex items-center space-x-3">
+                <span class="bg-white p-2 rounded-lg shadow text-indigo-600 font-bold">ONU</span>
+                <h1 class="text-xl sm:text-2xl font-bold text-white">ONU Inspection Report Dashboard</h1>
+            </div>
+            
+            <!-- Test Switcher Tabs -->
+            <div class="flex bg-indigo-700 p-1 rounded-xl shadow-inner">
+                <button id="tab-first" onclick="switchTestType('first')" class="px-4 py-1.5 rounded-lg text-sm font-semibold text-white bg-indigo-500 shadow transition">First Test</button>
+                <button id="tab-second" onclick="switchTestType('second')" class="px-4 py-1.5 rounded-lg text-sm font-semibold text-indigo-200 hover:text-white transition">Second Test</button>
+                <button id="tab-exchange" onclick="switchTestType('exchange')" class="px-4 py-1.5 rounded-lg text-sm font-semibold text-indigo-200 hover:text-white transition">Exchange Devices</button>
+                <button id="tab-weekly" onclick="switchTestType('weekly')" class="px-4 py-1.5 rounded-lg text-sm font-semibold text-indigo-200 hover:text-white transition">Weekly</button>
+                <button id="tab-monthly" onclick="switchTestType('monthly')" class="px-4 py-1.5 rounded-lg text-sm font-semibold text-indigo-200 hover:text-white transition">Monthly</button>
+            </div>
         </div>
     </header>
 
     <!-- Main Content Layout -->
     <main class="max-w-7xl mx-auto px-4 py-6">
 
-        <!-- ၁။ လအလိုက် (Yearly Monthly Comparison) Chart အတွက် -->
+        <!-- Region Filter Buttons -->
+        <div class="flex flex-wrap gap-2 mb-6" id="region-filters">
+            <button onclick="filterByRegion('All')" class="px-4 py-2 bg-indigo-600 text-white rounded-lg shadow font-medium text-sm">All Regions</button>
+            <button onclick="filterByRegion('OVF-Provision-HGAO')" class="px-4 py-2 bg-white text-gray-700 hover:bg-gray-50 rounded-lg shadow font-medium text-sm">OVF-Provision-HGAO</button>
+            <button onclick="filterByRegion('OVF-Provision-ENUO')" class="px-4 py-2 bg-white text-gray-700 hover:bg-gray-50 rounded-lg shadow font-medium text-sm">OVF-Provision-ENUO</button>
+            <button onclick="filterByRegion('OVF-Provision-MDY')" class="px-4 py-2 bg-white text-gray-700 hover:bg-gray-50 rounded-lg shadow font-medium text-sm">OVF-Provision-MDY</button>
+        </div>
+
+        <!-- ၁။ လအလိုက် (Yearly Monthly Comparison) Chart -->
         <div class="bg-white p-6 rounded-xl shadow-md mb-6">
             <h3 class="text-lg font-bold text-gray-800 mb-4">Monthly Comparison (Jan - Dec) - Pass vs Fail</h3>
             <div style="height: 300px;"><canvas id="monthlyComparisonChart"></canvas></div>
         </div>
 
-        <!-- ၂။ မူလ OLT Region အလိုက် Chart အတွက် -->
+        <!-- ၂။ မူလ OLT Region အလိုက် Chart -->
         <div class="bg-white p-6 rounded-xl shadow-md mb-6">
             <h3 id="olt-chart-title" class="text-lg font-bold text-gray-800 mb-4">OLT Region Performance</h3>
             <div style="height: 300px;"><canvas id="oltChart"></canvas></div>
         </div>
 
-        <!-- ၃။ Failure Reasons Doughnut Chart အတွက် -->
+        <!-- ၃။ Failure Reasons Doughnut Chart -->
         <div class="bg-white p-6 rounded-xl shadow-md">
             <h3 class="text-lg font-bold text-gray-800 mb-4">Failure Reasons Breakdown</h3>
             <div style="height: 300px;"><canvas id="failureChart"></canvas></div>
@@ -43,23 +65,27 @@
 
     <!-- JavaScript Execution Block -->
     <script>
-        // Chart Instances များကို သိမ်းဆည်းရန် Variables များ
+        // Global Variables
+        let rawDataSet = [];
+        let filteredData = [];
+        let currentTestType = 'first';
+        let currentRegion = 'All';
+
         let monthlyComparisonChartInstance = null;
         let oltChartInstance = null;
         let failureChartInstance = null;
-        let currentRegion = 'All';
 
-        // Helper Functions (ဒေတာဖတ်ရန် အထောက်အကူပြု လုပ်ဆောင်ချက်များ)
+        // Helper Functions for Data Parsing
         function getVal(row, key) {
-            return row[key] || '';
+            return row[key] !== undefined && row[key] !== null ? String(row[key]).trim() : '';
         }
 
         function getStatus(row, key) {
-            return (row[key] || '').toLowerCase();
+            return getVal(row, key).toLowerCase();
         }
 
         function getDateObj(row) {
-            let dateStr = row['Date'] || row['Timestamp'] || '';
+            let dateStr = getVal(row, 'Date') || getVal(row, 'Timestamp');
             return dateStr ? new Date(dateStr) : null;
         }
 
@@ -68,10 +94,54 @@
             return codes[dateObj.getMonth()];
         }
 
-        // Chart များ တည်ဆောက်ခြင်းနှင့် ဒေတာဖြည့်တင်းခြင်း ဖန်ရှင်အပြည့်အစုံ
+        // Switch Test Type Tab Function
+        function switchTestType(type) {
+            currentTestType = type;
+            
+            // Update active tab styling
+            ['first', 'second', 'exchange', 'weekly', 'monthly'].forEach(t => {
+                let btn = document.getElementById('tab-' + t);
+                if (btn) {
+                    if (t === type) {
+                        btn.className = "px-4 py-1.5 rounded-lg text-sm font-semibold text-white bg-indigo-500 shadow transition";
+                    } else {
+                        btn.className = "px-4 py-1.5 rounded-lg text-sm font-semibold text-indigo-200 hover:text-white transition";
+                    }
+                }
+            });
+
+            loadDataForActiveTest();
+        }
+
+        // Filter By Region Function
+        function filterByRegion(region) {
+            currentRegion = region;
+            if (region === 'All') {
+                filteredData = [...rawDataSet];
+            } else {
+                filteredData = rawDataSet.filter(row => getVal(row, 'Olt Hostname') === region);
+            }
+            renderCharts(rawDataSet, filteredData);
+        }
+
+        // Load Data Source based on Test Type
+        function loadDataForActiveTest() {
+            // Sample test data for initial load and smooth rendering
+            if (rawDataSet.length === 0) {
+                rawDataSet = [
+                    { 'Date': '2026-01-15', 'Olt Hostname': 'OVF-Provision-HGAO', 'Overall Pass/Fail': 'pass', 'Rx Pass/Fail': 'pass', 'Bias Pass/Fail': 'pass', 'Temp Pass/Fail': 'pass', 'Tx Pass/Fail': 'pass', 'Voltage Pass/Fail': 'pass' },
+                    { 'Date': '2026-02-20', 'Olt Hostname': 'OVF-Provision-ENUO', 'Overall Pass/Fail': 'fail', 'Rx Pass/Fail': 'fail', 'Bias Pass/Fail': 'pass', 'Temp Pass/Fail': 'pass', 'Tx Pass/Fail': 'pass', 'Voltage Pass/Fail': 'pass' },
+                    { 'Date': '2026-03-10', 'Olt Hostname': 'OVF-Provision-MDY', 'Overall Pass/Fail': 'pass', 'Rx Pass/Fail': 'pass', 'Bias Pass/Fail': 'pass', 'Temp Pass/Fail': 'pass', 'Tx Pass/Fail': 'pass', 'Voltage Pass/Fail': 'pass' }
+                ];
+            }
+            filteredData = [...rawDataSet];
+            renderCharts(rawDataSet, filteredData);
+        }
+
+        // Render Charts Function (Monthly Comparison + OLT + Failure)
         function renderCharts(rawDataSet, filteredData) {
             
-            // ၁။ လအလိုက် Comparison Chart (Jan - Dec) ကို ဆွဲမည်
+            // ၁။ လအလိုက် Comparison Chart (Jan - Dec)
             let monthsLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
             let monthCodes = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
             let mTotals = [], mPassed = [], mFailed = [];
@@ -81,7 +151,7 @@
                     let d = getDateObj(row);
                     return d && monthNames_getCode(d) === mCode;
                 });
-                if (typeof currentRegion !== 'undefined' && currentRegion !== 'All') {
+                if (currentRegion !== 'All') {
                     mData = mData.filter(row => getVal(row, 'Olt Hostname') === currentRegion);
                 }
                 let tot = mData.length;
@@ -106,7 +176,7 @@
             });
 
 
-            // ၂။ မူလ OLT Region Chart ကို ဆွဲမည်
+            // ၂။ မူလ OLT Region Chart
             let regionsList = ['OVF-Provision-HGAO', 'OVF-Provision-ENUO', 'OVF-Provision-MDY'];
             let oltTotals = [], oltPassed = [], oltFailed = [];
 
@@ -134,7 +204,7 @@
             });
 
 
-            // ၃။ Failure Reasons Doughnut Chart ကို ဆွဲမည်
+            // ၃။ Failure Reasons Doughnut Chart
             let rxFail = filteredData.filter(row => getStatus(row, 'Rx Pass/Fail') === 'fail').length;
             let biasFail = filteredData.filter(row => getStatus(row, 'Bias Pass/Fail') === 'fail').length;
             let tempFail = filteredData.filter(row => getStatus(row, 'Temp Pass/Fail') === 'fail').length;
@@ -154,6 +224,11 @@
                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
             });
         }
+
+        // Initialize on page load
+        window.onload = function() {
+            loadDataForActiveTest();
+        };
     </script>
 </body>
 </html>
