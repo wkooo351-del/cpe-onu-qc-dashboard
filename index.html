@@ -545,22 +545,29 @@ function renderCharts(rawDataSet, filteredData) {
         }
 
         function renderTables(data) {
-            let rxFail = data.filter(row => getStatus(row, 'Rx Pass/Fail') === 'fail').length;
-            let biasFail = data.filter(row => getStatus(row, 'Bias Pass/Fail') === 'fail').length;
-            let tempFail = data.filter(row => getStatus(row, 'Temp Pass/Fail') === 'fail').length;
-            let txFail = data.filter(row => getStatus(row, 'Tx Pass/Fail') === 'fail').length;
-            let voltFail = data.filter(row => getStatus(row, 'Voltage Pass/Fail') === 'fail').length;
-            
-            let totalParamFail = rxFail + biasFail + tempFail + txFail + voltFail;
+           let rxFail = data.filter(row => getStatus(row, 'Rx Pass/Fail') === 'fail').length;
+    let biasFail = data.filter(row => getStatus(row, 'Bias Pass/Fail') === 'fail').length;
+    let tempFail = data.filter(row => getStatus(row, 'Temp Pass/Fail') === 'fail').length;
+    let txFail = data.filter(row => getStatus(row, 'Tx Pass/Fail') === 'fail').length;
+    let voltFail = data.filter(row => getStatus(row, 'Voltage Pass/Fail') === 'fail').length;
 
-            let params = [
-                { name: 'Rx Power', count: rxFail, share: totalParamFail ? ((rxFail/totalParamFail)*100).toFixed(2) + '%' : '0%' },
-                { name: 'Bias Current', count: biasFail, share: totalParamFail ? ((biasFail/totalParamFail)*100).toFixed(2) + '%' : '0%' },
-                { name: 'Temperature', count: tempFail, share: totalParamFail ? ((tempFail/totalParamFail)*100).toFixed(2) + '%' : '0%' },
-                { name: 'Tx Power', count: txFail, share: totalParamFail ? ((txFail/totalParamFail)*100).toFixed(2) + '%' : '0%' },
-                { name: 'Voltage', count: voltFail, share: totalParamFail ? ((voltFail/totalParamFail)*100).toFixed(2) + '%' : '0%' }
-            ];
+    let totalParamFail = rxFail + biasFail + tempFail + txFail + voltFail;
+    
+    // အထက်ပါ ၅ ခုပေါင်းထားခြင်း မရှိဘဲ ကျန်နေသော Total Failed အရေအတွက်ကို ယူရန်
+    // (အောက်ဘက် Device Models ဇယားမှ သို့မဟုတ် သတ်မှတ်ထားသော failed အခြေအနေမှ ယူနိုင်သည်)
+    let totalActualFailed = data.filter(row => getStatus(row, 'Overall Pass/Fail') === 'fail').length;
+    let otherFail = Math.max(0, totalActualFailed - totalParamFail);
+    
+    let grandTotalParamShare = totalActualFailed > 0 ? totalActualFailed : totalParamFail;
 
+    let params = [
+        { name: 'Rx Power', count: rxFail, share: grandTotalParamShare ? ((rxFail/grandTotalParamShare)*100).toFixed(2) + '%' : '0.00%' },
+        { name: 'Bias Current', count: biasFail, share: grandTotalParamShare ? ((biasFail/grandTotalParamShare)*100).toFixed(2) + '%' : '0.00%' },
+        { name: 'Temperature', count: tempFail, share: grandTotalParamShare ? ((tempFail/grandTotalParamShare)*100).toFixed(2) + '%' : '0.00%' },
+        { name: 'Tx Power', count: txFail, share: grandTotalParamShare ? ((txFail/grandTotalParamShare)*100).toFixed(2) + '%' : '0.00%' },
+        { name: 'Voltage', count: voltFail, share: grandTotalParamShare ? ((voltFail/grandTotalParamShare)*100).toFixed(2) + '%' : '0.00%' },
+        { name: 'Other / Unspecified', count: otherFail, share: grandTotalParamShare ? ((otherFail/grandTotalParamShare)*100).toFixed(2) + '%' : '0.00%' }
+    ];
             const paramTable = document.getElementById('parameter-table-body');
             paramTable.innerHTML = '';
             params.forEach(p => {
