@@ -109,7 +109,13 @@
                 <p id="kpi-fail-rate" class="mt-2 text-2xl sm:text-3xl font-bold text-amber-600">0.00%</p>
             </div>
         </div>
-
+<!-- Monthly Comparison Summary Card (Sep vs Oct နှိုင်းယှဉ်ရန်) -->
+<div id="monthly-comparison-card" class="bg-white p-4 rounded-xl shadow mb-6 hidden">
+    <h3 class="text-md font-bold text-gray-800 mb-3">Monthly Comparison Breakdown (Sep vs Oct)</h3>
+    <div id="monthly-comparison-content" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Dynamic Data များကို ဒီထဲမှာ ထည့်ပေးပါမယ် -->
+    </div>
+</div>
         <!-- Charts Section -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div class="bg-white p-6 rounded-xl shadow-sm">
@@ -457,7 +463,40 @@ function renderCharts(rawDataSet, filteredData) {
                     options: { responsive: true, maintainAspectRatio: false, scales: { x: { grid: { display: false } }, y: { beginAtZero: true } } }
                 });
             }
-        
+        // Monthly Comparison Card ကို ထိန်းချုပ်ရန်
+            let compCard = document.getElementById('monthly-comparison-card');
+            let compContent = document.getElementById('monthly-comparison-content');
+
+            if (currentTestType === 'monthly' && currentMonth === 'comparison') {
+                compCard.classList.remove('hidden'); // ပေါ်လာစေရန်
+                
+                // Sep နဲ့ Oct ဒေတာများကို သီးသန့်ခွဲထုတ် စစ်ဆေးခြင်း
+                let sepData = rawDataSet.filter(row => {
+                    let d = getDateObj(row);
+                    return d && d.getMonth() === 8; // 8 = September
+                });
+                
+                let octData = rawDataSet.filter(row => {
+                    let d = getDateObj(row);
+                    return d && d.getMonth() === 9; // 9 = October
+                });
+
+                // HTML ထဲသို့ နှိုင်းယှဉ်ချက် ထည့်သွင်းခြင်း
+                compContent.innerHTML = `
+                    <div class="p-3 bg-blue-50 rounded-lg border border-blue-200">
+                        <h4 class="font-semibold text-blue-800">September (Sep)</h4>
+                        <p class="text-sm text-gray-600">Total Tested: <span class="font-bold">${sepData.length}</span></p>
+                        <p class="text-sm text-gray-600">Passed: <span class="font-bold text-green-600">${sepData.filter(r => getStatus(r, 'Overall Pass/Fail') === 'pass').length}</span></p>
+                    </div>
+                    <div class="p-3 bg-indigo-50 rounded-lg border border-indigo-200">
+                        <h4 class="font-semibold text-indigo-800">October (Oct)</h4>
+                        <p class="text-sm text-gray-600">Total Tested: <span class="font-bold">${octData.length}</span></p>
+                        <p class="text-sm text-gray-600">Passed: <span class="font-bold text-green-600">${octData.filter(r => getStatus(r, 'Overall Pass/Fail') === 'pass').length}</span></p>
+                    </div>
+                `;
+            } else {
+                compCard.classList.add('hidden'); // တခြား Tab တွေမှာဆိုရင် ဖျောက်ထားမည်
+            }
 
             let rxFail = filteredData.filter(row => getStatus(row, 'Rx Pass/Fail') === 'fail').length;
             let biasFail = filteredData.filter(row => getStatus(row, 'Bias Pass/Fail') === 'fail').length;
