@@ -260,19 +260,23 @@ function monthNames_getCode(dateObj) {
         }
 
         function switchWeek(week) {
-            currentWeek = week;
-            ['week1', 'week2', 'week3', 'week4', 'comparison'].forEach(w => {
-                const btn = document.getElementById(`subtab-${w}`);
-                if (btn) {
-                    if (w === week) {
-                        btn.className = 'px-4 py-2 text-sm font-semibold rounded-lg bg-indigo-600 text-white shadow';
-                    } else {
-                        btn.className = 'px-4 py-2 text-sm font-semibold rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition';
-                    }
-                }
-            });
-            updateDashboard();
+    currentWeek = week;
+    ['week1', 'week2', 'week3', 'week4', 'comparison'].forEach(w => {
+        const btn = document.getElementById(`subtab-${w}`);
+        if (btn) {
+            if (w === week) {
+                btn.className = 'px-4 py-2 text-sm font-semibold rounded-lg bg-indigo-600 text-white shadow';
+            } else {
+                btn.className = 'px-4 py-2 text-sm font-semibold rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition';
+            }
         }
+    });
+    if (week === 'comparison') {
+        renderWeeklyComparison();
+    } else {
+        updateDashboard();
+    }
+}
 function renderWeeklyComparison() {
     const tableBody = document.getElementById('device-table-body');
     if (!tableBody) return;
