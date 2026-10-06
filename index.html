@@ -474,30 +474,47 @@ function renderCharts(rawDataSet, filteredData) {
             if (currentTestType === 'monthly' && currentMonth === 'comparison') {
                 compCard.classList.remove('hidden'); // ပေါ်လာစေရန်
                 
-                // Sep နဲ့ Oct ဒေတာများကို သီးသန့်ခွဲထုတ် စစ်ဆေးခြင်း
-                let sepData = rawDataSet.filter(row => {
-                    let d = getDateObj(row);
-                    return d && d.getMonth() === 8; // 8 = September
-                });
+                // ဒေတာထဲတွင် ပါရှိသည့် လအမည်များ (Code များနှင့်တကွ)
+                const monthsCode = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+                const monthsFull = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
                 
-                let octData = rawDataSet.filter(row => {
+                // ဒေတာထဲတွင် အမှန်တကယ် ပါဝင်နေသော လများကို ရှာဖွေခြင်း (Auto Detection)
+                let activeMonths = new Set();
+                rawDataSet.forEach(row => {
                     let d = getDateObj(row);
-                    return d && d.getMonth() === 9; // 9 = October
+                    if (d) {
+                        activeMonths.add(d.getMonth());
+                    }
                 });
 
-                // HTML ထဲသို့ နှိုင်းယှဉ်ချက် ထည့်သွင်းခြင်း
-                compContent.innerHTML = `
-                    <div class="p-3 bg-blue-50 rounded-lg border border-blue-200">
-                        <h4 class="font-semibold text-blue-800">September (Sep)</h4>
-                        <p class="text-sm text-gray-600">Total Tested: <span class="font-bold">${sepData.length}</span></p>
-                        <p class="text-sm text-gray-600">Passed: <span class="font-bold text-green-600">${sepData.filter(r => getStatus(r, 'Overall Pass/Fail') === 'pass').length}</span></p>
-                    </div>
-                    <div class="p-3 bg-indigo-50 rounded-lg border border-indigo-200">
-                        <h4 class="font-semibold text-indigo-800">October (Oct)</h4>
-                        <p class="text-sm text-gray-600">Total Tested: <span class="font-bold">${octData.length}</span></p>
-                        <p class="text-sm text-gray-600">Passed: <span class="font-bold text-green-600">${octData.filter(r => getStatus(r, 'Overall Pass/Fail') === 'pass').length}</span></p>
-                    </div>
-                `;
+                let htmlContent = '';
+                
+                // တွေ့ရှိရသည့် လများအလိုက် Card များကို အလိုအလျောက် တည်ဆောက်ခြင်း
+                activeMonths.forEach(mIndex => {
+                    let monthData = rawDataSet.filter(row => {
+                        let d = getDateObj(row);
+                        return d && d.getMonth() === mIndex;
+                    });
+                    
+                    let total = monthData.length;
+                    let passed = monthData.filter(r => getStatus(r, 'Overall Pass/Fail') === 'pass').length;
+                    let failed = monthData.filter(r => getStatus(r, 'Overall Pass/Fail') === 'fail').length;
+
+                    // လ အလိုက် အရောင်ကုဒ် လှလှလေးများ သတ်မှတ်ရန်
+                    let bgColors = ['bg-blue-50 border-blue-200 text-blue-800', 'bg-indigo-50 border-indigo-200 text-indigo-800', 'bg-purple-50 border-purple-200 text-purple-800', 'bg-teal-50 border-teal-200 text-teal-800'];
+                    let colorClass = bgColors[mIndex % bgColors.length];
+
+                    htmlContent += `
+                        <div class="p-3 rounded-lg border ${colorClass}">
+                            <h4 class="font-semibold">${monthsFull[mIndex]} (${monthsCode[mIndex].toUpperCase()})</h4>
+                            <p class="text-sm text-gray-600">Total Tested: <span class="font-bold text-gray-800">${total}</span></p>
+                            <p class="text-sm text-gray-600">Passed: <span class="font-bold text-green-600">${passed}</span></p>
+                            <p class="text-sm text-gray-600">Failed: <span class="font-bold text-rose-600">${failed}</span></p>
+                        </div>
+                    `;
+                });
+
+                compContent.innerHTML = htmlContent || '<p class="text-gray-500">No data available for comparison.</p>';
             } else {
                 compCard.classList.add('hidden'); // တခြား Tab တွေမှာဆိုရင် ဖျောက်ထားမည်
             }
