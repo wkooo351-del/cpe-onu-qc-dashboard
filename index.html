@@ -618,15 +618,17 @@ function renderCharts(rawDataSet, filteredData) {
     let overallFailRate = totalTestedCount > 0 ? ((totalFailedCount / totalTestedCount) * 100).toFixed(2) + '%' : '0.00%';
 
     deviceTable.innerHTML += `
-        <tr class="bg-gray-50 font-bold">
-            <td class="px-6 py-3">Total</td>
-            <td class="px-6 py-3 text-right text-gray-900">${totalTestedCount.toLocaleString()}</td>
-            <td class="px-6 py-3 text-right text-emerald-600 font-medium">${totalPassedCount.toLocaleString()}</td>
-            <td class="px-6 py-3 text-right text-rose-600 font-semibold">${totalFailedCount.toLocaleString()}</td>
-            <td class="px-6 py-3 text-right text-gray-600 font-semibold">${overallFailRate}</td>
-        </tr>
-    `;
-        }     
+            <tr class="bg-gray-50 font-bold">
+                <td class="px-6 py-3">Total</td>
+                <td class="px-6 py-3 text-right text-gray-900">${totalTestedCount.toLocaleString()}</td>
+                <td class="px-6 py-3 text-right text-emerald-600 font-medium">${totalPassedCount.toLocaleString()}</td>
+                <td class="px-6 py-3 text-right text-rose-600 font-semibold">${totalFailedCount.toLocaleString()}</td>
+                <td class="px-6 py-3 text-right text-gray-600 font-semibold">${overallFailRate}</td>
+            </tr>
+        `;
+    }
+    fetchSheetData();
+</script>
         fetchSheetData();
     </script>
 </body>
