@@ -281,7 +281,7 @@ function renderWeeklyComparison() {
     const weeks = ['week1', 'week2', 'week3', 'week4'];
     
     weeks.forEach((wk, index) => {
-        let weekRows = data.filter(row => getWeek(row) === wk);
+        let weekRows = rawdataSet.filter(row => getWeek(row) === wk);
         let wTot = weekRows.length;
         let wPas = weekRows.filter(row => getStatus(row, 'Overall Pass/Fail') === 'pass').length;
         let wFai = wTot - wPas;
