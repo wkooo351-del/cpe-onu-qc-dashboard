@@ -306,7 +306,19 @@ function renderWeeklyComparison() {
             </tr>
         `;
     });
+let overallFailRate = sumTot > 0 ? ((sumFai / sumTot) * 100).toFixed(2) + '%' : '0.00%';
 
+    // ဤနေရာတွင် စုစုပေါင်း (Total Comparison) တန်းကို ဆက်ထည့်ပါ
+    tableBody.innerHTML += `
+        <tr class="bg-gray-100 font-bold border-t-2 border-gray-200">
+            <td class="px-6 py-4 text-left text-gray-900">Total Comparison</td>
+            <td class="px-6 py-4 text-right text-gray-900">${sumTot.toLocaleString()}</td>
+            <td class="px-6 py-4 text-right text-emerald-600">${sumPas.toLocaleString()}</td>
+            <td class="px-6 py-4 text-right text-rose-600">${sumFai.toLocaleString()}</td>
+            <td class="px-6 py-4 text-right text-gray-900">${overallFailRate}</td>
+        </tr>
+    `;
+}
     let overallFailRate = sumTot > 0 ? ((sumFai / sumTot) * 100).toFixed(2) + '%' : '0.00%';
     tableBody.innerHTML += `
         <tr class="bg-gray-50 font-bold border-t-2 border-gray-200">
