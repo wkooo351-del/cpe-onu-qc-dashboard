@@ -350,12 +350,15 @@ function updateDashboard() {
 
             let filteredData = rawDataSet;
 
+            // Monthly Tab ရောက်နေပြီး Comparison မဟုတ်မှသာ သက်ဆိုင်ရာ လ (oct, sep စသည်ဖြင့်) အလိုက် စစ်ထုတ်မည်
             if (currentTestType === 'monthly') {
                 if (currentMonth !== 'comparison') {
                     filteredData = rawDataSet.filter(row => {
                         let d = getDateObj(row);
                         if (d) {
-                            return monthNames_getCode(d) === currentMonth;
+                            // လ အမည်ကို code (ဥပမာ- 'oct', 'sep') အဖြစ်ပြောင်းပြီး တိုက်စစ်သည်
+                            let mCode = monthNames_getCode(d);
+                            return mCode === currentMonth;
                         }
                         return false;
                     });
