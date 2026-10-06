@@ -280,24 +280,25 @@ function monthNames_getCode(dateObj) {
 function renderWeeklyComparison() {
     const tableBody = document.getElementById('device-table-body');
     if (!tableBody) return;
+    
     tableBody.innerHTML = '';
-
+    
     const weeks = ['week1', 'week2', 'week3', 'week4'];
     let sumTot = 0, sumPas = 0, sumFai = 0;
-
+    
     weeks.forEach((wk, index) => {
         let weekRows = rawDataSet.filter(row => getWeek(row) === wk);
         let wTot = weekRows.length;
         let wPas = weekRows.filter(row => getStatus(row, 'Overall Pass/Fail') === 'pass').length;
         let wFai = wTot - wPas;
         let wRate = wTot > 0 ? ((wFai / wTot) * 100).toFixed(2) + '%' : '0.00%';
-
+        
         sumTot += wTot;
         sumPas += wPas;
         sumFai += wFai;
-
+        
         tableBody.innerHTML += `
-            <tr>
+            <tr class="border-b hover:bg-gray-50">
                 <td class="px-6 py-3 font-medium text-gray-900">Week ${index + 1} Test</td>
                 <td class="px-6 py-3 text-right text-gray-900">${wTot.toLocaleString()}</td>
                 <td class="px-6 py-3 text-right text-emerald-600 font-medium">${wPas.toLocaleString()}</td>
@@ -306,11 +307,10 @@ function renderWeeklyComparison() {
             </tr>
         `;
     });
-let overallFailRate = sumTot > 0 ? ((sumFai / sumTot) * 100).toFixed(2) + '%' : '0.00%';
+    
+    // overallFailRate ကို တစ်ကြိမ်တည်းသာ let ဖြင့် ကြေညာရန်
+    let overallFailRate = sumTot > 0 ? ((sumFai / sumTot) * 100).toFixed(2) + '%' : '0.00%';
 
-   let overallFailRate = sumTot > 0 ? ((sumFai / sumTot) * 100).toFixed(2) + '%' : '0.00%';
-
-    // စုစုပေါင်း (Total Comparison) တန်းကို တစ်ကြိမ်တည်း သေသေသပ်သပ် ထည့်သွင်းခြင်း
     tableBody.innerHTML += `
         <tr class="bg-gray-50 font-bold border-t-2 border-gray-200">
             <td class="px-6 py-3 text-gray-900">Total Comparison</td>
