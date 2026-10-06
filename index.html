@@ -381,10 +381,10 @@ function updateDashboard() {
                 filteredData = filteredData.filter(row => getVal(row, 'Olt Hostname') === currentRegion);
             }
 
-            let totalTested = filteredData.length;
+           let totalTested = filteredData.length;
 let passedCount = filteredData.filter(row => getStatus(row, 'Overall Pass/Fail') === 'pass').length;
-let failedCount = filteredData.filter(row => getStatus(row, 'Overall Pass/Fail') === 'fail').length;
-let unknownCount = totalTested - (passedCount + failedCount);
+// Unknown များကိုပါ Failed ထဲသို့ အလိုအလျောက် ထည့်သွင်းရေတွက်ရန်
+let failedCount = totalTested - passedCount; 
 
 let passRate = totalTested > 0 ? ((passedCount / totalTested) * 100).toFixed(2) + '%' : '0.00%';
 let failRate = totalTested > 0 ? ((failedCount / totalTested) * 100).toFixed(2) + '%' : '0.00%';
