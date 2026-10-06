@@ -273,7 +273,31 @@ function monthNames_getCode(dateObj) {
             });
             updateDashboard();
         }
+function renderWeeklyComparison() {
+    const tableBody = document.getElementById('device-table-body');
+    if (!tableBody) return;
+    tableBody.innerHTML = '';
 
+    const weeks = ['week1', 'week2', 'week3', 'week4'];
+    
+    weeks.forEach((wk, index) => {
+        let weekRows = data.filter(row => getWeek(row) === wk);
+        let wTot = weekRows.length;
+        let wPas = weekRows.filter(row => getStatus(row, 'Overall Pass/Fail') === 'pass').length;
+        let wFai = wTot - wPas;
+        let wRate = wTot > 0 ? ((wFai / wTot) * 100).toFixed(2) + '%' : '0.00%';
+
+        tableBody.innerHTML += `
+            <tr>
+                <td class="px-6 py-3 font-medium text-gray-900">Week ${index + 1}</td>
+                <td class="px-6 py-3 text-right text-gray-900">${wTot.toLocaleString()}</td>
+                <td class="px-6 py-3 text-right text-emerald-600 font-medium">${wPas.toLocaleString()}</td>
+                <td class="px-6 py-3 text-right text-rose-600 font-medium">${wFai.toLocaleString()}</td>
+                <td class="px-6 py-3 text-right text-gray-600 font-semibold">${wRate}</td>
+            </tr>
+        `;
+    });
+}
         function switchMonth(month) {
             currentMonth = month;
             const months = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec', 'comparison'];
@@ -359,7 +383,11 @@ function updateDashboard() {
             }
 
             let filteredData = rawDataSet;
-
+// Weekly Tab ရောက်နေပြီး Comparison နှိပ်ထားပါက ၄ ပတ်စာ နှိုင်းယှဉ်ဇယား ထုတ်မည်
+    if (currentTestType === 'weekly' && currentWeek === 'comparison') {
+        renderWeeklyComparison();
+        return;
+    }
             // Monthly Tab ရောက်နေပြီး Comparison မဟုတ်မှသာ သက်ဆိုင်ရာ လ (oct, sep စသည်ဖြင့်) အလိုက် စစ်ထုတ်မည်
             if (currentTestType === 'monthly') {
                 if (currentMonth !== 'comparison') {
