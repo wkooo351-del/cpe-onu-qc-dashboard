@@ -187,7 +187,11 @@
 
         let oltChartInstance = null;
         let failureChartInstance = null;
-
+// လ အမည်ကို ကုဒ်အဖြစ်ပြောင်းပေးမည့် helper function
+function monthNames_getCode(dateObj) {
+    const monthsCode = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+    return monthsCode[dateObj.getMonth()];
+}
         function fetchSheetData() {
             fetch(WEB_APP_URL)
                 .then(response => response.json())
