@@ -279,17 +279,23 @@ function renderWeeklyComparison() {
     tableBody.innerHTML = '';
 
     const weeks = ['week1', 'week2', 'week3', 'week4'];
-    
+    let sumTot = 0, sumPas = 0, sumFai = 0; // စုစုပေါင်းအတွက် ကိန်းရှင်များ
+
     weeks.forEach((wk, index) => {
-        let weekRows = rawdataSet.filter(row => getWeek(row) === wk);
+        let weekRows = rawDataSet.filter(row => getWeek(row) === wk);
         let wTot = weekRows.length;
         let wPas = weekRows.filter(row => getStatus(row, 'Overall Pass/Fail') === 'pass').length;
         let wFai = wTot - wPas;
         let wRate = wTot > 0 ? ((wFai / wTot) * 100).toFixed(2) + '%' : '0.00%';
 
+        // ပေါင်းစုရန်
+        sumTot += wTot;
+        sumPas += wPas;
+        sumFai += wFai;
+
         tableBody.innerHTML += `
             <tr>
-                <td class="px-6 py-3 font-medium text-gray-900">Week ${index + 1}</td>
+                <td class="px-6 py-3 font-medium text-gray-900">Week ${index + 1} Test</td>
                 <td class="px-6 py-3 text-right text-gray-900">${wTot.toLocaleString()}</td>
                 <td class="px-6 py-3 text-right text-emerald-600 font-medium">${wPas.toLocaleString()}</td>
                 <td class="px-6 py-3 text-right text-rose-600 font-medium">${wFai.toLocaleString()}</td>
@@ -297,6 +303,18 @@ function renderWeeklyComparison() {
             </tr>
         `;
     });
+
+    // ဤနေရာတွင် စုစုပေါင်း (Total) တန်းကို ထည့်ပါ
+    let overallFailRate = sumTot > 0 ? ((sumFai / sumTot) * 100).toFixed(2) + '%' : '0.00%';
+    tableBody.innerHTML += `
+        <tr class="bg-gray-50 font-bold border-t-2 border-gray-200">
+            <td class="px-6 py-3 text-gray-900">Total Comparison</td>
+            <td class="px-6 py-3 text-right text-gray-900">${sumTot.toLocaleString()}</td>
+            <td class="px-6 py-3 text-right text-emerald-600 font-medium">${sumPas.toLocaleString()}</td>
+            <td class="px-6 py-3 text-right text-rose-600 font-medium">${sumFai.toLocaleString()}</td>
+            <td class="px-6 py-3 text-right text-gray-600 font-semibold">${overallFailRate}</td>
+        </tr>
+    `;
 }
         function switchMonth(month) {
             currentMonth = month;
