@@ -24,6 +24,8 @@
             </div>
             <!-- Test Switcher Tabs -->
             <div class="flex bg-indigo-700 p-1 rounded-xl shadow-inner">
+                function switchTestType(type) {
+}
                 <button id="tab-first" onclick="switchTestType('first')" class="px-4 py-1.5 ...">First Test</button>
                 <button id="tab-second" onclick="switchTestType('second')" class="px-4 py-1.5 ...">Second Test</button>
                 <button id="tab-exchange" onclick="switchTestType('exchange')" class="px-4 py-1.5 ...">Exchange Devices</button>
@@ -626,7 +628,7 @@ function renderCharts(rawDataSet, filteredData) {
             <td class="px-6 py-3 text-right text-gray-600 font-semibold">${overallFailRate}</td>
         </tr>
     `;
-            
+        }      
 
         fetchSheetData();
     </script>
