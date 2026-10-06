@@ -611,17 +611,22 @@ function renderCharts(rawDataSet, filteredData) {
                         <td class="px-6 py-3 text-right text-gray-600 font-semibold">${dRate}</td>
                     </tr>`;
             });
+// Global Summary ထဲက တန်ဖိုးများကို တိုက်ရိုက်ယူသုံးရန်
+    let totalTestedCount = data.length; // သို့မဟုတ် totalTested
+    let totalPassedCount = data.filter(row => getStatus(row, 'Overall Pass/Fail') === 'pass').length;
+    let totalFailedCount = totalActualFailed; // (432 အမှန်တကယ် ပေါ်လာမည့် variable)
+    let overallFailRate = totalTestedCount > 0 ? ((totalFailedCount / totalTestedCount) * 100).toFixed(2) + '%' : '0.00%';
 
-            let overallFailRate = sumTot > 0 ? ((sumFai / sumTot) * 100).toFixed(2) + '%' : '0.00%';
-            deviceTable.innerHTML += `
-                <tr class="bg-gray-50 font-bold">
-                    <td class="px-6 py-3 text-gray-900">Total</td>
-                    <td class="px-6 py-3 text-right text-gray-900">${sumTot.toLocaleString()}</td>
-                    <td class="px-6 py-3 text-right text-emerald-600">${sumPas.toLocaleString()}</td>
-                    <td class="px-6 py-3 text-right text-rose-600">${sumFai}</td>
-                    <td class="px-6 py-3 text-right text-gray-900">${overallFailRate}</td>
-                </tr>`;
-        }
+    deviceTable.innerHTML += `
+        <tr class="bg-gray-50 font-bold">
+            <td class="px-6 py-3">Total</td>
+            <td class="px-6 py-3 text-right text-gray-900">${totalTestedCount.toLocaleString()}</td>
+            <td class="px-6 py-3 text-right text-emerald-600 font-medium">${totalPassedCount.toLocaleString()}</td>
+            <td class="px-6 py-3 text-right text-rose-600 font-semibold">${totalFailedCount.toLocaleString()}</td>
+            <td class="px-6 py-3 text-right text-gray-600 font-semibold">${overallFailRate}</td>
+        </tr>
+    `;
+            
 
         fetchSheetData();
     </script>
