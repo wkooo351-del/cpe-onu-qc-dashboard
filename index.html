@@ -356,9 +356,11 @@ function updateDashboard() {
                     filteredData = rawDataSet.filter(row => {
                         let d = getDateObj(row);
                         if (d) {
-                            // လ အမည်ကို code (ဥပမာ- 'oct', 'sep') အဖြစ်ပြောင်းပြီး တိုက်စစ်သည်
-                            let mCode = monthNames_getCode(d);
-                            return mCode === currentMonth;
+                            // လ အမည်ကို အတိုကောက်ကုဒ် (ဥပမာ- 'sep', 'oct') အဖြစ် တိုက်ရိုက်ပြောင်းယူခြင်း
+                            const monthsCode = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+                            let mCode = monthsCode[d.getMonth()];
+                            
+                            return mCode === currentMonth.toLowerCase();
                         }
                         return false;
                     });
