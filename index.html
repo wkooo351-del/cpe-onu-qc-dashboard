@@ -279,7 +279,7 @@ function renderWeeklyComparison() {
     tableBody.innerHTML = '';
 
     const weeks = ['week1', 'week2', 'week3', 'week4'];
-    let sumTot = 0, sumPas = 0, sumFai = 0; // စုစုပေါင်းအတွက် ကိန်းရှင်များ
+    let sumTot = 0, sumPas = 0, sumFai = 0;
 
     weeks.forEach((wk, index) => {
         let weekRows = rawDataSet.filter(row => getWeek(row) === wk);
@@ -288,7 +288,6 @@ function renderWeeklyComparison() {
         let wFai = wTot - wPas;
         let wRate = wTot > 0 ? ((wFai / wTot) * 100).toFixed(2) + '%' : '0.00%';
 
-        // ပေါင်းစုရန်
         sumTot += wTot;
         sumPas += wPas;
         sumFai += wFai;
@@ -304,7 +303,6 @@ function renderWeeklyComparison() {
         `;
     });
 
-    // ဤနေရာတွင် စုစုပေါင်း (Total) တန်းကို ထည့်ပါ
     let overallFailRate = sumTot > 0 ? ((sumFai / sumTot) * 100).toFixed(2) + '%' : '0.00%';
     tableBody.innerHTML += `
         <tr class="bg-gray-50 font-bold border-t-2 border-gray-200">
@@ -675,7 +673,6 @@ function renderCharts(rawDataSet, filteredData) {
     }
     fetchSheetData();
 </script>
-        fetchSheetData();
     </script>
 </body>
 </html>
