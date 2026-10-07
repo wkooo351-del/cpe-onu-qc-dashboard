@@ -283,11 +283,14 @@ function renderWeeklyComparison() {
     
     tableBody.innerHTML = '';
     
+    // Weekly ဒေတာများကို getCurrentActiveDataset() မှ ရယူရန်
+    let activeData = getCurrentActiveDataset();
+    
     const weeks = ['week1', 'week2', 'week3', 'week4'];
     let sumTot = 0, sumPas = 0, sumFai = 0;
     
     weeks.forEach((wk, index) => {
-        let weekRows = rawDataSet.filter(row => getWeek(row) === wk);
+        let weekRows = activeData.filter(row => getWeek(row) === wk);
         let wTot = weekRows.length;
         let wPas = weekRows.filter(row => getStatus(row, 'Overall Pass/Fail') === 'pass').length;
         let wFai = wTot - wPas;
@@ -308,7 +311,6 @@ function renderWeeklyComparison() {
         `;
     });
     
-    // overallFailRate ကို တစ်ကြိမ်တည်းသာ let ဖြင့် ကြေညာရန်
     let overallFailRate = sumTot > 0 ? ((sumFai / sumTot) * 100).toFixed(2) + '%' : '0.00%';
 
     tableBody.innerHTML += `
