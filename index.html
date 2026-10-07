@@ -283,14 +283,18 @@ function renderWeeklyComparison() {
     
     tableBody.innerHTML = '';
     
-    // Weekly ဒေတာများကို getCurrentActiveDataset() မှ ရယူရန်
     let activeData = getCurrentActiveDataset();
     
     const weeks = ['week1', 'week2', 'week3', 'week4'];
     let sumTot = 0, sumPas = 0, sumFai = 0;
     
     weeks.forEach((wk, index) => {
-        let weekRows = activeData.filter(row => getWeek(row) === wk);
+        // week တန်ဖိုးကို တိကျစွာ စစ်ထုတ်နိုင်ရန် getVal သို့မဟုတ် သက်ဆိုင်ရာ key ကိုသုံးပါ
+        let weekRows = activeData.filter(row => {
+            let rowWeek = getVal(row, 'Week') || getVal(row, 'Test Week') || getWeek(row);
+            return cleanKey(rowWeek) === cleanKey(wk) || cleanKey(rowWeek).includes(wk);
+        });
+        
         let wTot = weekRows.length;
         let wPas = weekRows.filter(row => getStatus(row, 'Overall Pass/Fail') === 'pass').length;
         let wFai = wTot - wPas;
