@@ -284,14 +284,16 @@ if (week === 'comparison') {
             if (!tableBody) return;
             
             tableBody.innerHTML = '';
-            let activeData = getCurrentActiveDataset();
+            let activeData = getCurrentActiveDataset() || [];
             const weeks = ['week1', 'week2', 'week3', 'week4'];
             let sumTot = 0, sumPas = 0, sumFai = 0;
             
             weeks.forEach((wk, index) => {
                 let weekRows = activeData.filter(row => {
-                    let rowWeek = getVal(row, 'Week') || getVal(row, 'Test Week') || getWeek(row);
-                    return cleanKey(rowWeek) === cleanKey(wk) || cleanKey(rowWeek).includes(wk);
+                    let rowWeek = getVal(row, 'Week') || getVal(row, 'Test Week');
+                    if (!rowWeek) return index === 0; // ဒေတာမပါက ပထမပတ်သို့ ထည့်ရန်
+                    let cleanW = cleanKey(rowWeek);
+                    return cleanW === wk || cleanW.includes(wk);
                 });
                 
                 let wTot = weekRows.length;
