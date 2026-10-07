@@ -109,13 +109,13 @@
                 <p id="kpi-fail-rate" class="mt-2 text-2xl sm:text-3xl font-bold text-amber-600">0.00%</p>
             </div>
         </div>
-<!-- Monthly Comparison Summary Card (Sep vs Oct နှိုင်းယှဉ်ရန်) -->
-<div id="monthly-comparison-card" class="bg-white p-4 rounded-xl shadow mb-6 hidden">
-    <h3 class="text-md font-bold text-gray-800 mb-3">Monthly Comparison Breakdown (Sep vs Oct)</h3>
-    <div id="monthly-comparison-content" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <!-- Dynamic Data များကို ဒီထဲမှာ ထည့်ပေးပါမယ် -->
-    </div>
-</div>
+
+        <!-- Monthly Comparison Summary Card -->
+        <div id="monthly-comparison-card" class="bg-white p-4 rounded-xl shadow mb-6 hidden">
+            <h3 class="text-md font-bold text-gray-800 mb-3">Monthly Comparison Breakdown</h3>
+            <div id="monthly-comparison-content" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+        </div>
+
         <!-- Charts Section -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div class="bg-white p-6 rounded-xl shadow-sm">
@@ -158,21 +158,20 @@
                 </div>
                 <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-200 text-sm">
-                       <thead class="bg-gray-50 text-gray-500 uppercase text-xs">
-    <tr>
-        <th class="px-6 py-3 text-left font-semibold">Period</th>
-        <th class="px-6 py-3 text-right font-semibold">Total Tested</th>
-        <th class="px-6 py-3 text-right font-semibold">Passed</th>
-        <th class="px-6 py-3 text-right font-semibold">Failed</th>
-        <th class="px-6 py-3 text-right font-semibold">Fail Rate</th>
-    </tr>
-</thead>
+                        <thead class="bg-gray-50 text-gray-500 uppercase text-xs">
+                            <tr>
+                                <th class="px-6 py-3 text-left font-semibold">Period</th>
+                                <th class="px-6 py-3 text-right font-semibold">Total Tested</th>
+                                <th class="px-6 py-3 text-right font-semibold">Passed</th>
+                                <th class="px-6 py-3 text-right font-semibold">Failed</th>
+                                <th class="px-6 py-3 text-right font-semibold">Fail Rate</th>
+                            </tr>
+                        </thead>
                         <tbody id="device-table-body" class="divide-y divide-gray-200 bg-white"></tbody>
                     </table>
                 </div>
             </div>
         </div>
-
     </main>
 
     <!-- JavaScript Logic -->
@@ -187,11 +186,12 @@
 
         let oltChartInstance = null;
         let failureChartInstance = null;
-// လ အမည်ကို ကုဒ်အဖြစ်ပြောင်းပေးမည့် helper function
-function monthNames_getCode(dateObj) {
-    const monthsCode = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
-    return monthsCode[dateObj.getMonth()];
-}
+
+        function monthNames_getCode(dateObj) {
+            const monthsCode = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+            return monthsCode[dateObj.getMonth()];
+        }
+
         function fetchSheetData() {
             fetch(WEB_APP_URL)
                 .then(response => response.json())
@@ -260,73 +260,71 @@ function monthNames_getCode(dateObj) {
         }
 
         function switchWeek(week) {
-    currentWeek = week;
-    ['week1', 'week2', 'week3', 'week4', 'comparison'].forEach(w => {
-        const btn = document.getElementById(`subtab-${w}`);
-        if (btn) {
-            if (w === week) {
-                btn.className = 'px-4 py-2 text-sm font-semibold rounded-lg bg-indigo-600 text-white shadow';
+            currentWeek = week;
+            ['week1', 'week2', 'week3', 'week4', 'comparison'].forEach(w => {
+                const btn = document.getElementById(`subtab-${w}`);
+                if (btn) {
+                    if (w === week) {
+                        btn.className = 'px-4 py-2 text-sm font-semibold rounded-lg bg-indigo-600 text-white shadow';
+                    } else {
+                        btn.className = 'px-4 py-2 text-sm font-semibold rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition';
+                    }
+                }
+            });
+            if (week === 'comparison') {
+                renderWeeklyComparison();
             } else {
-                btn.className = 'px-4 py-2 text-sm font-semibold rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition';
+                updateDashboard();
             }
         }
-    });
-    if (week === 'comparison') {
-        renderWeeklyComparison();
-    } else {
-        updateDashboard();
-    }
-}
-function renderWeeklyComparison() {
-    const tableBody = document.getElementById('device-table-body');
-    if (!tableBody) return;
-    
-    tableBody.innerHTML = '';
-    
-    let activeData = getCurrentActiveDataset();
-    
-    const weeks = ['week1', 'week2', 'week3', 'week4'];
-    let sumTot = 0, sumPas = 0, sumFai = 0;
-    
-    weeks.forEach((wk, index) => {
-        // week တန်ဖိုးကို တိကျစွာ စစ်ထုတ်နိုင်ရန် getVal သို့မဟုတ် သက်ဆိုင်ရာ key ကိုသုံးပါ
-        let weekRows = activeData.filter(row => {
-            let rowWeek = getVal(row, 'Week') || getVal(row, 'Test Week') || getWeek(row);
-            return cleanKey(rowWeek) === cleanKey(wk) || cleanKey(rowWeek).includes(wk);
-        });
-        
-        let wTot = weekRows.length;
-        let wPas = weekRows.filter(row => getStatus(row, 'Overall Pass/Fail') === 'pass').length;
-        let wFai = wTot - wPas;
-        let wRate = wTot > 0 ? ((wFai / wTot) * 100).toFixed(2) + '%' : '0.00%';
-        
-        sumTot += wTot;
-        sumPas += wPas;
-        sumFai += wFai;
-        
-        tableBody.innerHTML += `
-            <tr class="border-b hover:bg-gray-50">
-                <td class="px-6 py-3 font-medium text-gray-900">Week ${index + 1} Test</td>
-                <td class="px-6 py-3 text-right text-gray-900">${wTot.toLocaleString()}</td>
-                <td class="px-6 py-3 text-right text-emerald-600 font-medium">${wPas.toLocaleString()}</td>
-                <td class="px-6 py-3 text-right text-rose-600 font-medium">${wFai.toLocaleString()}</td>
-                <td class="px-6 py-3 text-right text-gray-600 font-semibold">${wRate}</td>
-            </tr>
-        `;
-    });
-    
-    let overallFailRate = sumTot > 0 ? ((sumFai / sumTot) * 100).toFixed(2) + '%' : '0.00%';
 
-    tableBody.innerHTML += `
-        <tr class="bg-gray-50 font-bold border-t-2 border-gray-200">
-            <td class="px-6 py-3 text-gray-900">Total Comparison</td>
-            <td class="px-6 py-3 text-right text-gray-900">${sumTot.toLocaleString()}</td>
-            <td class="px-6 py-3 text-right text-emerald-600">${sumPas.toLocaleString()}</td>
-            <td class="px-6 py-3 text-right text-rose-600">${sumFai.toLocaleString()}</td>
-            <td class="px-6 py-3 text-right text-gray-600 font-semibold">${overallFailRate}</td>
-        </tr>
-    `;
-}
+        function renderWeeklyComparison() {
+            const tableBody = document.getElementById('device-table-body');
+            if (!tableBody) return;
+            
+            tableBody.innerHTML = '';
+            let activeData = getCurrentActiveDataset();
+            const weeks = ['week1', 'week2', 'week3', 'week4'];
+            let sumTot = 0, sumPas = 0, sumFai = 0;
+            
+            weeks.forEach((wk, index) => {
+                let weekRows = activeData.filter(row => {
+                    let rowWeek = getVal(row, 'Week') || getVal(row, 'Test Week') || getWeek(row);
+                    return cleanKey(rowWeek) === cleanKey(wk) || cleanKey(rowWeek).includes(wk);
+                });
+                
+                let wTot = weekRows.length;
+                let wPas = weekRows.filter(row => getStatus(row, 'Overall Pass/Fail') === 'pass').length;
+                let wFai = wTot - wPas;
+                let wRate = wTot > 0 ? ((wFai / wTot) * 100).toFixed(2) + '%' : '0.00%';
+                
+                sumTot += wTot;
+                sumPas += wPas;
+                sumFai += wFai;
+                
+                tableBody.innerHTML += `
+                    <tr class="border-b hover:bg-gray-50">
+                        <td class="px-6 py-3 font-medium text-gray-900">Week ${index + 1} Test</td>
+                        <td class="px-6 py-3 text-right text-gray-900">${wTot.toLocaleString()}</td>
+                        <td class="px-6 py-3 text-right text-emerald-600 font-medium">${wPas.toLocaleString()}</td>
+                        <td class="px-6 py-3 text-right text-rose-600 font-medium">${wFai.toLocaleString()}</td>
+                        <td class="px-6 py-3 text-right text-gray-600 font-semibold">${wRate}</td>
+                    </tr>
+                `;
+            });
+            
+            let overallFailRate = sumTot > 0 ? ((sumFai / sumTot) * 100).toFixed(2) + '%' : '0.00%';
+            tableBody.innerHTML += `
+                <tr class="bg-gray-50 font-bold border-t-2 border-gray-200">
+                    <td class="px-6 py-3 text-gray-900">Total Comparison</td>
+                    <td class="px-6 py-3 text-right text-gray-900">${sumTot.toLocaleString()}</td>
+                    <td class="px-6 py-3 text-right text-emerald-600">${sumPas.toLocaleString()}</td>
+                    <td class="px-6 py-3 text-right text-rose-600">${sumFai.toLocaleString()}</td>
+                    <td class="px-6 py-3 text-right text-gray-600 font-semibold">${overallFailRate}</td>
+                </tr>
+            `;
+        }
+
         function switchMonth(month) {
             currentMonth = month;
             const months = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec', 'comparison'];
@@ -382,7 +380,8 @@ function renderWeeklyComparison() {
             }
             return null;
         }
-function getWeek(row) {
+
+        function getWeek(row) {
             let val = getVal(row, 'Week') || getVal(row, 'Test Week');
             if (val) {
                 let clean = val.toString().toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -404,12 +403,10 @@ function getWeek(row) {
         }
 
         function getCurrentActiveDataset() {
-        function getCurrentActiveDataset() {
             if (currentTestType === 'first') return allData.firstTest;
             if (currentTestType === 'exchange') return allData.exchangeTest;
             if (currentTestType === 'second') return allData.secondTest;
             
-            // Weekly သို့မဟုတ် Monthly ဖြစ်နေလျှင် Summary ဒေတာကို သုံးမည်
             if (currentTestType === 'weekly' || currentTestType === 'monthly') {
                 return allData.summary;
             }
@@ -417,7 +414,7 @@ function getWeek(row) {
             return allData.secondTest;
         }
 
-function updateDashboard() {
+        function updateDashboard() {
             let rawDataSet = getCurrentActiveDataset();
 
             if (!rawDataSet || rawDataSet.length === 0) {
@@ -433,21 +430,18 @@ function updateDashboard() {
             }
 
             let filteredData = rawDataSet;
-// Weekly Tab ရောက်နေပြီး Comparison နှိပ်ထားပါက ၄ ပတ်စာ နှိုင်းယှဉ်ဇယား ထုတ်မည်
-    if (currentTestType === 'weekly' && currentWeek === 'comparison') {
-        renderWeeklyComparison();
-        return;
-    }
-            // Monthly Tab ရောက်နေပြီး Comparison မဟုတ်မှသာ သက်ဆိုင်ရာ လ (oct, sep စသည်ဖြင့်) အလိုက် စစ်ထုတ်မည်
+            if (currentTestType === 'weekly' && currentWeek === 'comparison') {
+                renderWeeklyComparison();
+                return;
+            }
+
             if (currentTestType === 'monthly') {
                 if (currentMonth !== 'comparison') {
                     filteredData = rawDataSet.filter(row => {
                         let d = getDateObj(row);
                         if (d) {
-                            // လ အမည်ကို အတိုကောက်ကုဒ် (ဥပမာ- 'sep', 'oct') အဖြစ် တိုက်ရိုက်ပြောင်းယူခြင်း
                             const monthsCode = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
                             let mCode = monthsCode[d.getMonth()];
-                            
                             return mCode === currentMonth.toLowerCase();
                         }
                         return false;
@@ -459,13 +453,13 @@ function updateDashboard() {
                 filteredData = filteredData.filter(row => getVal(row, 'Olt Hostname') === currentRegion);
             }
 
-           let totalTested = filteredData.length;
-let passedCount = filteredData.filter(row => getStatus(row, 'Overall Pass/Fail') === 'pass').length;
-// Unknown များကိုပါ Failed ထဲသို့ အလိုအလျောက် ထည့်သွင်းရေတွက်ရန်
-let failedCount = totalTested - passedCount; 
+            let totalTested = filteredData.length;
+            let passedCount = filteredData.filter(row => getStatus(row, 'Overall Pass/Fail') === 'pass').length;
+            let failedCount = totalTested - passedCount; 
 
-let passRate = totalTested > 0 ? ((passedCount / totalTested) * 100).toFixed(2) + '%' : '0.00%';
-let failRate = totalTested > 0 ? ((failedCount / totalTested) * 100).toFixed(2) + '%' : '0.00%';
+            let passRate = totalTested > 0 ? ((passedCount / totalTested) * 100).toFixed(2) + '%' : '0.00%';
+            let failRate = totalTested > 0 ? ((failedCount / totalTested) * 100).toFixed(2) + '%' : '0.00%';
+
             document.getElementById('kpi-total').innerText = totalTested.toLocaleString();
             document.getElementById('kpi-passed').innerText = passedCount.toLocaleString();
             document.getElementById('kpi-failed').innerText = failedCount.toLocaleString();
@@ -483,8 +477,8 @@ let failRate = totalTested > 0 ? ((failedCount / totalTested) * 100).toFixed(2) 
             renderCharts(rawDataSet, filteredData);
             renderTables(filteredData);
         }
-function renderCharts(rawDataSet, filteredData) {
-            // Monthly Tab မှာ Comparison ကို ရွေးထားမှသာ လအလိုက် Jan-Dec Chart ကိုပြမယ်
+
+        function renderCharts(rawDataSet, filteredData) {
             if (currentTestType === 'monthly' && currentMonth === 'comparison') {
                 let monthsLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
                 let monthCodes = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
@@ -519,7 +513,6 @@ function renderCharts(rawDataSet, filteredData) {
                     options: { responsive: true, maintainAspectRatio: false, scales: { x: { grid: { display: false } }, y: { beginAtZero: true } } }
                 });
             } else {
-                // ကျန်တဲ့ Tab တွေနဲ့ အခြားအခြေအနေတွေမှာ မူလ Region အလိုက် Chart ကိုပဲ ဆက်ပြမယ်
                 let regionsList = ['OVF-Provision-HGAO', 'OVF-Provision-ENUO', 'OVF-Provision-MDY'];
                 let oltTotals = [], oltPassed = [], oltFailed = [];
 
@@ -546,18 +539,15 @@ function renderCharts(rawDataSet, filteredData) {
                     options: { responsive: true, maintainAspectRatio: false, scales: { x: { grid: { display: false } }, y: { beginAtZero: true } } }
                 });
             }
-        // Monthly Comparison Card ကို ထိန်းချုပ်ရန်
+
             let compCard = document.getElementById('monthly-comparison-card');
             let compContent = document.getElementById('monthly-comparison-content');
 
             if (currentTestType === 'monthly' && currentMonth === 'comparison') {
-                compCard.classList.remove('hidden'); // ပေါ်လာစေရန်
-                
-                // ဒေတာထဲတွင် ပါရှိသည့် လအမည်များ (Code များနှင့်တကွ)
+                compCard.classList.remove('hidden');
                 const monthsCode = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
                 const monthsFull = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
                 
-                // ဒေတာထဲတွင် အမှန်တကယ် ပါဝင်နေသော လများကို ရှာဖွေခြင်း (Auto Detection)
                 let activeMonths = new Set();
                 rawDataSet.forEach(row => {
                     let d = getDateObj(row);
@@ -567,8 +557,6 @@ function renderCharts(rawDataSet, filteredData) {
                 });
 
                 let htmlContent = '';
-                
-                // တွေ့ရှိရသည့် လများအလိုက် Card များကို အလိုအလျောက် တည်ဆောက်ခြင်း
                 activeMonths.forEach(mIndex => {
                     let monthData = rawDataSet.filter(row => {
                         let d = getDateObj(row);
@@ -578,11 +566,8 @@ function renderCharts(rawDataSet, filteredData) {
                     let total = monthData.length;
                     let passed = monthData.filter(r => getStatus(r, 'Overall Pass/Fail') === 'pass').length;
                     let failed = monthData.filter(r => getStatus(r, 'Overall Pass/Fail') === 'fail').length;
-                    
-                    // Passed လည်းမဟုတ်၊ Failed လည်းမဟုတ်သော အခြားတန်ဖိုးများ (Unknown စသည်ဖြင့်) ကို တွက်ချက်ခြင်း
                     let unknown = total - (passed + failed);
 
-                    // လ အလိုက် အရောင်ကုဒ်များ သတ်မှတ်ရန်
                     let bgColors = ['bg-blue-50 border-blue-200 text-blue-800', 'bg-indigo-50 border-indigo-200 text-indigo-800', 'bg-purple-50 border-purple-200 text-purple-800', 'bg-teal-50 border-teal-200 text-teal-800'];
                     let colorClass = bgColors[mIndex % bgColors.length];
 
@@ -599,7 +584,7 @@ function renderCharts(rawDataSet, filteredData) {
 
                 compContent.innerHTML = htmlContent || '<p class="text-gray-500">No data available for comparison.</p>';
             } else {
-                compCard.classList.add('hidden'); // တခြား Tab တွေမှာဆိုရင် ဖျောက်ထားမည်
+                compCard.classList.add('hidden');
             }
 
             let rxFail = filteredData.filter(row => getStatus(row, 'Rx Pass/Fail') === 'fail').length;
@@ -623,29 +608,26 @@ function renderCharts(rawDataSet, filteredData) {
         }
 
         function renderTables(data) {
-           let rxFail = data.filter(row => getStatus(row, 'Rx Pass/Fail') === 'fail').length;
-    let biasFail = data.filter(row => getStatus(row, 'Bias Pass/Fail') === 'fail').length;
-    let tempFail = data.filter(row => getStatus(row, 'Temp Pass/Fail') === 'fail').length;
-    let txFail = data.filter(row => getStatus(row, 'Tx Pass/Fail') === 'fail').length;
-    let voltFail = data.filter(row => getStatus(row, 'Voltage Pass/Fail') === 'fail').length;
+            let rxFail = data.filter(row => getStatus(row, 'Rx Pass/Fail') === 'fail').length;
+            let biasFail = data.filter(row => getStatus(row, 'Bias Pass/Fail') === 'fail').length;
+            let tempFail = data.filter(row => getStatus(row, 'Temp Pass/Fail') === 'fail').length;
+            let txFail = data.filter(row => getStatus(row, 'Tx Pass/Fail') === 'fail').length;
+            let voltFail = data.filter(row => getStatus(row, 'Voltage Pass/Fail') === 'fail').length;
 
-    let totalParamFail = rxFail + biasFail + tempFail + txFail + voltFail;
-    
-    // အထက်ပါ ၅ ခုပေါင်းထားခြင်း မရှိဘဲ ကျန်နေသော Total Failed အရေအတွက်ကို ယူရန်
-    // (အောက်ဘက် Device Models ဇယားမှ သို့မဟုတ် သတ်မှတ်ထားသော failed အခြေအနေမှ ယူနိုင်သည်)
-    let totalActualFailed = data.filter(row => getStatus(row, 'Overall Pass/Fail') === 'fail').length;
-    let otherFail = Math.max(0, totalActualFailed - totalParamFail);
-    
-    let grandTotalParamShare = totalActualFailed > 0 ? totalActualFailed : totalParamFail;
+            let totalParamFail = rxFail + biasFail + tempFail + txFail + voltFail;
+            let totalActualFailed = data.filter(row => getStatus(row, 'Overall Pass/Fail') === 'fail').length;
+            let otherFail = Math.max(0, totalActualFailed - totalParamFail);
+            let grandTotalParamShare = totalActualFailed > 0 ? totalActualFailed : totalParamFail;
 
-    let params = [
-        { name: 'Rx Power', count: rxFail, share: grandTotalParamShare ? ((rxFail/grandTotalParamShare)*100).toFixed(2) + '%' : '0.00%' },
-        { name: 'Bias Current', count: biasFail, share: grandTotalParamShare ? ((biasFail/grandTotalParamShare)*100).toFixed(2) + '%' : '0.00%' },
-        { name: 'Temperature', count: tempFail, share: grandTotalParamShare ? ((tempFail/grandTotalParamShare)*100).toFixed(2) + '%' : '0.00%' },
-        { name: 'Tx Power', count: txFail, share: grandTotalParamShare ? ((txFail/grandTotalParamShare)*100).toFixed(2) + '%' : '0.00%' },
-        { name: 'Voltage', count: voltFail, share: grandTotalParamShare ? ((voltFail/grandTotalParamShare)*100).toFixed(2) + '%' : '0.00%' },
-        { name: 'Other / Unspecified', count: otherFail, share: grandTotalParamShare ? ((otherFail/grandTotalParamShare)*100).toFixed(2) + '%' : '0.00%' }
-    ];
+            let params = [
+                { name: 'Rx Power', count: rxFail, share: grandTotalParamShare ? ((rxFail/grandTotalParamShare)*100).toFixed(2) + '%' : '0.00%' },
+                { name: 'Bias Current', count: biasFail, share: grandTotalParamShare ? ((biasFail/grandTotalParamShare)*100).toFixed(2) + '%' : '0.00%' },
+                { name: 'Temperature', count: tempFail, share: grandTotalParamShare ? ((tempFail/grandTotalParamShare)*100).toFixed(2) + '%' : '0.00%' },
+                { name: 'Tx Power', count: txFail, share: grandTotalParamShare ? ((txFail/grandTotalParamShare)*100).toFixed(2) + '%' : '0.00%' },
+                { name: 'Voltage', count: voltFail, share: grandTotalParamShare ? ((voltFail/grandTotalParamShare)*100).toFixed(2) + '%' : '0.00%' },
+                { name: 'Other / Unspecified', count: otherFail, share: grandTotalParamShare ? ((otherFail/grandTotalParamShare)*100).toFixed(2) + '%' : '0.00%' }
+            ];
+
             const paramTable = document.getElementById('parameter-table-body');
             paramTable.innerHTML = '';
             params.forEach(p => {
@@ -668,7 +650,6 @@ function renderCharts(rawDataSet, filteredData) {
             deviceTable.innerHTML = '';
 
             let sumTot = 0, sumPas = 0, sumFai = 0;
-
             deviceNames.forEach(dev => {
                 let dRows = data.filter(row => getVal(row, 'Devices Name').toUpperCase() === dev);
                 let dTot = dRows.length;
@@ -689,24 +670,24 @@ function renderCharts(rawDataSet, filteredData) {
                         <td class="px-6 py-3 text-right text-gray-600 font-semibold">${dRate}</td>
                     </tr>`;
             });
-// Global Summary ထဲက တန်ဖိုးများကို တိုက်ရိုက်ယူသုံးရန်
-    let totalTestedCount = data.length; // သို့မဟုတ် totalTested
-    let totalPassedCount = data.filter(row => getStatus(row, 'Overall Pass/Fail') === 'pass').length;
-    let totalFailedCount = totalActualFailed; // (432 အမှန်တကယ် ပေါ်လာမည့် variable)
-    let overallFailRate = totalTestedCount > 0 ? ((totalFailedCount / totalTestedCount) * 100).toFixed(2) + '%' : '0.00%';
 
-    deviceTable.innerHTML += `
-            <tr class="bg-gray-50 font-bold">
-                <td class="px-6 py-3">Total</td>
-                <td class="px-6 py-3 text-right text-gray-900">${totalTestedCount.toLocaleString()}</td>
-                <td class="px-6 py-3 text-right text-emerald-600 font-medium">${totalPassedCount.toLocaleString()}</td>
-                <td class="px-6 py-3 text-right text-rose-600 font-semibold">${totalFailedCount.toLocaleString()}</td>
-                <td class="px-6 py-3 text-right text-gray-600 font-semibold">${overallFailRate}</td>
-            </tr>
-        `;
-    }
-    fetchSheetData();
-</script>
+            let totalTestedCount = data.length;
+            let totalPassedCount = data.filter(row => getStatus(row, 'Overall Pass/Fail') === 'pass').length;
+            let totalFailedCount = totalActualFailed;
+            let overallFailRate = totalTestedCount > 0 ? ((totalFailedCount / totalTestedCount) * 100).toFixed(2) + '%' : '0.00%';
+
+            deviceTable.innerHTML += `
+                <tr class="bg-gray-50 font-bold">
+                    <td class="px-6 py-3">Total</td>
+                    <td class="px-6 py-3 text-right text-gray-900">${totalTestedCount.toLocaleString()}</td>
+                    <td class="px-6 py-3 text-right text-emerald-600 font-medium">${totalPassedCount.toLocaleString()}</td>
+                    <td class="px-6 py-3 text-right text-rose-600 font-semibold">${totalFailedCount.toLocaleString()}</td>
+                    <td class="px-6 py-3 text-right text-gray-600 font-semibold">${overallFailRate}</td>
+                </tr>
+            `;
+        }
+
+        fetchSheetData();
     </script>
 </body>
 </html>
