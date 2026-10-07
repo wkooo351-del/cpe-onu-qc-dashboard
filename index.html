@@ -271,13 +271,14 @@
                     }
                 }
             });
-            if (week === 'comparison') {
+if (week === 'comparison') {
                 renderWeeklyComparison();
+    let rawDataSet = getCurrentActiveDataset();
+                renderCharts(rawDataSet, rawDataSet);
             } else {
                 updateDashboard();
             }
         }
-
         function renderWeeklyComparison() {
             const tableBody = document.getElementById('device-table-body');
             if (!tableBody) return;
