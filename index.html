@@ -293,9 +293,11 @@
             weeks.forEach((wk, index) => {
                 let weekRows = activeData.filter(row => {
                     if (!row) return false;
-                    let rowWeek = getVal(row, 'Week') || getVal(row, 'Test Week');
-                    let cleanW = cleanKey(rowWeek);
-                    return cleanW === wk || cleanW.includes(wk);
+                    let d = getDateObj(row);
+                    if (!d) return false;
+                    let day = d.getDate();
+                    let wNum = day <= 7 ? 1 : (day <= 14 ? 2 : (day <= 21 ? 3 : 4));
+                    return `week${wNum}` === wk;
                 });
                 
                 let wTot = weekRows.length;
@@ -349,9 +351,11 @@
 
                 weeks.forEach((wk, index) => {
                     let weekRows = activeData.filter(row => {
-                        let rowWeek = getVal(row, 'Week') || getVal(row, 'Test Week');
-                        let cleanW = cleanKey(rowWeek);
-                        return cleanW === wk || cleanW.includes(wk);
+                        let d = getDateObj(row);
+                        if (!d) return false;
+                        let day = d.getDate();
+                        let wNum = day <= 7 ? 1 : (day <= 14 ? 2 : (day <= 21 ? 3 : 4));
+                        return `week${wNum}` === wk;
                     });
 
                     let total = weekRows.length;
@@ -467,9 +471,11 @@
 
             if (currentTestType === 'weekly') {
                 filteredData = rawDataSet.filter(row => {
-                    let rowWeek = getVal(row, 'Week') || getVal(row, 'Test Week');
-                    let cleanW = cleanKey(rowWeek);
-                    return cleanW === currentWeek || cleanW.includes(currentWeek);
+                    let d = getDateObj(row);
+                    if (!d) return false;
+                    let day = d.getDate();
+                    let wNum = day <= 7 ? 1 : (day <= 14 ? 2 : (day <= 21 ? 3 : 4));
+                    return `week${wNum}` === currentWeek;
                 });
             } else if (currentTestType === 'monthly') {
                 if (currentMonth !== 'comparison') {
