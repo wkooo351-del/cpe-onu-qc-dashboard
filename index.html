@@ -382,7 +382,28 @@ function renderWeeklyComparison() {
             }
             return null;
         }
+function getWeek(row) {
+            let val = getVal(row, 'Week') || getVal(row, 'Test Week');
+            if (val) {
+                let clean = val.toString().toLowerCase().replace(/[^a-z0-9]/g, '');
+                if (clean.includes('1')) return 'week1';
+                if (clean.includes('2')) return 'week2';
+                if (clean.includes('3')) return 'week3';
+                if (clean.includes('4')) return 'week4';
+            }
+            
+            let d = getDateObj(row);
+            if (d) {
+                let day = d.getDate();
+                if (day <= 7) return 'week1';
+                if (day <= 14) return 'week2';
+                if (day <= 21) return 'week3';
+                return 'week4';
+            }
+            return 'week1';
+        }
 
+        function getCurrentActiveDataset() {
         function getCurrentActiveDataset() {
             if (currentTestType === 'first') return allData.firstTest;
             if (currentTestType === 'exchange') return allData.exchangeTest;
