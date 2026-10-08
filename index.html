@@ -452,13 +452,24 @@
         }
 
         function getDateObj(row) {
-            let val = getVal(row, 'Latest Time') || getVal(row, 'Date') || getVal(row, 'Time');
-            if (val) {
-                let d = new Date(val);
-                if (!isNaN(d.getTime())) return d;
-            }
-            return null;
+    let val = getVal(row, 'Latest Time') || getVal(row, 'Date') || getVal(row, 'Time');
+    if (!val) return null;
+    
+    // Sheet ထဲက "10/8/2026 10:46:00" ပုံစံ စာသားကို Timezone အလွှဲအပြော်မရှိဘဲ တိုက်ရိုက်ယူရန်
+    let datePart = val.toString().split(' ')[0];
+    let parts = datePart.split('/');
+    if (parts.length === 3) {
+        let month = parseInt(parts[0], 10);
+        let day = parseInt(parts[1], 10);
+        let year = parseInt(parts[2], 10);
+        if (!isNaN(year) && !isNaN(month) && !isNaN(day)) {
+            return new Date(year, month - 1, day);
         }
+    }
+    
+    let d = new Date(val);
+    return !isNaN(d.getTime()) ? d : null;
+}
 
         function getCurrentActiveDataset() {
             if (currentTestType === 'first') return allData.firstTest;
