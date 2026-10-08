@@ -4,41 +4,28 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CPE & ONU-QC Multi-Test Dashboard</title>
-    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Chart.js CDN -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #f4f5f7; }
-        /* Nav bar ကို ဘယ်တော့မှ အောက်မဆင်းဘဲ တစ်တန်းတည်း အမြဲတမ်းရှိနေစေရန် */
-        .strict-row-nav {
-            display: flex;
-            flex-wrap: nowrap !important;
-            overflow-x: auto;
-            gap: 4px;
-            align-items: center;
-        }
     </style>
 </head>
 <body class="text-gray-800">
 
-    <!-- Header with Test Switcher Tabs -->
     <header class="bg-indigo-600 shadow-md">
-        <div class="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-4">
+        <div class="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-center gap-4">
             <div class="flex items-center space-x-3">
                 <span class="bg-white p-2 rounded-lg shadow text-indigo-600 font-bold">📊</span>
-                <h1 class="text-xl sm:text-2xl font-bold text-white whitespace-nowrap">ONU Inspection Dashboard</h1>
+                <h1 class="text-xl sm:text-2xl font-bold text-white">ONU Inspection Report Dashboard</h1>
             </div>
-            
-            <!-- Test Switcher Tabs (လိုချင်တဲ့ပုံစံအတိုင်း တစ်တန်းတည်း သပ်ရပ်စွာ) -->
-            <div class="strict-row-nav bg-indigo-700 p-1 rounded-xl shadow-inner">
-                <button id="tab-first" onclick="switchTestType('first')" class="px-3 py-1.5 rounded-lg text-sm font-semibold transition text-white hover:bg-indigo-600 whitespace-nowrap">First Test</button>
-                <button id="tab-second" onclick="switchTestType('second')" class="px-3 py-1.5 rounded-lg text-sm font-semibold transition text-white hover:bg-indigo-600 whitespace-nowrap">Second Test</button>
-                <button id="tab-exchange" onclick="switchTestType('exchange')" class="px-3 py-1.5 rounded-lg text-sm font-semibold transition text-white hover:bg-indigo-600 whitespace-nowrap">Exchange Devices</button>
-                <button id="tab-daily" onclick="switchTestType('daily')" class="px-3 py-1.5 rounded-lg text-sm font-semibold transition text-white hover:bg-indigo-600 whitespace-nowrap">Daily</button>
-                <button id="tab-weekly" onclick="switchTestType('weekly')" class="px-3 py-1.5 rounded-lg text-sm font-semibold transition text-white hover:bg-indigo-600 whitespace-nowrap">Weekly</button>
-                <button id="tab-monthly" onclick="switchTestType('monthly')" class="px-3 py-1.5 rounded-lg text-sm font-semibold transition text-white hover:bg-indigo-600 whitespace-nowrap">Monthly</button>
+            <div class="flex flex-wrap bg-indigo-700 p-1 rounded-xl shadow-inner gap-1 justify-center">
+                <button id="tab-first" onclick="switchTestType('first')" class="px-3 py-1.5 rounded-lg text-sm font-semibold transition text-white hover:bg-indigo-600">First Test</button>
+                <button id="tab-second" onclick="switchTestType('second')" class="px-3 py-1.5 rounded-lg text-sm font-semibold transition text-white hover:bg-indigo-600">Second Test</button>
+                <button id="tab-exchange" onclick="switchTestType('exchange')" class="px-3 py-1.5 rounded-lg text-sm font-semibold transition text-white hover:bg-indigo-600">Exchange Devices</button>
+                <button id="tab-daily" onclick="switchTestType('daily')" class="px-3 py-1.5 rounded-lg text-sm font-semibold transition text-white hover:bg-indigo-600">Daily</button>
+                <button id="tab-weekly" onclick="switchTestType('weekly')" class="px-3 py-1.5 rounded-lg text-sm font-semibold transition text-white hover:bg-indigo-600">Weekly</button>
+                <button id="tab-monthly" onclick="switchTestType('monthly')" class="px-3 py-1.5 rounded-lg text-sm font-semibold transition text-white hover:bg-indigo-600">Monthly</button>
             </div>
 
             <div class="flex items-center space-x-3">
@@ -53,28 +40,24 @@
         </div>
     </header>
 
-    <!-- Main Container -->
     <main class="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8 space-y-6">
         
-        <!-- Daily Date Picker Container -->
         <div id="daily-container" class="hidden bg-white p-4 rounded-xl shadow-sm flex items-center space-x-4">
             <label for="daily-date-input" class="text-sm font-semibold text-gray-700">Select Date:</label>
             <input type="date" id="daily-date-input" onchange="onDateChanged()" class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
             <span id="daily-selected-label" class="text-xs text-gray-500"></span>
         </div>
 
-        <!-- Weekly Sub-Tabs Container -->
         <div id="weekly-container" class="hidden mb-6">
             <div class="flex space-x-2 border-b border-gray-200 pb-3 overflow-x-auto">
-                <button onclick="switchWeek('week1')" id="subtab-week1" class="px-4 py-2 text-sm font-semibold rounded-lg bg-indigo-600 text-white shadow whitespace-nowrap">Week 1 Test</button>
-                <button onclick="switchWeek('week2')" id="subtab-week2" class="px-4 py-2 text-sm font-semibold rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition whitespace-nowrap">Week 2 Test</button>
-                <button onclick="switchWeek('week3')" id="subtab-week3" class="px-4 py-2 text-sm font-semibold rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition whitespace-nowrap">Week 3 Test</button>
-                <button onclick="switchWeek('week4')" id="subtab-week4" class="px-4 py-2 text-sm font-semibold rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition whitespace-nowrap">Week 4 Test</button>
+                <button onclick="switchWeek('week1')" id="subtab-week1" class="px-4 py-2 text-sm font-semibold rounded-lg bg-indigo-600 text-white shadow">Week 1 Test</button>
+                <button onclick="switchWeek('week2')" id="subtab-week2" class="px-4 py-2 text-sm font-semibold rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition">Week 2 Test</button>
+                <button onclick="switchWeek('week3')" id="subtab-week3" class="px-4 py-2 text-sm font-semibold rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition">Week 3 Test</button>
+                <button onclick="switchWeek('week4')" id="subtab-week4" class="px-4 py-2 text-sm font-semibold rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition">Week 4 Test</button>
                 <button onclick="switchWeek('comparison')" id="subtab-comparison" class="px-4 py-2 text-sm font-semibold rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition whitespace-nowrap">📊 Week-by-Week Comparison</button>
             </div>
         </div>
 
-        <!-- Monthly Sub-Tabs Container -->
         <div id="monthly-container" class="hidden mb-6 overflow-x-auto">
             <div class="flex space-x-2 border-b border-gray-200 pb-3 whitespace-nowrap">
                 <button onclick="switchMonth('jan')" id="subtab-jan" class="px-3 py-1.5 text-sm font-semibold rounded-lg bg-indigo-600 text-white shadow">Jan</button>
@@ -93,7 +76,6 @@
             </div>
         </div>
 
-        <!-- Region Filter Bar -->
         <div class="bg-white p-4 rounded-xl shadow-sm flex flex-col sm:flex-row justify-between items-center gap-4">
             <span class="text-sm font-semibold text-gray-600 uppercase tracking-wider"><span id="active-test-label">Exchange Devices</span> - Select Region:</span>
             <div class="flex flex-wrap gap-2" id="region-filters">
@@ -104,7 +86,6 @@
             </div>
         </div>
 
-        <!-- KPI Cards -->
         <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
             <div class="bg-white p-5 rounded-xl shadow-sm border-t-4 border-indigo-500">
                 <p class="text-xs font-semibold text-gray-400 uppercase">Total Tested</p>
@@ -128,13 +109,11 @@
             </div>
         </div>
 
-        <!-- Comparison Summary Card -->
         <div id="comparison-card" class="bg-white p-4 rounded-xl shadow mb-6 hidden">
             <h3 id="comparison-card-title" class="text-md font-bold text-gray-800 mb-3">Comparison Breakdown</h3>
             <div id="comparison-content" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"></div>
         </div>
 
-        <!-- Charts Section -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div class="bg-white p-6 rounded-xl shadow-sm">
                 <h3 id="olt-chart-title" class="text-base font-bold text-gray-800 mb-4">Pass vs Fail & Total Comparison (All Regions)</h3>
@@ -150,7 +129,6 @@
             </div>
         </div>
 
-        <!-- Tables Section -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div class="bg-white rounded-xl shadow-sm overflow-hidden">
                 <div class="px-6 py-4 bg-gray-50 border-b border-gray-100">
@@ -192,7 +170,6 @@
         </div>
     </main>
 
-    <!-- JavaScript Logic -->
     <script>
         const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbwsI5qlj5n-jBgneiEC7dbiHY2ap6TnbR2fqrU93EV3JsyoUMjNB1fklF2P-fa0VxPeyw/exec';
 
@@ -247,16 +224,15 @@
                 }
             });
 
-            const inactiveStyle = 'px-3 py-1.5 rounded-lg text-sm font-semibold transition text-white hover:bg-indigo-600 whitespace-nowrap';
-            const activeStyle = 'px-3 py-1.5 rounded-lg text-sm font-semibold transition bg-white text-indigo-600 shadow whitespace-nowrap';
+            const inactiveStyle = 'px-3 py-1.5 rounded-lg text-sm font-semibold transition text-white hover:bg-indigo-600';
+            const activeStyle = 'px-3 py-1.5 rounded-lg text-sm font-semibold transition bg-white text-indigo-600 shadow';
 
-            ['first', 'second', 'exchange', 'daily', 'weekly', 'monthly'].forEach(t => {
-                let el = document.getElementById(`tab-${t}`);
-                if(el) el.className = inactiveStyle;
-            });
-
-            let activeTabEl = document.getElementById(`tab-${type}`);
-            if(activeTabEl) activeTabEl.className = activeStyle;
+            document.getElementById('tab-first').className = inactiveStyle;
+            document.getElementById('tab-second').className = inactiveStyle;
+            document.getElementById('tab-exchange').className = inactiveStyle;
+            document.getElementById('tab-daily').className = inactiveStyle;
+            document.getElementById('tab-weekly').className = inactiveStyle;
+            document.getElementById('tab-monthly').className = inactiveStyle;
 
             const dailyContainer = document.getElementById('daily-container');
             const weeklyContainer = document.getElementById('weekly-container');
@@ -267,18 +243,24 @@
             if(monthlyContainer) monthlyContainer.classList.add('hidden');
 
             if (type === 'first') {
+                document.getElementById('tab-first').className = activeStyle;
                 document.getElementById('active-test-label').innerText = 'First Test';
             } else if (type === 'second') {
+                document.getElementById('tab-second').className = activeStyle;
                 document.getElementById('active-test-label').innerText = 'Second Test';
             } else if (type === 'exchange') {
+                document.getElementById('tab-exchange').className = activeStyle;
                 document.getElementById('active-test-label').innerText = 'Exchange Devices';
             } else if (type === 'daily') {
+                document.getElementById('tab-daily').className = activeStyle;
                 document.getElementById('active-test-label').innerText = 'Daily Analytics';
                 if(dailyContainer) dailyContainer.classList.remove('hidden');
             } else if (type === 'weekly') {
+                document.getElementById('tab-weekly').className = activeStyle;
                 document.getElementById('active-test-label').innerText = 'Weekly Analytics';
                 if(weeklyContainer) weeklyContainer.classList.remove('hidden');
             } else if (type === 'monthly') {
+                document.getElementById('tab-monthly').className = activeStyle;
                 document.getElementById('active-test-label').innerText = 'Monthly Analytics';
                 if(monthlyContainer) monthlyContainer.classList.remove('hidden');
             }
@@ -295,9 +277,9 @@
                 const btn = document.getElementById(`subtab-${w}`);
                 if (btn) {
                     if (w === week) {
-                        btn.className = 'px-4 py-2 text-sm font-semibold rounded-lg bg-indigo-600 text-white shadow whitespace-nowrap';
+                        btn.className = 'px-4 py-2 text-sm font-semibold rounded-lg bg-indigo-600 text-white shadow';
                     } else {
-                        btn.className = 'px-4 py-2 text-sm font-semibold rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition whitespace-nowrap';
+                        btn.className = 'px-4 py-2 text-sm font-semibold rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition';
                     }
                 }
             });
@@ -323,6 +305,16 @@
             weeks.forEach((wk, index) => {
                 let weekRows = activeData.filter(row => {
                     if (!row) return false;
+                    let d = getDateObj(row);
+                    if (d) {
+                        let dayOfMonth = d.getDate();
+                        let calcWeek = 'week1';
+                        if (dayOfMonth >= 1 && dayOfMonth <= 7) calcWeek = 'week1';
+                        else if (dayOfMonth >= 8 && dayOfMonth <= 14) calcWeek = 'week2';
+                        else if (dayOfMonth >= 15 && dayOfMonth <= 21) calcWeek = 'week3';
+                        else calcWeek = 'week4';
+                        return calcWeek === wk;
+                    }
                     let rowWeek = getVal(row, 'Week') || getVal(row, 'Test Week');
                     let cleanW = cleanKey(rowWeek);
                     return cleanW === wk || cleanW.includes(wk);
@@ -379,6 +371,16 @@
 
                 weeks.forEach((wk, index) => {
                     let weekRows = activeData.filter(row => {
+                        let d = getDateObj(row);
+                        if (d) {
+                            let dayOfMonth = d.getDate();
+                            let calcWeek = 'week1';
+                            if (dayOfMonth >= 1 && dayOfMonth <= 7) calcWeek = 'week1';
+                            else if (dayOfMonth >= 8 && dayOfMonth <= 14) calcWeek = 'week2';
+                            else if (dayOfMonth >= 15 && dayOfMonth <= 21) calcWeek = 'week3';
+                            else calcWeek = 'week4';
+                            return calcWeek === wk;
+                        }
                         let rowWeek = getVal(row, 'Week') || getVal(row, 'Test Week');
                         let cleanW = cleanKey(rowWeek);
                         return cleanW === wk || cleanW.includes(wk);
@@ -454,7 +456,6 @@
             return val.toLowerCase();
         }
 
-        // Timezone အလွှဲအပြော်ကင်းရှင်းစေသော Date Parser (ရက်စွဲတိကျမှန်ကန်စေရန်)
         function getDateObj(row) {
             let val = getVal(row, 'Latest Time') || getVal(row, 'Date') || getVal(row, 'Time');
             if (!val) return null;
@@ -475,11 +476,10 @@
         }
 
         function getCurrentActiveDataset() {
-            // Daily နဲ့ Weekly အတွက် ဒေတာများကို exchangeTest (သို့မဟုတ် အဓိကဒေတာ) မှ ရယူစေရန် ပြင်ဆင်ထားသည်
             if (currentTestType === 'first') return allData.firstTest;
             if (currentTestType === 'second') return allData.secondTest;
-            if (currentTestType === 'exchange' || currentTestType === 'daily') return allData.exchangeTest;
-            if (currentTestType === 'weekly' || currentTestType === 'monthly') {
+            if (currentTestType === 'exchange') return allData.exchangeTest;
+            if (currentTestType === 'daily' || currentTestType === 'weekly' || currentTestType === 'monthly') {
                 return (allData.summary && allData.summary.length > 0) ? allData.summary : allData.exchangeTest;
             }
             return allData.exchangeTest;
@@ -519,6 +519,10 @@
                             let rowDateStr = `${yyyy}-${mm}-${dd}`;
                             return rowDateStr === selectedDateVal;
                         }
+                        let rawDateVal = getVal(row, 'Latest Time') || getVal(row, 'Date') || getVal(row, 'Time');
+                        if (rawDateVal && rawDateVal.includes(selectedDateVal)) {
+                            return true;
+                        }
                         return false;
                     });
                 }
@@ -527,23 +531,23 @@
                     let d = getDateObj(row);
                     if (d) {
                         let dayOfMonth = d.getDate();
-                        let calculatedWeek = 'week1';
-                        if (dayOfMonth >= 1 && dayOfMonth <= 7) calculatedWeek = 'week1';
-                        else if (dayOfMonth >= 8 && dayOfMonth <= 14) calculatedWeek = 'week2';
-                        else if (dayOfMonth >= 15 && dayOfMonth <= 21) calculatedWeek = 'week3';
-                        else calculatedWeek = 'week4';
-                        
-                        return calculatedWeek === currentWeek;
+                        let calcWeek = 'week1';
+                        if (dayOfMonth >= 1 && dayOfMonth <= 7) calcWeek = 'week1';
+                        else if (dayOfMonth >= 8 && dayOfMonth <= 14) calcWeek = 'week2';
+                        else if (dayOfMonth >= 15 && dayOfMonth <= 21) calcWeek = 'week3';
+                        else calcWeek = 'week4';
+                        return calcWeek === currentWeek;
                     }
-                    return false;
+                    let rowWeek = getVal(row, 'Week') || getVal(row, 'Test Week');
+                    let cleanW = cleanKey(rowWeek);
+                    return cleanW === currentWeek || cleanW.includes(currentWeek);
                 });
             } else if (currentTestType === 'monthly') {
                 if (currentMonth !== 'comparison') {
                     filteredData = rawDataSet.filter(row => {
                         let d = getDateObj(row);
                         if (d) {
-                            const monthsCode = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
-                            let mCode = monthsCode[d.getMonth()];
+                            let mCode = monthNames_getCode(d);
                             return mCode === currentMonth.toLowerCase();
                         }
                         return false;
