@@ -23,12 +23,13 @@
                 <h1 class="text-xl sm:text-2xl font-bold text-white">ONU Inspection Report Dashboard</h1>
             </div>
             <!-- Test Switcher Tabs -->
-            <div class="flex bg-indigo-700 p-1 rounded-xl shadow-inner">
-                <button id="tab-first" onclick="switchTestType('first')" class="px-4 py-1.5 rounded-lg text-sm font-semibold transition text-white hover:bg-indigo-600">First Test</button>
-                <button id="tab-second" onclick="switchTestType('second')" class="px-4 py-1.5 rounded-lg text-sm font-semibold transition text-white hover:bg-indigo-600">Second Test</button>
-                <button id="tab-exchange" onclick="switchTestType('exchange')" class="px-4 py-1.5 rounded-lg text-sm font-semibold transition text-white hover:bg-indigo-600">Exchange Devices</button>
-                <button id="tab-weekly" onclick="switchTestType('weekly')" class="px-4 py-1.5 rounded-lg text-sm font-semibold transition text-white hover:bg-indigo-600">Weekly</button>
-                <button id="tab-monthly" onclick="switchTestType('monthly')" class="px-4 py-1.5 rounded-lg text-sm font-semibold transition text-white hover:bg-indigo-600">Monthly</button>
+            <div class="flex flex-wrap bg-indigo-700 p-1 rounded-xl shadow-inner gap-1 justify-center">
+                <button id="tab-first" onclick="switchTestType('first')" class="px-3 py-1.5 rounded-lg text-sm font-semibold transition text-white hover:bg-indigo-600">First Test</button>
+                <button id="tab-second" onclick="switchTestType('second')" class="px-3 py-1.5 rounded-lg text-sm font-semibold transition text-white hover:bg-indigo-600">Second Test</button>
+                <button id="tab-exchange" onclick="switchTestType('exchange')" class="px-3 py-1.5 rounded-lg text-sm font-semibold transition text-white hover:bg-indigo-600">Exchange Devices</button>
+                <button id="tab-daily" onclick="switchTestType('daily')" class="px-3 py-1.5 rounded-lg text-sm font-semibold transition text-white hover:bg-indigo-600">Daily</button>
+                <button id="tab-weekly" onclick="switchTestType('weekly')" class="px-3 py-1.5 rounded-lg text-sm font-semibold transition text-white hover:bg-indigo-600">Weekly</button>
+                <button id="tab-monthly" onclick="switchTestType('monthly')" class="px-3 py-1.5 rounded-lg text-sm font-semibold transition text-white hover:bg-indigo-600">Monthly</button>
             </div>
 
             <div class="flex items-center space-x-3">
@@ -45,14 +46,22 @@
 
     <!-- Main Container -->
     <main class="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8 space-y-6">
+        
+        <!-- Daily Date Picker Container (Appears when Daily tab is active) -->
+        <div id="daily-container" class="hidden bg-white p-4 rounded-xl shadow-sm flex items-center space-x-4">
+            <label for="daily-date-input" class="text-sm font-semibold text-gray-700">Select Date:</label>
+            <input type="date" id="daily-date-input" onchange="onDateChanged()" class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <span id="daily-selected-label" class="text-xs text-gray-500"></span>
+        </div>
+
         <!-- Weekly Sub-Tabs Container -->
         <div id="weekly-container" class="hidden mb-6">
-            <div class="flex space-x-2 border-b border-gray-200 pb-3">
+            <div class="flex space-x-2 border-b border-gray-200 pb-3 overflow-x-auto">
                 <button onclick="switchWeek('week1')" id="subtab-week1" class="px-4 py-2 text-sm font-semibold rounded-lg bg-indigo-600 text-white shadow">Week 1 Test</button>
                 <button onclick="switchWeek('week2')" id="subtab-week2" class="px-4 py-2 text-sm font-semibold rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition">Week 2 Test</button>
                 <button onclick="switchWeek('week3')" id="subtab-week3" class="px-4 py-2 text-sm font-semibold rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition">Week 3 Test</button>
                 <button onclick="switchWeek('week4')" id="subtab-week4" class="px-4 py-2 text-sm font-semibold rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition">Week 4 Test</button>
-                <button onclick="switchWeek('comparison')" id="subtab-comparison" class="px-4 py-2 text-sm font-semibold rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition">📊 Week-by-Week Comparison</button>
+                <button onclick="switchWeek('comparison')" id="subtab-comparison" class="px-4 py-2 text-sm font-semibold rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition whitespace-nowrap">📊 Week-by-Week Comparison</button>
             </div>
         </div>
 
@@ -203,6 +212,13 @@
                         summary: data.summary || []
                    };
                     document.getElementById('last-updated').innerText = 'Last Synced: ' + new Date().toLocaleTimeString();
+                    
+                    // Set default daily date input to today if empty
+                    const dateInput = document.getElementById('daily-date-input');
+                    if (dateInput && !dateInput.value) {
+                        dateInput.value = new Date().toISOString().split('T')[0];
+                    }
+
                     updateDashboard();
                 })
                 .catch(err => {
@@ -223,18 +239,21 @@
                 }
             });
 
-            const inactiveStyle = 'px-4 py-1.5 rounded-lg text-sm font-semibold transition text-white hover:bg-indigo-600';
-            const activeStyle = 'px-4 py-1.5 rounded-lg text-sm font-semibold transition bg-white text-indigo-600 shadow';
+            const inactiveStyle = 'px-3 py-1.5 rounded-lg text-sm font-semibold transition text-white hover:bg-indigo-600';
+            const activeStyle = 'px-3 py-1.5 rounded-lg text-sm font-semibold transition bg-white text-indigo-600 shadow';
 
             document.getElementById('tab-first').className = inactiveStyle;
             document.getElementById('tab-second').className = inactiveStyle;
             document.getElementById('tab-exchange').className = inactiveStyle;
+            document.getElementById('tab-daily').className = inactiveStyle;
             document.getElementById('tab-weekly').className = inactiveStyle;
             document.getElementById('tab-monthly').className = inactiveStyle;
 
+            const dailyContainer = document.getElementById('daily-container');
             const weeklyContainer = document.getElementById('weekly-container');
             const monthlyContainer = document.getElementById('monthly-container');
 
+            if(dailyContainer) dailyContainer.classList.add('hidden');
             if(weeklyContainer) weeklyContainer.classList.add('hidden');
             if(monthlyContainer) monthlyContainer.classList.add('hidden');
 
@@ -247,6 +266,10 @@
             } else if (type === 'exchange') {
                 document.getElementById('tab-exchange').className = activeStyle;
                 document.getElementById('active-test-label').innerText = 'Exchange Devices';
+            } else if (type === 'daily') {
+                document.getElementById('tab-daily').className = activeStyle;
+                document.getElementById('active-test-label').innerText = 'Daily Analytics';
+                if(dailyContainer) dailyContainer.classList.remove('hidden');
             } else if (type === 'weekly') {
                 document.getElementById('tab-weekly').className = activeStyle;
                 document.getElementById('active-test-label').innerText = 'Weekly Analytics';
@@ -256,6 +279,10 @@
                 document.getElementById('active-test-label').innerText = 'Monthly Analytics';
                 if(monthlyContainer) monthlyContainer.classList.remove('hidden');
             }
+            updateDashboard();
+        }
+
+        function onDateChanged() {
             updateDashboard();
         }
 
@@ -293,11 +320,9 @@
             weeks.forEach((wk, index) => {
                 let weekRows = activeData.filter(row => {
                     if (!row) return false;
-                    let d = getDateObj(row);
-                    if (!d) return false;
-                    let day = d.getDate();
-                    let wNum = day <= 7 ? 1 : (day <= 14 ? 2 : (day <= 21 ? 3 : 4));
-                    return `week${wNum}` === wk;
+                    let rowWeek = getVal(row, 'Week') || getVal(row, 'Test Week');
+                    let cleanW = cleanKey(rowWeek);
+                    return cleanW === wk || cleanW.includes(wk);
                 });
                 
                 let wTot = weekRows.length;
@@ -351,11 +376,9 @@
 
                 weeks.forEach((wk, index) => {
                     let weekRows = activeData.filter(row => {
-                        let d = getDateObj(row);
-                        if (!d) return false;
-                        let day = d.getDate();
-                        let wNum = day <= 7 ? 1 : (day <= 14 ? 2 : (day <= 21 ? 3 : 4));
-                        return `week${wNum}` === wk;
+                        let rowWeek = getVal(row, 'Week') || getVal(row, 'Test Week');
+                        let cleanW = cleanKey(rowWeek);
+                        return cleanW === wk || cleanW.includes(wk);
                     });
 
                     let total = weekRows.length;
@@ -441,6 +464,7 @@
             if (currentTestType === 'first') return allData.firstTest;
             if (currentTestType === 'exchange') return allData.exchangeTest;
             if (currentTestType === 'second') return allData.secondTest;
+            if (currentTestType === 'daily') return allData.summary; // Or appropriate source dataset for daily
             if (currentTestType === 'weekly' || currentTestType === 'monthly') {
                 return allData.summary;
             }
@@ -469,13 +493,26 @@
 
             let filteredData = rawDataSet;
 
-            if (currentTestType === 'weekly') {
+            if (currentTestType === 'daily') {
+                const selectedDateVal = document.getElementById('daily-date-input').value;
+                if (selectedDateVal) {
+                    filteredData = rawDataSet.filter(row => {
+                        let d = getDateObj(row);
+                        if (d) {
+                            let yyyy = d.getFullYear();
+                            let mm = String(d.getMonth() + 1).padStart(2, '0');
+                            let dd = String(d.getDate()).padStart(2, '0');
+                            let rowDateStr = `${yyyy}-${mm}-${dd}`;
+                            return rowDateStr === selectedDateVal;
+                        }
+                        return false;
+                    });
+                }
+            } else if (currentTestType === 'weekly') {
                 filteredData = rawDataSet.filter(row => {
-                    let d = getDateObj(row);
-                    if (!d) return false;
-                    let day = d.getDate();
-                    let wNum = day <= 7 ? 1 : (day <= 14 ? 2 : (day <= 21 ? 3 : 4));
-                    return `week${wNum}` === currentWeek;
+                    let rowWeek = getVal(row, 'Week') || getVal(row, 'Test Week');
+                    let cleanW = cleanKey(rowWeek);
+                    return cleanW === currentWeek || cleanW.includes(currentWeek);
                 });
             } else if (currentTestType === 'monthly') {
                 if (currentMonth !== 'comparison') {
@@ -510,8 +547,9 @@
 
             let testTitlePrefix = currentTestType === 'first' ? 'First Test' : 
                                   (currentTestType === 'exchange' ? 'Exchange Devices' : 
+                                  (currentTestType === 'daily' ? `Daily (${document.getElementById('daily-date-input').value})` :
                                   (currentTestType === 'weekly' ? `Weekly (${currentWeek.toUpperCase()})` : 
-                                  (currentTestType === 'monthly' ? (currentMonth === 'comparison' ? 'Monthly Comparison (Jan - Dec)' : `Monthly (${currentMonth.toUpperCase()})`) : 'Second Test')));
+                                  (currentTestType === 'monthly' ? (currentMonth === 'comparison' ? 'Monthly Comparison (Jan - Dec)' : `Monthly (${currentMonth.toUpperCase()})`) : 'Second Test'))));
             
             document.getElementById('olt-chart-title').innerText = currentRegion === 'All' ?  
                 `${testTitlePrefix} - Pass vs Fail & Total Comparison` : `${testTitlePrefix} - Pass vs Fail & Total Comparison (${currentRegion})`;
@@ -619,8 +657,7 @@
                             <h4 class="font-semibold">${monthsFull[mIndex]} (${monthsCode[mIndex].toUpperCase()})</h4>
                             <p class="text-sm text-gray-600">Total Tested: <span class="font-bold text-gray-800">${total}</span></p>
                             <p class="text-sm text-gray-600">Passed: <span class="font-bold text-green-600">${passed}</span></p>
-                            <p class="text-sm text-gray-600">Failed: <span class="font-bold text-rose-600">${failed}</span></p>
-                            ${unknown > 0 ? `<p class="text-sm text-gray-600">Unknown: <span class="font-bold text-amber-600">${unknown}</span></p>` : ''}
+                            <p class="text-sm text-gray-600">Failed: <span class="font-bold text-rose-600">${failed}</span></p>${unknown > 0 ? `<p class="text-sm text-gray-600">Unknown: <span class="font-bold text-amber-600">${unknown}</span></p>` : ''}
                         </div>
                     `;
                 });
@@ -693,7 +730,7 @@
 
             let deviceNames = ['FFO', 'FFG', 'SCP', 'FFA', 'BFFA'];
             const deviceTable = document.getElementById('device-table-body');
-            deviceTable.innerHTML = '';
+            deviceTable.innerHTML = ``;
 
             let sumTot = 0, sumPas = 0, sumFai = 0;
             deviceNames.forEach(dev => {
