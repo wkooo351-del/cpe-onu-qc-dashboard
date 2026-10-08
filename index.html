@@ -14,25 +14,35 @@
 <body class="text-gray-800">
 
     <header class="bg-indigo-600 shadow-md">
-        <div class="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-center gap-4">
-            <div class="flex items-center space-x-3">
-                <span class="bg-white p-2 rounded-lg shadow text-indigo-600 font-bold">📊</span>
-                <h1 class="text-xl sm:text-2xl font-bold text-white">ONU Inspection Report Dashboard</h1>
-            </div>
-            <div class="flex flex-wrap bg-indigo-700 p-1 rounded-xl shadow-inner gap-1 justify-center">
-                <button id="tab-first" onclick="switchTestType('first')" class="px-3 py-1.5 rounded-lg text-sm font-semibold transition text-white hover:bg-indigo-600">First Test</button>
-                <button id="tab-second" onclick="switchTestType('second')" class="px-3 py-1.5 rounded-lg text-sm font-semibold transition text-white hover:bg-indigo-600">Second Test</button>
-                <button id="tab-exchange" onclick="switchTestType('exchange')" class="px-3 py-1.5 rounded-lg text-sm font-semibold transition text-white hover:bg-indigo-600">Exchange Devices</button>
-                <button id="tab-daily" onclick="switchTestType('daily')" class="px-3 py-1.5 rounded-lg text-sm font-semibold transition text-white hover:bg-indigo-600">Daily</button>
-                <button id="tab-weekly" onclick="switchTestType('weekly')" class="px-3 py-1.5 rounded-lg text-sm font-semibold transition text-white hover:bg-indigo-600">Weekly</button>
-                <button id="tab-monthly" onclick="switchTestType('monthly')" class="px-3 py-1.5 rounded-lg text-sm font-semibold transition text-white hover:bg-indigo-600">Monthly</button>
+        <div class="max-w-7xl mx-auto px-4 py-3 sm:px-6 lg:px-8 flex flex-col lg:flex-row justify-between items-center gap-3">
+            <div class="flex items-center space-x-2 w-full lg:w-auto justify-between lg:justify-start">
+                <div class="flex items-center space-x-2">
+                    <span class="bg-white p-1.5 rounded-lg shadow text-indigo-600 font-bold text-sm">📊</span>
+                    <h1 class="text-base sm:text-lg font-bold text-white whitespace-nowrap">ONU Report Dashboard</h1>
+                </div>
+                <div class="flex items-center space-x-2 bg-indigo-700/50 px-2.5 py-1 rounded-lg border border-indigo-500/30 lg:hidden">
+                    <span class="relative flex h-2 w-2">
+                      <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                      <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                    </span>
+                    <span id="last-updated-mob" class="text-[10px] text-indigo-200">Synced</span>
+                </div>
             </div>
 
-            <div class="flex items-center space-x-3">
-                <div class="flex items-center space-x-2 bg-indigo-700/50 px-3 py-1.5 rounded-lg border border-indigo-500/30">
-                    <span class="relative flex h-2.5 w-2.5">
+            <div class="flex flex-wrap bg-indigo-700/80 p-1 rounded-xl shadow-inner gap-1 justify-center">
+                <button id="tab-first" onclick="switchTestType('first')" class="px-2.5 py-1 rounded-lg text-xs font-semibold transition text-white hover:bg-indigo-600">First Test</button>
+                <button id="tab-second" onclick="switchTestType('second')" class="px-2.5 py-1 rounded-lg text-xs font-semibold transition text-white hover:bg-indigo-600">Second Test</button>
+                <button id="tab-exchange" onclick="switchTestType('exchange')" class="px-2.5 py-1 rounded-lg text-xs font-semibold transition text-white hover:bg-indigo-600">Exchange</button>
+                <button id="tab-daily" onclick="switchTestType('daily')" class="px-2.5 py-1 rounded-lg text-xs font-semibold transition text-white hover:bg-indigo-600">Daily</button>
+                <button id="tab-weekly" onclick="switchTestType('weekly')" class="px-2.5 py-1 rounded-lg text-xs font-semibold transition text-white hover:bg-indigo-600">Weekly</button>
+                <button id="tab-monthly" onclick="switchTestType('monthly')" class="px-2.5 py-1 rounded-lg text-xs font-semibold transition text-white hover:bg-indigo-600">Monthly</button>
+            </div>
+
+            <div class="hidden lg:flex items-center space-x-2">
+                <div class="flex items-center space-x-2 bg-indigo-700/50 px-3 py-1 rounded-lg border border-indigo-500/30">
+                    <span class="relative flex h-2 w-2">
                       <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                      <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                      <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                     </span>
                     <span id="last-updated" class="text-xs text-indigo-200">Connecting...</span>
                 </div>
@@ -197,7 +207,9 @@
                         exchangeTest: data.exchangeTest || [],
                         summary: data.summary || []
                    };
-                    document.getElementById('last-updated').innerText = 'Last Synced: ' + new Date().toLocaleTimeString();
+                    const timeStr = 'Last Synced: ' + new Date().toLocaleTimeString();
+                    document.getElementById('last-updated').innerText = timeStr;
+                    document.getElementById('last-updated-mob').innerText = 'Synced';
                     
                     const dateInput = document.getElementById('daily-date-input');
                     if (dateInput && !dateInput.value) {
@@ -209,6 +221,7 @@
                 .catch(err => {
                     console.error("Sync Error:", err);
                     document.getElementById('last-updated').innerText = 'Sync Failed';
+                    document.getElementById('last-updated-mob').innerText = 'Failed';
                 });
         }
 
@@ -224,8 +237,8 @@
                 }
             });
 
-            const inactiveStyle = 'px-3 py-1.5 rounded-lg text-sm font-semibold transition text-white hover:bg-indigo-600';
-            const activeStyle = 'px-3 py-1.5 rounded-lg text-sm font-semibold transition bg-white text-indigo-600 shadow';
+            const inactiveStyle = 'px-2.5 py-1 rounded-lg text-xs font-semibold transition text-white hover:bg-indigo-600';
+            const activeStyle = 'px-2.5 py-1 rounded-lg text-xs font-semibold transition bg-white text-indigo-600 shadow';
 
             document.getElementById('tab-first').className = inactiveStyle;
             document.getElementById('tab-second').className = inactiveStyle;
@@ -440,6 +453,7 @@
             let val = getVal(row, 'Latest Time') || getVal(row, 'Date') || getVal(row, 'Time');
             if (!val) return null;
             
+            // တိကျစွာ ရက်စွဲကို String ဖြတ်ယူခြင်း (Timezone အလွဲအပြော်မရှိစေရန်)
             let datePart = val.toString().split(' ')[0];
             let parts = datePart.split('/');
             if (parts.length === 3) {
@@ -447,6 +461,7 @@
                 let day = parseInt(parts[1], 10);
                 let year = parseInt(parts[2], 10);
                 if (!isNaN(year) && !isNaN(month) && !isNaN(day)) {
+                    // Local Date အနေဖြင့် တိုက်ရိုက်ဆောက်ပေးရန်
                     return new Date(year, month - 1, day);
                 }
             }
@@ -459,9 +474,9 @@
             if (currentTestType === 'first') return allData.firstTest;
             if (currentTestType === 'exchange') return allData.exchangeTest;
             if (currentTestType === 'second') return allData.secondTest;
-            // Weekly နှင့် Monthly အတွက် summary ဒေတာမရှိပါက exchangeTest သို့မဟုတ် firstTest ကို ဖြည့်စွက်သုံးနိုင်ရန် ဖန်တီးပေးထားသည်
-            if (currentTestType === 'daily' || currentTestType === 'weekly' || currentTestType === 'monthly') {
-                return (allData.summary && allData.summary.length > 0) ? allData.summary : allData.exchangeTest;
+            if (currentTestType === 'daily') return allData.summary.length > 0 ? allData.summary : allData.exchangeTest;
+            if (currentTestType === 'weekly' || currentTestType === 'monthly') {
+                return allData.summary.length > 0 ? allData.summary : allData.exchangeTest;
             }
             return allData.exchangeTest;
         }
@@ -489,16 +504,19 @@
             let filteredData = rawDataSet;
 
             if (currentTestType === 'daily') {
-                const selectedDateVal = document.getElementById('daily-date-input').value;
+                const selectedDateVal = document.getElementById('daily-date-input').value; // format: "YYYY-MM-DD"
                 if (selectedDateVal) {
                     filteredData = rawDataSet.filter(row => {
-                        let d = getDateObj(row);
-                        if (d) {
-                            let yyyy = d.getFullYear();
-                            let mm = String(d.getMonth() + 1).padStart(2, '0');
-                            let dd = String(d.getDate()).padStart(2, '0');
-                            let rowDateStr = `${yyyy}-${mm}-${dd}`;
-                            return rowDateStr === selectedDateVal;
+                        let val = getVal(row, 'Latest Time') || getVal(row, 'Date') || getVal(row, 'Time');
+                        if (!val) return false;
+                        let datePart = val.toString().split(' ')[0];
+                        let parts = datePart.split('/');
+                        if (parts.length === 3) {
+                            let mm = parts[0].padStart(2, '0');
+                            let dd = parts[1].padStart(2, '0');
+                            let yyyy = parts[2];
+                            let sheetDateStr = `${yyyy}-${mm}-${dd}`;
+                            return sheetDateStr === selectedDateVal;
                         }
                         return false;
                     });
