@@ -429,7 +429,7 @@
         }
 
         function getDateObj(row) {
-            let val = getVal(row, 'Latest Time') || getVal(row, 'Date');
+            let val = getVal(row, 'Latest Time') || getVal(row, 'Date') || getVal(row, 'Time');
             if (val) {
                 let d = new Date(val);
                 if (!isNaN(d.getTime())) return d;
