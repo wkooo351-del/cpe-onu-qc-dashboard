@@ -450,10 +450,11 @@
         }
 
         function getDateObj(row) {
-            let val = getVal(row, 'Latest Time') || getVal(row, 'Date') || getVal(row, 'Time');
+            // Sheet ထဲက ခေါင်းစဉ်မှာ 'Time' လို့ ပေးထားတာကြောင့် Time ကို ဦးစားပေး ယူပါမည်
+            let val = getVal(row, 'Time') || getVal(row, 'Latest Time') || getVal(row, 'Date');
             if (!val) return null;
             
-            // တိကျစွာ ရက်စွဲကို String ဖြတ်ယူခြင်း (Timezone အလွဲအပြော်မရှိစေရန်)
+            // Sheet ထဲက "10/8/2026 10:46:00" ပုံစံ စာသားကို Timezone အလွှဲအပြော်မရှိဘဲ တိုက်ရိုက်ယူရန်
             let datePart = val.toString().split(' ')[0];
             let parts = datePart.split('/');
             if (parts.length === 3) {
@@ -461,13 +462,23 @@
                 let day = parseInt(parts[1], 10);
                 let year = parseInt(parts[2], 10);
                 if (!isNaN(year) && !isNaN(month) && !isNaN(day)) {
-                    // Local Date အနေဖြင့် တိုက်ရိုက်ဆောက်ပေးရန်
                     return new Date(year, month - 1, day);
                 }
             }
             
             let d = new Date(val);
             return !isNaN(d.getTime()) ? d : null;
+        }
+
+        function getCurrentActiveDataset() {
+            if (currentTestType === 'first') return allData.firstTest;
+            if (currentTestType === 'exchange') return allData.exchangeTest;
+            if (currentTestType === 'second') return allData.secondTest;
+            
+            if (currentTestType === 'daily' || currentTestType === 'weekly' || currentTestType === 'monthly') {
+                return (allData.summary && allData.summary.length > 0) ? allData.summary : allData.exchangeTest;
+            }
+            return allData.exchangeTest;
         }
 
         function getCurrentActiveDataset() {
