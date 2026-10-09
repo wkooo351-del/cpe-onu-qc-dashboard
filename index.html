@@ -475,10 +475,9 @@
             return val.toLowerCase();
         }
 
-        function getDateObj(row) {
+       function getDateObj(row) {
             let val = getVal(row, 'Time') || getVal(row, 'Latest Time') || getVal(row, 'Date');
             if (!val) return null;
-            
             let datePart = val.toString().split(' ')[0];
             let parts = datePart.split('/');
             if (parts.length === 3) {
