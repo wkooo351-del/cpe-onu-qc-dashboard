@@ -542,7 +542,10 @@
                         }
                         return false;
                     });
+                } else {
+                    filteredData = []; 
                 }
+            }
             } else if (currentTestType === 'weekly') {
                 filteredData = rawDataSet.filter(row => {
                     let d = getDateObj(row);
