@@ -20,7 +20,7 @@
         <!-- Staff Name Buttons Bar -->
         <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
             <div id="staff-buttons-container" class="strict-row-nav py-2">
-                <!-- Dynamically loaded staff buttons -->
+                <span class="text-xs text-slate-400 font-bold px-2">Loading Staff Members...</span>
             </div>
         </div>
 
@@ -29,14 +29,14 @@
             <div class="flex items-center space-x-3 border-b border-slate-100 pb-4">
                 <span class="bg-blue-100 text-blue-600 p-3 rounded-xl font-bold">👤</span>
                 <div>
-                    <h2 id="active-staff-name" class="text-xl font-extrabold text-slate-900">Soe Huan</h2>
+                    <h2 id="active-staff-name" class="text-xl font-extrabold text-slate-900">Select a Staff</h2>
                     <p class="text-xs text-slate-400 font-bold">Performance & Daily Activities</p>
                 </div>
             </div>
 
-            <!-- KPI & Leave Alert Notices -->
+            <!-- Dynamic Alerts (KPI Missed & Leave) -->
             <div id="staff-alerts-container" class="space-y-2">
-                <!-- Populated via JS -->
+                <!-- Dynamic Content -->
             </div>
 
             <!-- Staff Activity Table -->
@@ -52,7 +52,7 @@
                         </tr>
                     </thead>
                     <tbody id="staff-table-body" class="text-sm divide-y divide-slate-100">
-                        <!-- Populated via JS -->
+                        <tr><td colspan="5" class="py-6 text-center text-slate-400">Fetching live data from Google Sheet...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -61,27 +61,100 @@
     </div>
 
     <script>
-        const staffList = [
-            "Aung Aung14", "Aung Myint Myat", "Aung Zaw Htet", "Chit Bhone", 
-            "Htet Myat Hlaing", "Htet Naing Win4", "Min Maw Kun2", "Myat Htet Kyaw", 
-            "Myat Zaw Soe", "Myint Kyaw Aung", "Myo Aung", "Phyo Wai Aung", 
-            "Soe Huan", "Win Ko Oo", "Zin Khant"
-        ];
+        const STAFF_SHEET_ID = "14WOHloWhGuQOc95PrRUsYWAHT6PTCC6EL2pY18uglVs";
+        const SHEET_NAME = "Oct 26";
+        const TARGET_KPI = 150;
 
-        function initStaffKpi() {
+        let rawSheetData = [];
+        let staffGroupedData = {};
+
+        async function fetchStaffData() {
+            try {
+                const url = `https://docs.google.com/spreadsheets/d/${STAFF_SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(SHEET_NAME)}`;
+                const res = await fetch(url);
+                const text = await res.text();
+                const json = JSON.parse(text.substring(47, text.length - 2));
+                
+                const cols = json.table.cols.map(c => (c && c.label) ? c.label.trim() : '');
+                const rows = json.table.rows.map(r => r.c.map(cell => cell ? (cell.v !== null ? cell.v : '') : ''));
+
+                rawSheetData = rows.map(row => {
+                    let obj = {};
+                    cols.forEach((col, idx) => { if(col) obj[col] = row[idx]; });
+                    return obj;
+                });
+
+                processStaffData();
+            } catch (err) {
+                console.error("Error fetching staff sheet:", err);
+                document.getElementById('staff-table-body').innerHTML = `<tr><td colspan="5" class="py-6 text-center text-rose-500 font-bold">Failed to load Google Sheet data. Check connection.</td></tr>`;
+            }
+        }
+
+        function processStaffData() {
+            staffGroupedData = {};
+
+            rawSheetData.forEach(row => {
+                let name = String(row['Staff Name'] || row['Name'] || row['STAFF'] || '').trim();
+                let dateRaw = row['Date'] || row['DATE'] || '';
+                let device = row['Device Name'] || row['DEVICE NAME'] || row['Device'] || '-';
+                let jd = row['Daily (JD)'] || row['DAILY (JD)'] || row['Activity'] || '-';
+                let qty = parseFloat(row['Quantity'] || row['QTY'] || row['Total'] || row['Count'] || 0) || 0;
+                let isLeave = String(row['Leave'] || row['STATUS'] || '').toLowerCase().includes('leave');
+
+                if (!name) return;
+
+                let dateStr = "";
+                if (typeof dateRaw === 'string' && dateRaw.startsWith('Date(')) {
+                    let parts = dateRaw.match(/\d+/g);
+                    if (parts) {
+                        let d = new Date(parts[0], parts[1], parts[2]);
+                        dateStr = d.toISOString().split('T')[0];
+                    }
+                } else if (dateRaw) {
+                    dateStr = String(dateRaw).split('T')[0];
+                }
+
+                if (!staffGroupedData[name]) {
+                    staffGroupedData[name] = { leaves: new Set(), dates: {} };
+                }
+
+                if (isLeave && dateStr) {
+                    staffGroupedData[name].leaves.add(dateStr);
+                }
+
+                if (dateStr && qty > 0) {
+                    if (!staffGroupedData[name].dates[dateStr]) {
+                        staffGroupedData[name].dates[dateStr] = [];
+                    }
+                    staffGroupedData[name].dates[dateStr].push({ device, jd, qty });
+                }
+            });
+
+            renderStaffButtons();
+        }
+
+        function renderStaffButtons() {
+            let staffList = Object.keys(staffGroupedData).sort();
             let container = document.getElementById('staff-buttons-container');
             container.innerHTML = "";
+
+            if (staffList.length === 0) {
+                container.innerHTML = `<span class="text-xs text-rose-500 font-bold px-2">No staff data found in Sheet.</span>`;
+                return;
+            }
+
             staffList.forEach((name, idx) => {
                 let btn = document.createElement('button');
                 btn.innerText = name;
-                btn.className = name === "Soe Huan"
+                btn.className = idx === 0 
                     ? 'px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-blue-600 text-white shadow whitespace-nowrap' 
                     : 'px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 whitespace-nowrap';
                 btn.onclick = () => selectStaff(name, btn);
                 container.appendChild(btn);
             });
 
-            selectStaff("Soe Huan", container.children[12] || container.children[0]);
+            selectStaff(staffList[0], container.children[0]);
         }
 
         function selectStaff(name, btnElement) {
@@ -89,113 +162,73 @@
                 b.className = 'px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 whitespace-nowrap';
             });
             if(btnElement) btnElement.className = 'px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-blue-600 text-white shadow whitespace-nowrap';
+            
             document.getElementById('active-staff-name').innerText = name;
 
-            // Render KPI Missed & Leave Alerts (Exact match to User Image)
-            let alertsDiv = document.getElementById('staff-alerts-container');
-            alertsDiv.innerHTML = `
-                <div class="p-3 bg-red-50 border-l-4 border-red-500 text-red-800 text-xs font-bold rounded-r-xl">
-                    ⚠️ ${name} No Meet Daily KPI. 2026-10-07 (Total: 104 / Target: 150)
-                </div>
-                <div class="p-3 bg-amber-50 border-l-4 border-amber-500 text-amber-800 text-xs font-bold rounded-r-xl">
-                    ⚠️ ${name} is on Leave on 2026-10-12
-                </div>
-                <div class="p-3 bg-red-50 border-l-4 border-red-500 text-red-800 text-xs font-bold rounded-r-xl">
-                    ⚠️ ${name} No Meet Daily KPI. 2026-10-14 (Total: 142 / Target: 150)
-                </div>
-            `;
+            let sData = staffGroupedData[name] || { leaves: new Set(), dates: {} };
+            let alertsHtml = "";
 
-            // Render Table (Exact match to User Image with Pass/Fail Status)
-            let tbody = document.getElementById('staff-table-body');
-            tbody.innerHTML = `
-                <!-- 2026-10-01 -->
-                <tr class="hover:bg-slate-50/50">
-                    <td class="py-3 px-4 text-slate-600 font-bold align-middle" rowspan="2">2026-10-01</td>
-                    <td class="py-3 px-4 text-slate-400 align-middle">-</td>
-                    <td class="py-3 px-4 text-slate-700">MAC</td>
-                    <td class="py-3 px-4 text-center font-bold text-blue-600">50</td>
-                    <td class="py-3 px-4 text-right align-middle" rowspan="2"></td>
-                </tr>
-                <tr class="hover:bg-slate-50/50 border-b border-slate-200">
-                    <td class="py-3 px-4 font-bold text-slate-800 align-middle">FFO</td>
-                    <td class="py-3 px-4 text-slate-700">Lan Port Test</td>
-                    <td class="py-3 px-4 text-center font-bold text-blue-600">150</td>
-                </tr>
-                <tr class="bg-slate-50/80 border-b border-slate-200">
-                    <td colspan="3" class="py-2.5 px-4 text-right text-slate-500 text-xs font-bold uppercase">Daily Total:</td>
-                    <td class="py-2.5 px-4 text-center font-black text-slate-900">200</td>
-                    <td class="py-2.5 px-4 text-right font-black text-emerald-600">Pass (200)</td>
-                </tr>
+            // Render Staff Specific Leave Alerts
+            sData.leaves.forEach(date => {
+                alertsHtml += `
+                    <div class="p-3 bg-amber-50 border-l-4 border-amber-500 text-amber-800 text-xs font-bold rounded-r-xl">
+                        ⚠️ ${name} is on Leave on ${date}
+                    </div>
+                `;
+            });
 
-                <!-- 2026-10-02 -->
-                <tr class="hover:bg-slate-50/50">
-                    <td class="py-3 px-4 text-slate-600 font-bold align-middle" rowspan="2">2026-10-02</td>
-                    <td class="py-3 px-4 font-bold text-slate-800 align-middle">Exchange Test</td>
-                    <td class="py-3 px-4 text-slate-700">Exchange Test</td>
-                    <td class="py-3 px-4 text-center font-bold text-blue-600">32</td>
-                    <td class="py-3 px-4 text-right align-middle" rowspan="2"></td>
-                </tr>
-                <tr class="hover:bg-slate-50/50 border-b border-slate-200">
-                    <td class="py-3 px-4 font-bold text-slate-800 align-middle">FFO</td>
-                    <td class="py-3 px-4 text-slate-700">Lan Port Test</td>
-                    <td class="py-3 px-4 text-center font-bold text-blue-600">75</td>
-                </tr>
-                <tr class="bg-slate-50/80 border-b border-slate-200">
-                    <td colspan="3" class="py-2.5 px-4 text-right text-slate-500 text-xs font-bold uppercase">Daily Total:</td>
-                    <td class="py-2.5 px-4 text-center font-black text-slate-900">107</td>
-                    <td class="py-2.5 px-4 text-right font-black text-rose-600">Fail (107)</td>
-                </tr>
+            let sortedDates = Object.keys(sData.dates).sort();
+            let tableRowsHtml = "";
 
-                <!-- 2026-10-03 -->
-                <tr class="hover:bg-slate-50/50 border-b border-slate-200">
-                    <td class="py-3 px-4 text-slate-600 font-bold align-middle">2026-10-03</td>
-                    <td class="py-3 px-4 font-bold text-slate-800 align-middle">FFO</td>
-                    <td class="py-3 px-4 text-slate-700">Lan Port Test</td>
-                    <td class="py-3 px-4 text-center font-bold text-blue-600">534</td>
-                    <td class="py-3 px-4 text-right font-black text-emerald-600 align-middle">Pass (534)</td>
-                </tr>
+            if (sortedDates.length === 0) {
+                tableRowsHtml = `<tr><td colspan="5" class="py-6 text-center text-slate-400 font-bold">No activity records found for ${name}.</td></tr>`;
+            }
 
-                <!-- 2026-10-06 -->
-                <tr class="hover:bg-slate-50/50 border-b border-slate-200">
-                    <td class="py-3 px-4 text-slate-600 font-bold align-middle">2026-10-06</td>
-                    <td class="py-3 px-4 text-slate-400 align-middle">-</td>
-                    <td class="py-3 px-4 text-slate-700">Exchange Test</td>
-                    <td class="py-3 px-4 text-center font-bold text-blue-600">80</td>
-                    <td class="py-3 px-4 text-right font-black text-rose-600 align-middle">Fail (80)</td>
-                </tr>
+            sortedDates.forEach(date => {
+                let items = sData.dates[date];
+                let dailyTotal = items.reduce((sum, item) => sum + item.qty, 0);
 
-                <!-- 2026-10-07 -->
-                <tr class="hover:bg-slate-50/50">
-                    <td class="py-3 px-4 text-slate-600 font-bold align-middle" rowspan="2">2026-10-07</td>
-                    <td class="py-3 px-4 text-slate-400 align-middle">-</td>
-                    <td class="py-3 px-4 text-slate-700">MAC</td>
-                    <td class="py-3 px-4 text-center font-bold text-blue-600">20</td>
-                    <td class="py-3 px-4 text-right align-middle" rowspan="2"></td>
-                </tr>
-                <tr class="hover:bg-slate-50/50 border-b border-slate-200">
-                    <td class="py-3 px-4 font-bold text-slate-800 align-middle">FFO</td>
-                    <td class="py-3 px-4 text-slate-700">RMA</td>
-                    <td class="py-3 px-4 text-center font-bold text-blue-600">84</td>
-                </tr>
-                <tr class="bg-slate-50/80 border-b border-slate-200">
-                    <td colspan="3" class="py-2.5 px-4 text-right text-slate-500 text-xs font-bold uppercase">Daily Total:</td>
-                    <td class="py-2.5 px-4 text-center font-black text-slate-900">104</td>
-                    <td class="py-2.5 px-4 text-right font-black text-rose-600">Fail (104)</td>
-                </tr>
+                // Add KPI miss alert for days where target wasn't met
+                if (dailyTotal < TARGET_KPI) {
+                    alertsHtml += `
+                        <div class="p-3 bg-red-50 border-l-4 border-red-500 text-red-800 text-xs font-bold rounded-r-xl">
+                            ⚠️ ${name} No Meet Daily KPI. ${date} (Total: ${dailyTotal} / Target: ${TARGET_KPI})
+                        </div>
+                    `;
+                }
 
-                <!-- 2026-10-08 -->
-                <tr class="hover:bg-slate-50/50 border-b border-slate-200">
-                    <td class="py-3 px-4 text-slate-600 font-bold align-middle">2026-10-08</td>
-                    <td class="py-3 px-4 text-slate-400 align-middle">-</td>
-                    <td class="py-3 px-4 text-slate-700">RMA</td>
-                    <td class="py-3 px-4 text-center font-bold text-blue-600">178</td>
-                    <td class="py-3 px-4 text-right font-black text-emerald-600 align-middle">Pass (178)</td>
-                </tr>
-            `;
+                let passFailBadge = dailyTotal >= TARGET_KPI 
+                    ? `<span class="font-black text-emerald-600">Pass (${dailyTotal})</span>`
+                    : `<span class="font-black text-rose-600">Fail (${dailyTotal})</span>`;
+
+                items.forEach((item, index) => {
+                    tableRowsHtml += `
+                        <tr class="hover:bg-slate-50/50">
+                            ${index === 0 ? `<td class="py-3 px-4 text-slate-600 font-bold align-middle" rowspan="${items.length}">${date}</td>` : ''}
+                            <td class="py-3 px-4 font-bold text-slate-800 align-middle">${item.device}</td>
+                            <td class="py-3 px-4 text-slate-700">${item.jd}</td>
+                            <td class="py-3 px-4 text-center font-bold text-blue-600">${item.qty}</td>
+                            ${index === 0 ? `<td class="py-3 px-4 text-right align-middle" rowspan="${items.length}">${passFailBadge}</td>` : ''}
+                        </tr>
+                    `;
+                });
+
+                // Add Daily Summary Row
+                tableRowsHtml += `
+                    <tr class="bg-slate-50/80 border-b border-slate-200">
+                        <td colspan="3" class="py-2.5 px-4 text-right text-slate-500 text-xs font-bold uppercase">Daily Total:</td>
+                        <td class="py-2.5 px-4 text-center font-black text-slate-900">${dailyTotal}</td>
+                        <td class="py-2.5 px-4 text-right">${passFailBadge}</td>
+                    </tr>
+                `;
+            });
+
+            document.getElementById('staff-alerts-container').innerHTML = alertsHtml;
+            document.getElementById('staff-table-body').innerHTML = tableRowsHtml;
         }
 
         window.onload = function() {
-            initStaffKpi();
+            fetchStaffData();
         };
     </script>
 </body>
