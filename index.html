@@ -308,8 +308,8 @@
             return monthsCode[dateObj.getMonth()];
         }
 
-        function fetchSheetData() {
-            fetch(WEB_APP_URL)
+        function fetchUnifiedData() {
+            fetch(WEB_APP_URL + '?format=json')
                 .then(response => response.json())
                 .then(data => {
                    allData = {
@@ -317,7 +317,11 @@
                         secondTest: data.secondTest || [],
                         exchangeTest: data.exchangeTest || []
                    };
-                    document.getElementById('last-updated').innerText = 'Last Synced: ' + new Date().toLocaleTimeString();
+                   
+                   renderStaffTable(data.staffData || []);
+                   renderInboundTable(data.inboundData || []);
+
+                   document.getElementById('last-updated').innerText = 'Last Synced: ' + new Date().toLocaleTimeString();
                     
                     const dateInput = document.getElementById('daily-date-input');
                     if (dateInput && !dateInput.value) {
@@ -330,6 +334,48 @@
                     console.error("Sync Error:", err);
                     document.getElementById('last-updated').innerText = 'Sync Failed';
                 });
+        }
+
+        function renderStaffTable(staffRows) {
+            const tbody = document.getElementById('staff-table-body');
+            if (!tbody) return;
+            if (staffRows.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-500">No Staff records found.</td></tr>`;
+                return;
+            }
+            tbody.innerHTML = '';
+            staffRows.forEach(row => {
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50">
+                        <td class="p-3 text-center">${row.Date || ''}</td>
+                        <td class="p-3 text-center font-bold">${row.Name || ''}</td>
+                        <td class="p-3 text-center">${row['Device Name'] || ''}</td>
+                        <td class="p-3 text-center">${row.JD || ''}</td>
+                        <td class="p-3 text-center">${row.Qty || 0}</td>
+                        <td class="p-3 text-center"><span class="px-2 py-1 bg-emerald-100 text-emerald-800 rounded text-xs">Active</span></td>
+                    </tr>
+                `;
+            });
+        }
+
+        function renderInboundTable(inboundRows) {
+            const tbody = document.getElementById('inbound-table-body');
+            if (!tbody) return;
+            if (inboundRows.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-slate-500">No Inbound records found.</td></tr>`;
+                return;
+            }
+            tbody.innerHTML = '';
+            inboundRows.forEach(row => {
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50">
+                        <td class="p-3 text-center font-bold">${row.Region || ''}</td>
+                        <td class="p-3 text-center">${row.Date || ''}</td>
+                        <td class="p-3 text-center">${row['CPE Type'] || 'Standard'}</td>
+                        <td class="p-3 text-center font-extrabold text-blue-950">${row.Qty || 1}</td>
+                    </tr>
+                `;
+            });
         }
 
         function switchTestType(type) {
@@ -476,7 +522,7 @@
             
             if (compCard) {
                 compCard.classList.remove('hidden');
-                compTitle.innerText = 'Week-by-Week Comparison Breakdown[cite: 4]';
+                compTitle.innerText = 'Week-by-Week Comparison Breakdown';
                 
                 let bgColors = ['bg-blue-50 border-blue-200 text-blue-800', 'bg-indigo-50 border-indigo-200 text-indigo-800', 'bg-purple-50 border-purple-200 text-purple-800', 'bg-teal-50 border-teal-200 text-teal-800'];
                 let weekLabels = ['Week 1 Test', 'Week 2 Test', 'Week 3 Test', 'Week 4 Test'];
@@ -903,7 +949,7 @@
         }
 
         // Initialize Data Load on Page Startup
-        fetchSheetData();
+        fetchUnifiedData();
     </script>
 </body>
 </html>
