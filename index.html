@@ -54,8 +54,22 @@
             <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
                 <h2 class="text-lg font-extrabold text-slate-900 mb-2">👤 Daily Staff KPI Management</h2>
                 <p class="text-xs text-slate-500 mb-4 font-bold">Monitor daily staff target performance (150-unit target), leave status, and run/default tasks.</p>
-                <div id="staff-content-area" class="text-slate-600">
-                    <p class="text-sm font-bold">Staff KPI data loaded successfully from backend sync.</p>
+                <div class="overflow-x-auto rounded-xl border border-slate-200">
+                    <table class="w-full text-left text-sm font-bold">
+                        <thead class="bg-slate-200 text-slate-900 uppercase text-xs font-extrabold">
+                            <tr>
+                                <th class="p-3 text-center">Date</th>
+                                <th class="p-3 text-center">Staff Name</th>
+                                <th class="p-3 text-center">Device Name</th>
+                                <th class="p-3 text-center">Daily (JD)</th>
+                                <th class="p-3 text-center">Total</th>
+                                <th class="p-3 text-center">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="staff-table-body" class="divide-y divide-slate-200 bg-white">
+                            <tr><td colspan="6" class="p-4 text-center text-slate-500">Loading Staff KPI Records...</td></tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -67,8 +81,20 @@
             <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
                 <h2 class="text-lg font-extrabold text-slate-900 mb-2">📦 Inbound Regional KPI & Weekly Breakdown</h2>
                 <p class="text-xs text-slate-500 mb-4 font-bold">Weekly regional comparisons, CPE categories, and subtotal metrics across regions (ENUO, HGAO, MDY).</p>
-                <div id="inbound-content-area" class="text-slate-600">
-                    <p class="text-sm font-bold">Inbound Regional data loaded successfully.</p>
+                <div class="overflow-x-auto rounded-xl border border-slate-200">
+                    <table class="w-full text-left text-sm font-bold">
+                        <thead class="bg-slate-800 text-white uppercase text-xs font-extrabold">
+                            <tr>
+                                <th class="p-3 text-center">Regional</th>
+                                <th class="p-3 text-center">Date</th>
+                                <th class="p-3 text-center">CPE Types</th>
+                                <th class="p-3 text-center bg-slate-900 text-white">Daily Total</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inbound-table-body" class="divide-y divide-slate-200 bg-white">
+                            <tr><td colspan="4" class="p-4 text-center text-slate-500">Loading Inbound Regional Records...</td></tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -450,7 +476,7 @@
             
             if (compCard) {
                 compCard.classList.remove('hidden');
-                compTitle.innerText = 'Week-by-Week Comparison Breakdown';
+                compTitle.innerText = 'Week-by-Week Comparison Breakdown[cite: 4]';
                 
                 let bgColors = ['bg-blue-50 border-blue-200 text-blue-800', 'bg-indigo-50 border-indigo-200 text-indigo-800', 'bg-purple-50 border-purple-200 text-purple-800', 'bg-teal-50 border-teal-200 text-teal-800'];
                 let weekLabels = ['Week 1 Test', 'Week 2 Test', 'Week 3 Test', 'Week 4 Test'];
