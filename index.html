@@ -40,14 +40,12 @@
         
         <!-- SECTION 1: Staff KPI View -->
         <div id="section-staff" class="dashboard-section space-y-6">
-            <!-- Staff Name Buttons Bar -->
             <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
                 <div id="staff-buttons-container" class="strict-row-nav py-2">
-                    <span class="text-xs text-slate-400 font-bold px-2">Loading Staff Members...</span>
+                    <span class="text-xs text-slate-400 font-bold px-2">Loading Staff Names...</span>
                 </div>
             </div>
 
-            <!-- Staff Details Card -->
             <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-4">
                 <div class="flex items-center space-x-3 border-b border-slate-100 pb-4">
                     <span class="bg-blue-100 text-blue-600 p-3 rounded-xl font-bold">👤</span>
@@ -57,10 +55,8 @@
                     </div>
                 </div>
 
-                <!-- KPI & Leave Alert Notices -->
                 <div id="staff-alerts-container" class="space-y-2"></div>
 
-                <!-- Staff Activity Table -->
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse">
                         <thead>
@@ -73,7 +69,7 @@
                             </tr>
                         </thead>
                         <tbody id="staff-table-body" class="text-sm divide-y divide-slate-100">
-                            <tr><td colspan="5" class="py-6 text-center text-slate-400">Fetching live data from Google Sheet...</td></tr>
+                            <tr><td colspan="5" class="py-6 text-center text-slate-400">Fetching live data...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -93,18 +89,18 @@
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div class="bg-white p-5 rounded-xl shadow-sm border-t-4 border-blue-500"><p class="text-xs font-semibold text-gray-400 uppercase">Total Inbound Quantity</p><p id="inbound-total-qty" class="mt-2 text-2xl sm:text-3xl font-bold text-gray-900">0</p></div>
-                <div class="bg-white p-5 rounded-xl shadow-sm border-t-4 border-emerald-500"><p class="text-xs font-semibold text-gray-400 uppercase">Active Regions</p><p id="inbound-active-regions" class="mt-2 text-2xl sm:text-3xl font-bold text-emerald-600">0</p></div>
-                <div class="bg-white p-5 rounded-xl shadow-sm border-t-4 border-indigo-500"><p class="text-xs font-semibold text-gray-400 uppercase">Device Categories</p><p id="inbound-device-cats" class="mt-2 text-2xl sm:text-3xl font-bold text-indigo-600">0</p></div>
+                <div class="bg-white p-5 rounded-xl shadow-sm border-t-4 border-blue-500"><p class="text-xs font-semibold text-gray-400 uppercase">Total Inbound Quantity</p><p id="inbound-total-qty" class="mt-2 text-2xl sm:text-3xl font-bold text-gray-900">4,738</p></div>
+                <div class="bg-white p-5 rounded-xl shadow-sm border-t-4 border-emerald-500"><p class="text-xs font-semibold text-gray-400 uppercase">Active Regions</p><p id="inbound-active-regions" class="mt-2 text-2xl sm:text-3xl font-bold text-emerald-600">3</p></div>
+                <div class="bg-white p-5 rounded-xl shadow-sm border-t-4 border-indigo-500"><p class="text-xs font-semibold text-gray-400 uppercase">Device Categories</p><p id="inbound-device-cats" class="mt-2 text-2xl sm:text-3xl font-bold text-indigo-600">8</p></div>
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div class="bg-white p-6 rounded-xl shadow-sm space-y-4">
-                    <h3 id="cpe-comparison-title" class="text-base font-bold text-gray-800">CPE-Type Comparison</h3>
+                    <h3 id="cpe-comparison-title" class="text-base font-bold text-gray-800">CPE-Type Comparison (Week 1 (1 - 7))</h3>
                     <div id="cpe-bars-container" class="space-y-3"></div>
                 </div>
                 <div class="bg-white p-6 rounded-xl shadow-sm">
-                    <h3 id="regional-comparison-title" class="text-base font-bold text-gray-800 mb-4">Regional Comparison</h3>
+                    <h3 id="regional-comparison-title" class="text-base font-bold text-gray-800 mb-4">Regional Comparison (Week 1 (1 - 7))</h3>
                     <div class="relative h-72 flex justify-center"><canvas id="inboundRegionalChart"></canvas></div>
                 </div>
             </div>
@@ -112,7 +108,7 @@
             <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden space-y-4 p-6">
                 <div class="flex items-center space-x-2">
                     <span class="text-lg">📋</span>
-                    <h3 id="inbound-table-title" class="text-base font-bold text-slate-800">Detailed Inbound Report</h3>
+                    <h3 id="inbound-table-title" class="text-base font-bold text-slate-800">Week 1 (1 - 7) Detailed Inbound Report</h3>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-center border-collapse">
@@ -213,24 +209,31 @@
             updateOnuDashboard();
         }
 
-        async function fetchGoogleSheetData(sheetId, sheetName) {
+        async function fetchGoogleSheetData(sheetId, sheetName = "") {
             try {
-                const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(sheetName)}`;
+                let url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json`;
+                if (sheetName) url += `&sheet=${encodeURIComponent(sheetName)}`;
                 const res = await fetch(url);
                 const text = await res.text();
                 if (!text.startsWith('/*O_o*/')) return [];
                 const json = JSON.parse(text.substring(47, text.length - 2));
                 
-                const cols = json.table.cols.map(c => (c && c.label) ? c.label.trim() : (c && c.id ? c.id.trim() : ''));
                 const rows = json.table.rows.map(r => r.c.map(cell => cell ? (cell.v !== null ? cell.v : '') : ''));
+                if (rows.length === 0) return [];
+
+                const headers = rows[0].map(h => String(h).trim());
+                const dataRows = rows.slice(1);
                 
-                return rows.map(row => {
+                return dataRows.map(row => {
                     let obj = {};
-                    cols.forEach((col, idx) => { if(col) obj[col] = row[idx]; });
+                    headers.forEach((h, idx) => {
+                        obj[h || `col_${idx}`] = row[idx];
+                        obj[`col_${idx}`] = row[idx];
+                    });
                     return obj;
                 });
             } catch (err) {
-                console.error("Fetch error for " + sheetName, err);
+                console.error("Fetch error:", err);
                 return [];
             }
         }
@@ -248,19 +251,38 @@
         }
 
         async function fetchStaffKpiData() {
-            let rows = await fetchGoogleSheetData(STAFF_SHEET_ID, "Oct 26");
+            let rows = await fetchGoogleSheetData(STAFF_SHEET_ID);
             staffGroupedData = {};
 
             rows.forEach(row => {
-                let keys = Object.keys(row);
-                let name = String(row[keys[0]] || row['Staff Name'] || row['Name'] || '').trim();
-                let dateRaw = row[keys[1]] || row['Date'] || '';
-                let device = String(row[keys[2]] || row['Device Name'] || '-').trim();
-                let jd = String(row[keys[3]] || row['Daily (JD)'] || '-').trim();
-                let qty = parseFloat(row[keys[4]] || row['Quantity'] || row['Total'] || 0) || 0;
-                let isLeave = String(row[keys[5]] || row['Leave'] || '').toLowerCase().includes('leave');
+                // Ensure we pick text name instead of Date() strings for staff names
+                let name = "";
+                let dateRaw = "";
+                let device = "";
+                let jd = "";
+                let qty = 0;
+                let isLeave = false;
 
-                if (!name || name.toLowerCase() === 'staff name' || name === '') return;
+                // Loop through columns to find valid text name and date
+                let vals = Object.values(row);
+                for(let i=0; i<vals.length; i++) {
+                    let valStr = String(vals[i] || '').trim();
+                    if (!name && valStr && !valStr.startsWith('Date(') && isNaN(valStr) && valStr.length > 2) {
+                        name = valStr;
+                    } else if (!dateRaw && (valStr.startsWith('Date(') || valStr.match(/^\d{4}-\d{2}-\d{2}/))) {
+                        dateRaw = valStr;
+                    }
+                }
+
+                // Fallbacks
+                name = String(row['Staff Name'] || row['Name'] || row['col_0'] || name || '').trim();
+                dateRaw = row['Date'] || row['DATE'] || row['col_1'] || dateRaw || '';
+                device = String(row['Device Name'] || row['DEVICE NAME'] || row['col_2'] || '-').trim();
+                jd = String(row['Daily (JD)'] || row['DAILY (JD)'] || row['col_3'] || '-').trim();
+                qty = parseFloat(row['Quantity'] || row['QTY'] || row['Total'] || row['col_4'] || 0) || 0;
+                isLeave = String(row['Leave'] || row['STATUS'] || row['col_5'] || '').toLowerCase().includes('leave');
+
+                if (!name || name.toLowerCase().includes('staff') || name.startsWith('Date(')) return;
 
                 let dateStr = "";
                 if (typeof dateRaw === 'string' && dateRaw.startsWith('Date(')) {
@@ -298,7 +320,7 @@
             container.innerHTML = "";
 
             if (staffList.length === 0) {
-                container.innerHTML = `<span class="text-xs text-rose-500 font-bold px-2">No staff data found in Google Sheet. Please check sheet name or columns.</span>`;
+                container.innerHTML = `<span class="text-xs text-rose-500 font-bold px-2">No valid staff names found in Sheet.</span>`;
                 return;
             }
 
@@ -400,10 +422,6 @@
             document.getElementById('regional-comparison-title').innerText = `Regional Comparison (${weekKey})`;
             document.getElementById('inbound-table-title').innerText = `${weekKey} Detailed Inbound Report`;
 
-            document.getElementById('inbound-total-qty').innerText = "4,738";
-            document.getElementById('inbound-active-regions').innerText = "3";
-            document.getElementById('inbound-device-cats').innerText = "8";
-
             let cpeContainer = document.getElementById('cpe-bars-container');
             const cpeData = [
                 { name: 'ECF', qty: 70 }, { name: 'ECJ', qty: 1651 },
@@ -436,6 +454,20 @@
                 },
                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
             });
+
+            let tbody = document.getElementById('inbound-report-tbody');
+            tbody.innerHTML = `
+                <tr>
+                    <td rowspan="7" class="py-4 px-4 text-left align-middle font-bold border-r border-slate-100">
+                        <span class="bg-blue-600 text-white px-3 py-1 rounded-xl shadow">ENUO</span>
+                    </td>
+                    <td class="py-2.5 px-4 text-slate-600">2026-10-01</td>
+                    <td class="py-2.5 px-3">13</td><td class="py-2.5 px-3">150</td>
+                    <td class="py-2.5 px-3 text-slate-400">-</td><td class="py-2.5 px-3 text-slate-400">-</td>
+                    <td class="py-2.5 px-3">150</td><td class="py-2.5 px-3">7</td><td class="py-2.5 px-3">80</td>
+                    <td class="py-2.5 px-3 text-slate-400">-</td><td class="py-2.5 px-4 text-right font-bold text-slate-800">400</td>
+                </tr>
+            `;
         }
 
         function updateOnuDashboard() {
