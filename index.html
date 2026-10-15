@@ -253,8 +253,6 @@
 
         function parseLocalDate(dateRaw) {
             if (!dateRaw && dateRaw !== 0) return "";
-            
-            // Handle Google GViz Date string: Date(2026,9,15)
             if (typeof dateRaw === 'string' && dateRaw.startsWith('Date(')) {
                 let parts = dateRaw.match(/\d+/g);
                 if (parts && parts.length >= 3) {
@@ -264,14 +262,10 @@
                     return `${y}-${m}-${d}`;
                 }
             }
-            
-            // Handle standard date strings
             let str = String(dateRaw).trim();
             if (/^\d{4}-\d{2}-\d{2}/.test(str)) {
                 return str.substring(0, 10);
             }
-            
-            // Universal date parsing using local components to avoid UTC timezone shifts
             let parsed = new Date(dateRaw);
             if (!isNaN(parsed.getTime())) {
                 let y = parsed.getFullYear();
@@ -281,7 +275,6 @@
                     return `${y}-${m}-${d}`;
                 }
             }
-            
             return str;
         }
 
@@ -306,12 +299,18 @@
 
                 if (isLeave) {
                     staffGroupedData[name].leaves.add(dateStr);
+                    // Add leave entry into table records as well
+                    if (!staffGroupedData[name].dates[dateStr]) {
+                        staffGroupedData[name].dates[dateStr] = { isLeave: true, devices: {} };
+                    } else {
+                        staffGroupedData[name].dates[dateStr].isLeave = true;
+                    }
                     return;
                 }
 
                 if (dateStr && jd) {
                     if (!staffGroupedData[name].dates[dateStr]) {
-                        staffGroupedData[name].dates[dateStr] = { devices: {} };
+                        staffGroupedData[name].dates[dateStr] = { isLeave: false, devices: {} };
                     }
                     let devKey = device || '-';
                     if (!staffGroupedData[name].dates[dateStr].devices[devKey]) {
@@ -390,12 +389,28 @@
             let sortedDates = Object.keys(sData.dates).sort();
             let tableRowsHtml = "";
 
-            if (sortedDates.length === 0 && sData.leaves.size === 0) {
+            if (sortedDates.length === 0) {
                 tableRowsHtml = `<tr><td colspan="5" class="py-6 text-center text-slate-400 font-bold border border-slate-300">No activity records found for ${name}.</td></tr>`;
             }
 
             sortedDates.forEach(date => {
                 let dayObj = sData.dates[date];
+
+                if (dayObj.isLeave) {
+                    tableRowsHtml += `
+                        <tr class="hover:bg-amber-50/40 transition bg-amber-50/20">
+                            <td class="py-4 px-6 text-center font-bold text-slate-700 align-middle border border-slate-300">${date}</td>
+                            <td class="py-3 px-6 text-center font-extrabold text-amber-600 align-middle border border-slate-300">Leave</td>
+                            <td class="py-3 px-6 text-center font-bold text-slate-500 align-middle border border-slate-300">Annual / Medical Leave</td>
+                            <td class="py-4 px-6 text-center font-black text-slate-500 align-middle border border-slate-300">-</td>
+                            <td class="py-4 px-6 text-center align-middle border border-slate-300">
+                                <span class="inline-block px-3 py-1 bg-amber-100 text-amber-800 font-extrabold rounded-lg text-xs">Leave</span>
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+
                 let devices = dayObj.devices;
                 let deviceKeys = Object.keys(devices);
 
