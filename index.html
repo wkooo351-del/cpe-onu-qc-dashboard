@@ -284,7 +284,7 @@
                 let name = String(row['Name'] || row['Staff Name'] || row['col_1'] || '').trim();
                 let device = String(row['Device Name'] || row['col_2'] || '-').trim();
                 let jd = String(row['Daily (JD)'] || row['col_3'] || '-').trim();
-                let qty = parseFloat(row['Qty'] || row['Quantity'] || row['Total'] || row['col_4'] || 1) || 1;
+                let qty = parseFloat(row['Qty'] || row['Quantity'] || row['Total'] || row['col_4'] || 0) || 0;
                 let mac = String(row['MAC'] || row['col_5'] || '').trim();
                 let isLeave = String(row['Leave'] || row['col_5'] || jd || '').toLowerCase().includes('leave');
 
@@ -316,18 +316,25 @@
                         staffGroupedData[name].dates[dateStr].devices[devKey] = {};
                     }
 
-                    let increment = qty;
+                    let addedValue = 0;
                     let jdLower = jd.toLowerCase();
+
                     if (jdLower === "run" || jdLower === "default") {
-                        // Count based on MAC presence/occurrence
-                        increment = (mac && mac !== "" && mac !== "#N/A") ? 1 : 0;
-                        if (increment === 0) increment = 1; // Fallback if MAC column is empty
+                        // Count based on valid MAC presence
+                        let hasValidMac = (mac && mac !== "" && mac !== "#N/A") ? 1 : 0;
+                        if (hasValidMac === 0) return; // Skip if no valid MAC for run/default
+                        addedValue = 1;
+                    } else {
+                        // For other activities, take the QTY number
+                        addedValue = qty;
                     }
+
+                    if (addedValue === 0) return;
 
                     if (!staffGroupedData[name].dates[dateStr].devices[devKey][jd]) {
                         staffGroupedData[name].dates[dateStr].devices[devKey][jd] = 0;
                     }
-                    staffGroupedData[name].dates[dateStr].devices[devKey][jd] += increment;
+                    staffGroupedData[name].dates[dateStr].devices[devKey][jd] += addedValue;
                 }
             });
         }
