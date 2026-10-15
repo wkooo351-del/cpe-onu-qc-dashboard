@@ -1,308 +1,875 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Unified ISP Operations & Dashboard</title>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    <!-- Chart.js CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
-        .strict-row-nav {
-            display: flex;
-            flex-wrap: nowrap !important;
-            overflow-x: auto;
-            gap: 4px;
-            align-items: center;
+function doGet() {
+  var staffSsUrl = "https://docs.google.com/spreadsheets/d/14WOHloWhGuQOc95PrRUsYWAHT6PTCC6EL2pY18uglVs/edit?gid=1967829808#gid=1967829808";
+  
+  var sheet1 = null;
+  try {
+    var sFile = SpreadsheetApp.openByUrl(staffSsUrl);
+    sheet1 = sFile.getSheetByName("Oct 26");
+  } catch(e) {}
+  
+  var mdySs = SpreadsheetApp.openByUrl("https://docs.google.com/spreadsheets/d/1XrjpVgSeu1lDpyNNyuJdjYji8MxnoQWuo3bwwPWAs9Q/edit");
+  var sheet2 = mdySs.getSheets()[0];
+  
+  var inboundSs = SpreadsheetApp.openByUrl("https://drive.google.com/open?id=1PK1Bz7gRg8x3L8IOr7Xx8ntMADaznWWhYyEjchzuM6M");
+  var inboundSheet = inboundSs.getSheets()[0];
+
+  // --- ONU Inspection Sheets (လိုလျှင် ID ထည့်ရန် သို့မဟုတ် Active Sheet ယူရန်) ---
+  var onuSsId = "YOUR_ONU_INSPECTION_SHEET_ID"; 
+  function getSheetDataAsObjects(sheet) {
+    if (!sheet) return [];
+    var rows = sheet.getDataRange().getValues();
+    if (rows.length < 2) return [];
+    var headers = rows[0];
+    var data = [];
+    for (var i = 1; i < rows.length; i++) {
+      var obj = {};
+      for (var j = 0; j < headers.length; j++) {
+        obj[headers[j]] = rows[i][j];
+      }
+      data.push(obj);
+    }
+    return data;
+  }
+
+  var firstTestArr = [], secondTestArr = [], exchangeTestArr = [];
+  try {
+    var onuSs = SpreadsheetApp.openById(onuSsId);
+    firstTestArr = getSheetDataAsObjects(onuSs.getSheetByName("First Test"));
+    secondTestArr = getSheetDataAsObjects(onuSs.getSheetByName("Second Test"));
+    exchangeTestArr = getSheetDataAsObjects(onuSs.getSheetByName("Exchange"));
+  } catch(e) {}
+
+  var requestParam = arguments[0] && arguments[0].parameter ? arguments[0].parameter : null;
+  var e = typeof e !== 'undefined' ? e : null;
+  if ((e && e.parameter && e.parameter.format === 'json') || (requestParam && requestParam.format === 'json')) {
+    var payload = {
+      firstTest: firstTestArr,
+      secondTest: secondTestArr,
+      exchangeTest: exchangeTestArr
+    };
+    return ContentService.createTextOutput(JSON.stringify(payload))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+  
+  var htmlOutput = HtmlService.createHtmlOutput();
+  htmlOutput.setTitle("Unified ISP Operations Dashboard");
+  
+  var staffDataMap = {};
+  var staffSet = {};
+  
+  function processStaffSheet(sheet) {
+    if (!sheet) return;
+    var lastRow = sheet.getLastRow();
+    if (lastRow < 2) return;
+    var rawData = sheet.getRange(2, 1, lastRow - 1, 7).getValues();
+    
+    for (var i = 0; i < rawData.length; i++) {
+      var rawDate = rawData[i][0];
+      var name = rawData[i][1];
+      var deviceName = rawData[i][2];
+      var jd = rawData[i][3];
+      var qty = Number(rawData[i][4]) || 0;
+      var mac = rawData[i][5];
+      
+      if (!name || !jd) continue;
+      
+      var dateStr = "";
+      if (rawDate instanceof Date) {
+        dateStr = Utilities.formatDate(rawDate, Session.getScriptTimeZone(), "yyyy-MM-dd");
+      } else {
+        dateStr = String(rawDate).trim();
+      }
+      
+      var jdLower = String(jd).trim().toLowerCase();
+      var addedValue = 0;
+      
+      if (jdLower === "leave") {
+        addedValue = 0;
+      } else if (jdLower === "run" || jdLower === "default") {
+        var hasValidMac = (mac && String(mac).trim() !== "" && String(mac).trim() !== "#N/A") ? 1 : 0;
+        if (hasValidMac === 0) continue;
+        addedValue = 1;
+      } else {
+        addedValue = qty;
+      }
+      
+      if (addedValue === 0 && jdLower !== "leave") continue;
+      
+      staffSet[name] = true;
+      if (!staffDataMap[name]) staffDataMap[name] = {};
+      
+      var dateKey = dateStr;
+      if (!staffDataMap[name][dateKey]) {
+        staffDataMap[name][dateKey] = { date: dateStr, devices: {} };
+      }
+      
+      var devKey = deviceName || "-";
+      if (!staffDataMap[name][dateKey].devices[devKey]) {
+        staffDataMap[name][dateKey].devices[devKey] = {};
+      }
+      
+      if (!staffDataMap[name][dateKey].devices[devKey][jd]) {
+        staffDataMap[name][dateKey].devices[devKey][jd] = 0;
+      }
+      staffDataMap[name][dateKey].devices[devKey][jd] += addedValue;
+    }
+  }
+  
+  processStaffSheet(sheet1);
+  processStaffSheet(sheet2);
+  var staffList = Object.keys(staffSet).sort();
+  
+  var weeksMap = {
+    "Week 1 (1 - 7)": { cpeTypes: {}, regions: {}, totalQty: 0 },
+    "Week 2 (8 - 14)": { cpeTypes: {}, regions: {}, totalQty: 0 },
+    "Week 3 (15 - 21)": { cpeTypes: {}, regions: {}, totalQty: 0 },
+    "Week 4 (22 - End)": { cpeTypes: {}, regions: {}, totalQty: 0 }
+  };
+  var weekKeys = Object.keys(weeksMap);
+  
+  var globalCpeTypes = {};
+  var globalRegions = {};
+  var allWeeksComparison = {};
+  for (var wKey in weeksMap) {
+    allWeeksComparison[wKey] = { regions: {}, cpes: {}, totalQty: 0 };
+  }
+  
+  if (inboundSheet) {
+    var inLastRow = inboundSheet.getLastRow();
+    if (inLastRow >= 2) {
+      var inRawData = inboundSheet.getRange(2, 1, inLastRow - 1, Math.min(inboundSheet.getLastColumn(), 12)).getValues();
+      
+      for (var i = 0; i < inRawData.length; i++) {
+        var rDate = inRawData[i][0];
+        var region = String(inRawData[i][1] || "").trim();
+        var cpeType = String(inRawData[i][3] || inRawData[i][2] || "Standard").trim(); 
+        var qty = Number(inRawData[i][4]) || Number(inRawData[i][3]) || 1;
+        
+        if (!region || !rDate) continue;
+        
+        var dayNum = 1;
+        var dateStr = "";
+        
+        if (rDate instanceof Date) {
+          dayNum = rDate.getDate();
+          dateStr = Utilities.formatDate(rDate, Session.getScriptTimeZone(), "yyyy-MM-dd");
+        } else {
+          dateStr = String(rDate).trim();
+          var parts = dateStr.split(/[-/]/);
+          if (parts.length >= 3) {
+            dayNum = parseInt(parts[2]) || parseInt(parts[0]) || 1;
+          } else {
+            dayNum = 1;
+          }
         }
-        .strict-row-nav::-webkit-scrollbar { height: 4px; }
-        .strict-row-nav::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.3); border-radius: 4px; }
-    </style>
-</head>
-<body class="text-slate-900 font-semibold">
-
-    <!-- Top Master Header & Main Dashboard Tabs -->
-    <header class="bg-slate-900 shadow-lg sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-4">
-            <div class="flex items-center space-x-3">
-                <span class="bg-blue-600 text-white p-2.5 rounded-xl shadow font-black text-lg">📊</span>
-                <div>
-                    <h1 class="text-xl sm:text-2xl font-extrabold text-white tracking-tight">Unified ISP Operations Dashboard</h1>
-                    <p class="text-xs text-slate-400 font-bold mt-0.5">Staff KPI, Inbound Regional KPI & ONU Inspection Tracking</p>
-                </div>
-            </div>
-            
-            <!-- Main Section Switcher Tabs -->
-            <div class="flex gap-2 bg-slate-800 p-1.5 rounded-xl border border-slate-700">
-                <button onclick="switchMainSection('staff')" id="main-btn-staff" class="px-4 py-2 text-sm font-bold rounded-lg bg-blue-600 text-white transition shadow">👤 Staff KPI</button>
-                <button onclick="switchMainSection('inbound')" id="main-btn-inbound" class="px-4 py-2 text-sm font-bold rounded-lg text-slate-300 hover:text-white transition">📦 Inbound Regional</button>
-                <button onclick="switchMainSection('onu')" id="main-btn-onu" class="px-4 py-2 text-sm font-bold rounded-lg text-slate-300 hover:text-white transition">🔍 ONU Inspection</button>
-            </div>
-        </div>
-    </header>
-
-    <!-- MAIN CONTAINER -->
-    <main class="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8 space-y-6">
-
-        <!-- ========================================== -->
-        <!-- SECTION 1: STAFF KPI DASHBOARD -->
-        <!-- ========================================== -->
-        <div id="section-staff" class="main-dashboard-section space-y-6">
-            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-6">
-                <div>
-                    <h2 class="text-xl font-extrabold text-slate-900">Regional KPI Dashboard</h2>
-                    <p class="text-xs text-slate-500 font-bold mt-0.5">Staff Performance & Regional Inbound Tracking</p>
-                </div>
-
-                <div id="staff-pills-container" class="flex flex-wrap gap-2 pt-2"></div>
-
-                <div class="pt-4 border-t border-slate-100">
-                    <h3 id="selected-staff-display-name" class="text-lg font-bold text-slate-800">Select a staff member</h3>
-                </div>
-
-                <div class="overflow-x-auto rounded-xl border border-slate-200">
-                    <table class="w-full text-left text-sm font-bold">
-                        <thead class="bg-slate-100 text-slate-600 uppercase text-xs font-extrabold tracking-wider border-b border-slate-200">
-                            <tr>
-                                <th class="p-3 text-left">DATE</th>
-                                <th class="p-3 text-center">DEVICE NAME</th>
-                                <th class="p-3 text-center">DAILY (JD)</th>
-                                <th class="p-3 text-right">TOTAL</th>
-                            </tr>
-                        </thead>
-                        <tbody id="staff-table-body" class="divide-y divide-slate-100 bg-white">
-                            <tr><td colspan="4" class="p-6 text-center text-slate-400">Loading Staff Records...</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <!-- ========================================== -->
-        <!-- SECTION 2: INBOUND REGIONAL KPI DASHBOARD -->
-        <!-- ========================================== -->
-        <div id="section-inbound" class="main-dashboard-section hidden space-y-6">
-            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-6">
-                <div>
-                    <h2 class="text-xl font-extrabold text-slate-900">Staff & Regional KPI Dashboard</h2>
-                    <p class="text-xs text-slate-500 font-bold mt-0.5">Staff Performance & Regional Inbound Tracking</p>
-                </div>
-
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div class="bg-slate-50 p-5 rounded-2xl border border-slate-100">
-                        <p class="text-xs font-bold text-slate-400 uppercase">INBOUND QUANTITY</p>
-                        <p class="mt-2 text-3xl font-extrabold text-slate-800">562</p>
-                    </div>
-                    <div class="bg-slate-50 p-5 rounded-2xl border border-slate-100">
-                        <p class="text-xs font-bold text-slate-400 uppercase">ACTIVE REGIONS</p>
-                        <p class="mt-2 text-3xl font-extrabold text-slate-800">3</p>
-                    </div>
-                    <div class="bg-slate-50 p-5 rounded-2xl border border-slate-100">
-                        <p class="text-xs font-bold text-slate-400 uppercase">DEVICE CATEGORIES</p>
-                        <p class="mt-2 text-3xl font-extrabold text-slate-800">14</p>
-                    </div>
-                </div>
-
-                <div class="overflow-x-auto rounded-xl border border-slate-200">
-                    <table class="w-full text-left text-sm font-bold">
-                        <thead class="bg-slate-100 text-slate-600 uppercase text-xs font-extrabold tracking-wider border-b border-slate-200">
-                            <tr>
-                                <th class="p-3 text-left">REGIONAL</th>
-                                <th class="p-3 text-center">DATE</th>
-                                <th class="p-3 text-center">CPE TYPE</th>
-                                <th class="p-3 text-right">DAILY KPI</th>
-                            </tr>
-                        </thead>
-                        <tbody id="inbound-table-body" class="divide-y divide-slate-100 bg-white">
-                            <tr><td colspan="4" class="p-6 text-center text-slate-400">Loading Inbound Records...</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <!-- ========================================== -->
-        <!-- SECTION 3: ONU INSPECTION DASHBOARD -->
-        <!-- ========================================== -->
-        <div id="section-onu" class="main-dashboard-section hidden space-y-6">
-            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-6">
-                <div class="flex flex-col md:flex-row justify-between items-center gap-4 bg-indigo-600 p-4 rounded-xl text-white shadow">
-                    <div>
-                        <h2 class="text-lg font-extrabold">ONU Inspection Dashboard</h2>
-                        <p class="text-xs text-indigo-200 font-bold mt-0.5">OLT Testing & Quality Control Tracking</p>
-                    </div>
-                    <div class="flex gap-2 bg-indigo-700 p-1.5 rounded-xl">
-                        <button onclick="switchONUTest('first')" id="onu-sub-first" class="px-3 py-1.5 text-xs font-bold rounded-lg text-indigo-200 hover:bg-white hover:text-indigo-900 transition">First Test</button>
-                        <button onclick="switchONUTest('second')" id="onu-sub-second" class="px-3 py-1.5 text-xs font-bold rounded-lg text-indigo-200 hover:bg-white hover:text-indigo-900 transition">Second Test</button>
-                        <button onclick="switchONUTest('exchange')" id="onu-sub-exchange" class="px-3 py-1.5 text-xs font-bold rounded-lg bg-white text-indigo-900 shadow transition">Exchange</button>
-                    </div>
-                </div>
-
-                <div class="overflow-x-auto rounded-xl border border-slate-200">
-                    <table class="w-full text-left text-sm font-bold">
-                        <thead class="bg-slate-100 text-slate-600 uppercase text-xs font-extrabold tracking-wider border-b border-slate-200">
-                            <tr>
-                                <th class="p-3 text-left">TIME</th>
-                                <th class="p-3 text-center">OLT HOSTNAME</th>
-                                <th class="p-3 text-center">DEVICES NAME</th>
-                                <th class="p-3 text-right">OVERALL PASS/FAIL</th>
-                            </tr>
-                        </thead>
-                        <tbody id="onu-table-body" class="divide-y divide-slate-100 bg-white">
-                            <tr><td colspan="4" class="p-6 text-center text-slate-400">Loading ONU Inspection Records...</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-    </main>
-
-    <!-- JavaScript Execution & Data Logic -->
-    <script>
-        const WEB_APP_URL = 'YOUR_APPS_SCRIPT_WEB_APP_URL';
-
-        let masterData = { staffData: [], inboundData: [], firstTest: [], secondTest: [], exchangeTest: [] };
-        let selectedStaffName = '';
-        let currentONUTest = 'exchange';
-
-        function switchMainSection(section) {
-            document.querySelectorAll('.main-dashboard-section').forEach(el => el.classList.add('hidden'));
-            
-            document.getElementById('main-btn-staff').className = 'px-4 py-2 text-sm font-bold rounded-lg text-slate-300 hover:text-white transition';
-            document.getElementById('main-btn-inbound').className = 'px-4 py-2 text-sm font-bold rounded-lg text-slate-300 hover:text-white transition';
-            document.getElementById('main-btn-onu').className = 'px-4 py-2 text-sm font-bold rounded-lg text-slate-300 hover:text-white transition';
-
-            if (section === 'staff') {
-                document.getElementById('section-staff').classList.remove('hidden');
-                document.getElementById('main-btn-staff').className = 'px-4 py-2 text-sm font-bold rounded-lg bg-blue-600 text-white transition shadow';
-                renderStaffSection();
-            } else if (section === 'inbound') {
-                document.getElementById('section-inbound').classList.remove('hidden');
-                document.getElementById('main-btn-inbound').className = 'px-4 py-2 text-sm font-bold rounded-lg bg-blue-600 text-white transition shadow';
-                renderInboundSection();
-            } else if (section === 'onu') {
-                document.getElementById('section-onu').classList.remove('hidden');
-                document.getElementById('main-btn-onu').className = 'px-4 py-2 text-sm font-bold rounded-lg bg-blue-600 text-white transition shadow';
-                renderONUSection();
-            }
+        
+        var targetWeekKey = "";
+        if (dayNum >= 1 && dayNum <= 7) targetWeekKey = "Week 1 (1 - 7)";
+        else if (dayNum >= 8 && dayNum <= 14) targetWeekKey = "Week 2 (8 - 14)";
+        else if (dayNum >= 15 && dayNum <= 21) targetWeekKey = "Week 3 (15 - 21)";
+        else targetWeekKey = "Week 4 (22 - End)";
+        
+        var wkObj = weeksMap[targetWeekKey];
+        wkObj.cpeTypes[cpeType] = true;
+        wkObj.totalQty += qty;
+        
+        globalCpeTypes[cpeType] = true;
+        globalRegions[region] = true;
+        
+        allWeeksComparison[targetWeekKey].totalQty += qty;
+        if (!allWeeksComparison[targetWeekKey].regions[region]) allWeeksComparison[targetWeekKey].regions[region] = 0;
+        allWeeksComparison[targetWeekKey].regions[region] += qty;
+        
+        if (!allWeeksComparison[targetWeekKey].cpes[cpeType]) allWeeksComparison[targetWeekKey].cpes[cpeType] = 0;
+        allWeeksComparison[targetWeekKey].cpes[cpeType] += qty;
+        
+        if (!wkObj.regions[region]) wkObj.regions[region] = {};
+        if (!wkObj.regions[region][dateStr]) {
+          wkObj.regions[region][dateStr] = { cpes: {}, total: 0 };
         }
-
-        function loadData() {
-            fetch(WEB_APP_URL + '?format=json')
-                .then(res => res.json())
-                .then(data => {
-                    masterData = data;
-                    renderStaffSection();
-                    renderInboundSection();
-                    renderONUSection();
-                })
-                .catch(err => console.error("Error loading dashboard data:", err));
+        
+        if (!wkObj.regions[region][dateStr].cpes[cpeType]) {
+          wkObj.regions[region][dateStr].cpes[cpeType] = 0;
         }
+        wkObj.regions[region][dateStr].cpes[cpeType] += qty;
+        wkObj.regions[region][dateStr].total += qty;
+      }
+    }
+  }
+  
+  var DAILY_TARGET = 150;
+  var allCpeList = Object.keys(globalCpeTypes).sort();
+  var allRegionList = Object.keys(globalRegions).sort();
+  
+  function getRegionBadgeStyle(regName) {
+    var regUpper = regName.toUpperCase();
+    if (regUpper.indexOf("ENUO") !== -1) return "bg-blue-600 text-white font-black";
+    if (regUpper.indexOf("HGAO") !== -1) return "bg-amber-500 text-white font-black";
+    if (regUpper.indexOf("MDY") !== -1 || regUpper.indexOf("MYFO") !== -1) return "bg-emerald-600 text-white font-black";
+    return "bg-slate-700 text-white font-black";
+  }
 
-        function renderStaffSection() {
-            const rows = masterData.staffData || [];
-            const container = document.getElementById('staff-pills-container');
-            const staffNames = [...new Set(rows.map(r => r.Name || r['Staff Name']).filter(Boolean))];
+  function getRegionSubtotalStyle(regName) {
+    var regUpper = regName.toUpperCase();
+    if (regUpper.indexOf("ENUO") !== -1) return "bg-blue-50 text-blue-950 font-extrabold border-t-2 border-b-2 border-blue-300";
+    if (regUpper.indexOf("HGAO") !== -1) return "bg-amber-50 text-amber-950 font-extrabold border-t-2 border-b-2 border-amber-300";
+    if (regUpper.indexOf("MDY") !== -1 || regUpper.indexOf("MYFO") !== -1) return "bg-emerald-50 text-emerald-950 font-extrabold border-t-2 border-b-2 border-emerald-300";
+    return "bg-slate-100 text-slate-950 font-extrabold border-t-2 border-b-2 border-slate-300";
+  }
 
-            if (staffNames.length > 0 && !selectedStaffName) {
-                selectedStaffName = staffNames[0];
-            }
+  function getRegionColorHex(regName) {
+    var regUpper = regName.toUpperCase();
+    if (regUpper.indexOf("ENUO") !== -1) return "#2563eb";
+    if (regUpper.indexOf("HGAO") !== -1) return "#f59e0b";
+    if (regUpper.indexOf("MDY") !== -1 || regUpper.indexOf("MYFO") !== -1) return "#10b981";
+    return "#64748b";
+  }
+  
+  var html = "<!DOCTYPE html><html><head><meta charset='UTF-8'>";
+  html += "<script src='https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4'></script>";
+  html += "<script src='https://cdn.jsdelivr.net/npm/chart.js'></script>";
+  html += "<link href='https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap' rel='stylesheet'>";
+  html += "<style> body { font-family: 'Inter', sans-serif; background-color: #f4f5f7; } .strict-row-nav { display: flex; flex-wrap: nowrap !important; overflow-x: auto; gap: 4px; align-items: center; } .strict-row-nav::-webkit-scrollbar { height: 4px; } .strict-row-nav::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.3); border-radius: 4px; } </style>";
+  html += "</head><body class='text-slate-900 font-semibold'>";
+  
+  html += "<div class='sticky top-0 z-50 bg-slate-900 shadow-xl'>";
+  html += "  <div class='max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-4'>";
+  html += "    <div class='flex items-center space-x-3'>";
+  html += "      <span class='bg-blue-600 text-white p-2.5 rounded-xl shadow font-black text-lg'>📊</span>";
+  html += "      <div>";
+  html += "        <h1 class='text-xl sm:text-2xl font-extrabold text-white tracking-tight'>Unified ISP Operations Dashboard</h1>";
+  html += "        <p class='text-xs text-slate-400 font-bold mt-0.5'>Staff KPI, Inbound Regional KPI & ONU Inspection Tracking</p>";
+  html += "      </div>";
+  html += "    </div>";
+  html += "    <div class='flex gap-2 bg-slate-800 p-1.5 rounded-xl border border-slate-700'>";
+  html += "      <button onclick='switchMasterTab(event, \"section-hc\")' id='master-btn-hc' class='px-4 py-2 text-sm font-bold rounded-lg bg-blue-600 text-white transition shadow'>👤 Staff KPI</button>";
+  html += "      <button onclick='switchMasterTab(event, \"section-inbound\")' id='master-btn-inbound' class='px-4 py-2 text-sm font-bold rounded-lg text-slate-300 hover:text-white transition'>📦 Inbound Regional</button>";
+  html += "      <button onclick='switchMasterTab(event, \"section-onu\")' id='master-btn-onu' class='px-4 py-2 text-sm font-bold rounded-lg text-slate-300 hover:text-white transition'>🔍 ONU Inspection</button>";
+  html += "    </div>";
+  html += "  </div>";
+  html += "</div>";
 
-            container.innerHTML = '';
-            staffNames.forEach(name => {
-                const active = name === selectedStaffName ? 'bg-blue-600 text-white shadow' : 'bg-slate-100 text-slate-700 hover:bg-slate-200';
-                container.innerHTML += `<button onclick="selectStaff('${name}')" class="px-4 py-2 rounded-xl text-xs font-bold transition ${active}">${name}</button>`;
-            });
-
-            document.getElementById('selected-staff-display-name').innerText = selectedStaffName || 'Select a staff member';
-
-            const tbody = document.getElementById('staff-table-body');
-            tbody.innerHTML = '';
-            const filtered = rows.filter(r => (r.Name || r['Staff Name']) === selectedStaffName);
-
-            if (filtered.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-slate-400">No records found.</td></tr>`;
-                return;
-            }
-
-            filtered.forEach(r => {
-                tbody.innerHTML += `
-                    <tr class="hover:bg-slate-50 border-b border-slate-100">
-                        <td class="p-3.5 text-left text-slate-700 font-bold">${r.Date || ''}</td>
-                        <td class="p-3.5 text-center text-slate-600">${r['Device Name'] || '-'}</td>
-                        <td class="p-3.5 text-center text-slate-600">${r['Daily (JD)'] || '-'}</td>
-                        <td class="p-3.5 text-right font-extrabold text-blue-600">${r.Total || r.Qty || 0}</td>
-                    </tr>`;
-            });
+  html += "<main class='max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8 space-y-6'>";
+  
+  html += "<div id='section-hc' class='dashboard-section space-y-6'>";
+  html += "  <div class='flex flex-wrap gap-2 justify-center mb-6'>";
+  for (var i = 0; i < staffList.length; i++) {
+    var staff = staffList[i];
+    var activeClass = (i === 0) ? " bg-blue-600 text-white shadow" : " bg-white text-slate-800 hover:bg-slate-100 border border-slate-300";
+    html += "<button class='px-4 py-2 text-sm font-bold rounded-xl transition " + activeClass + "' onclick='openStaff(event, \"staff-" + i + "\")'>" + staff + "</button>";
+  }
+  html += "  </div>";
+  
+  for (var i = 0; i < staffList.length; i++) {
+    var staff = staffList[i];
+    var dateObj = staffDataMap[staff];
+    var activeClass = (i === 0) ? " block" : " hidden";
+    
+    html += "<div id='staff-" + i + "' class='content-card " + activeClass + " bg-white p-6 rounded-2xl border border-slate-200 shadow-sm'>";
+    html += "<h3 class='text-lg font-extrabold text-slate-900 mb-4 pb-2 border-b border-slate-100'>👤 " + staff + "</h3>";
+    
+    var alerts = [];
+    if (dateObj) {
+      var sortedDates = Object.keys(dateObj).sort();
+      for (var d = 0; d < sortedDates.length; d++) {
+        var dt = sortedDates[d];
+        var devices = dateObj[dt].devices;
+        var isLeaveDay = false;
+        var dayTotal = 0;
+        for (var dv in devices) {
+          for (var jKey in devices[dv]) {
+            if (String(jKey).trim().toLowerCase() === "leave") isLeaveDay = true;
+            else dayTotal += devices[dv][jKey];
+          }
         }
-
-        function selectStaff(name) {
-            selectedStaffName = name;
-            renderStaffSection();
+        if (isLeaveDay) alerts.push({type: 'leave', text: "🏖️ " + staff + " is on Leave on " + dt});
+        else if (dayTotal < DAILY_TARGET) alerts.push({type: 'fail', text: "⚠️ " + staff + " No Meet Daily KPI. " + dt + " (Total: " + dayTotal + " / Target: " + DAILY_TARGET + ")"});
+      }
+    }
+    
+    for (var a = 0; a < alerts.length; a++) {
+      var alertObj = alerts[a];
+      if (alertObj.type === 'leave') html += "<div class='bg-amber-50 border-l-4 border-amber-500 p-4 mb-4 rounded-r-xl text-amber-900 font-bold text-sm'>" + alertObj.text + "</div>";
+      else html += "<div class='bg-red-50 border-l-4 border-red-500 p-4 mb-4 rounded-r-xl text-red-900 font-bold text-sm'>" + alertObj.text + "</div>";
+    }
+    
+    html += "<div class='overflow-x-auto rounded-xl border border-slate-200'>";
+    html += "<table class='w-auto min-w-full text-left text-sm font-bold'>";
+    html += "<thead class='bg-slate-200 text-slate-900 uppercase text-xs font-extrabold'><tr><th class='p-3 text-center'>Date</th><th class='p-3 text-center'>Device Name</th><th class='p-3 text-center'>Daily (JD)</th><th class='p-3 text-center'>Total</th><th class='p-3 text-center'>Status</th></tr></thead>";
+    html += "<tbody class='divide-y divide-slate-200'>";
+    
+    var grandTotal = 0;
+    if (dateObj) {
+      var sortedDates = Object.keys(dateObj).sort();
+      for (var d = 0; d < sortedDates.length; d++) {
+        var dt = sortedDates[d];
+        var dateData = dateObj[dt];
+        var devices = dateData.devices;
+        var sortedDevices = Object.keys(devices).sort();
+        
+        var dayTotal = 0;
+        var isLeaveDay = false;
+        for (var dv = 0; dv < sortedDevices.length; dv++) {
+          var jdMap = devices[sortedDevices[dv]];
+          for (var jKey in jdMap) {
+            if (String(jKey).trim().toLowerCase() === "leave") isLeaveDay = true;
+            else dayTotal += jdMap[jKey];
+          }
         }
-
-        function renderInboundSection() {
-            const rows = masterData.inboundData || [];
-            const tbody = document.getElementById('inbound-table-body');
-            tbody.innerHTML = '';
-
-            if (rows.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-slate-400">No inbound records found.</td></tr>`;
-                return;
-            }
-
-            rows.forEach(r => {
-                tbody.innerHTML += `
-                    <tr class="hover:bg-slate-50 border-b border-slate-100">
-                        <td class="p-3.5 text-left text-slate-700 font-bold">${r.Regional || r.Region || ''}</td>
-                        <td class="p-3.5 text-center text-slate-600">${r.Date || ''}</td>
-                        <td class="p-3.5 text-center text-slate-600">${r['CPE Type'] || '-'}</td>
-                        <td class="p-3.5 text-right font-extrabold text-indigo-900">${r['Daily KPI'] || 0}</td>
-                    </tr>`;
-            });
+        grandTotal += dayTotal;
+        
+        var statusBadge = isLeaveDay ? "<span class='px-2.5 py-1 bg-amber-100 text-amber-900 font-extrabold rounded-lg text-xs'>Leave</span>" : (dayTotal >= DAILY_TARGET ? "<span class='px-2.5 py-1 bg-emerald-100 text-emerald-900 font-extrabold rounded-lg text-xs'>Pass (" + dayTotal + ")</span>" : "<span class='px-2.5 py-1 bg-red-100 text-red-900 font-extrabold rounded-lg text-xs'>Fail (" + dayTotal + ")</span>");
+        
+        for (var dv = 0; dv < sortedDevices.length; dv++) {
+          var devName = sortedDevices[dv];
+          var jdMap = devices[devName];
+          html += "<tr class='hover:bg-slate-50'>";
+          if (dv === 0) html += "<td rowspan='" + sortedDevices.length + "' class='p-3 text-center font-bold bg-slate-50/50'>" + dt + "</td>";
+          html += "<td class='p-3 text-center font-bold'>" + devName + "</td>";
+          html += "<td class='p-0'><table class='w-full font-bold'>";
+          var jds = Object.keys(jdMap).sort();
+          for (var j = 0; j < jds.length; j++) {
+            var jName = jds[j];
+            var jVal = jdMap[jName];
+            html += "<tr><td class='p-2 text-center border-b border-slate-100 text-slate-800'>" + jName + "</td><td class='p-2 text-right border-b border-slate-100 font-extrabold text-blue-700 pr-4'>" + (jVal > 0 ? jVal : "-") + "</td></tr>";
+          }
+          html += "</table></td>";
+          if (dv === 0) {
+            html += "<td rowspan='" + sortedDevices.length + "' class='p-3 text-center font-extrabold text-blue-950 bg-slate-50/50'>" + (isLeaveDay ? "-" : dayTotal) + "</td>";
+            html += "<td rowspan='" + sortedDevices.length + "' class='p-3 text-center bg-slate-50/50'>" + statusBadge + "</td>";
+          }
+          html += "</tr>";
         }
-
-        function switchONUTest(testType) {
-            currentONUTest = testType;
-            ['first', 'second', 'exchange'].forEach(t => {
-                const btn = document.getElementById(`onu-sub-${t}`);
-                btn.className = (t === testType) ? 'px-3 py-1.5 text-xs font-bold rounded-lg bg-white text-indigo-900 shadow transition' : 'px-3 py-1.5 text-xs font-bold rounded-lg text-indigo-200 hover:bg-white hover:text-indigo-900 transition';
-            });
-            renderONUSection();
+      }
+    }
+    html += "<tr class='bg-slate-200 font-extrabold text-slate-900'><td colspan='3' class='p-3 text-right'>Grand Total:</td><td colspan='2' class='p-3 text-center text-red-700 text-base'>" + grandTotal + "</td></tr>";
+    html += "</tbody></table></div></div>";
+  }
+  html += "</div>";
+  
+  html += "<div id='section-inbound' class='dashboard-section hidden space-y-6'>";
+  html += "  <div class='flex flex-wrap gap-2 justify-center mb-6'>";
+  for (var w = 0; w < weekKeys.length; w++) {
+    var wkKey = weekKeys[w];
+    var activeWkClass = (w === 0) ? " bg-blue-600 text-white shadow" : " bg-white text-slate-800 hover:bg-slate-100 border border-slate-300";
+    html += "<button class='px-4 py-2 text-sm font-bold rounded-xl transition " + activeWkClass + "' onclick='openWeek(event, \"week-" + w + "\")'>" + wkKey + "</button>";
+  }
+  html += "<button class='px-4 py-2 text-sm font-extrabold rounded-xl transition bg-slate-900 text-white shadow' onclick='openWeek(event, \"week-comparison\")'>📊 Week-by-Week Comparison</button>";
+  html += "  </div>";
+  
+  for (var w = 0; w < weekKeys.length; w++) {
+    var wkKey = weekKeys[w];
+    var wkObj = weeksMap[wkKey];
+    var regionNames = Object.keys(wkObj.regions).sort();
+    var cpeTypesList = Object.keys(wkObj.cpeTypes).sort();
+    var activeWkClass = (w === 0) ? " block" : " hidden";
+    
+    html += "<div id='week-" + w + "' class='content-card " + activeWkClass + " space-y-6'>";
+    html += "<div class='grid grid-cols-1 md:grid-cols-3 gap-4 font-bold'>";
+    html += "  <div class='bg-white p-5 rounded-2xl border border-slate-200 shadow-sm'><p class='text-xs uppercase text-slate-500'>Total Inbound Quantity</p><h3 class='text-3xl font-extrabold text-slate-900 mt-2'>" + wkObj.totalQty.toLocaleString() + "</h3></div>";
+    html += "  <div class='bg-white p-5 rounded-2xl border border-slate-200 shadow-sm'><p class='text-xs uppercase text-slate-500'>Active Regions</p><h3 class='text-3xl font-extrabold text-slate-900 mt-2'>" + regionNames.length + "</h3></div>";
+    html += "  <div class='bg-white p-5 rounded-2xl border border-slate-200 shadow-sm'><p class='text-xs uppercase text-slate-500'>Device Categories</p><h3 class='text-3xl font-extrabold text-slate-900 mt-2'>" + cpeTypesList.length + "</h3></div>";
+    html += "</div>";
+    
+    if (regionNames.length === 0) {
+      html += "<div class='bg-white p-8 rounded-2xl border border-slate-200 text-center text-slate-600 font-bold'>No inbound data available for " + wkKey + "</div></div>";
+      continue;
+    }
+    
+    html += "<div class='grid grid-cols-1 lg:grid-cols-2 gap-6 font-bold'>";
+    html += "  <div class='bg-white p-6 rounded-2xl border border-slate-200 shadow-sm'>";
+    html += "    <h4 class='text-sm font-extrabold text-slate-900 uppercase tracking-wide mb-4'>📈 CPE-TYPE COMPARISON (" + wkKey + ")</h4>";
+    var cpeTotalsMap = {};
+    var maxCpeTotal = 1;
+    for (var c = 0; c < cpeTypesList.length; c++) {
+      var cpe = cpeTypesList[c];
+      var cTot = 0;
+      for (var r = 0; r < regionNames.length; r++) {
+        var dMap = wkObj.regions[regionNames[r]];
+        for (var dtStr in dMap) if (dMap[dtStr].cpes[cpe]) cTot += dMap[dtStr].cpes[cpe];
+      }
+      cpeTotalsMap[cpe] = cTot;
+      if (cTot > maxCpeTotal) maxCpeTotal = cTot;
+    }
+    for (var c = 0; c < cpeTypesList.length; c++) {
+      var cpe = cpeTypesList[c];
+      var cTot = cpeTotalsMap[cpe];
+      var pct = Math.round((cTot / maxCpeTotal) * 100);
+      if (pct < 5 && cTot > 0) pct = 5;
+      html += "    <div class='mb-3'><div class='flex justify-between text-xs mb-1'><span>" + cpe + "</span><span>" + cTot + " units</span></div><div class='w-full bg-slate-100 rounded-full h-3 overflow-hidden border border-slate-200'><div class='bg-indigo-600 h-full rounded-full' style='width: " + pct + "%;'></div></div></div>";
+    }
+    html += "  </div>";
+    
+    html += "  <div class='bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between'>";
+    html += "    <h4 class='text-sm font-extrabold text-slate-900 uppercase tracking-wide mb-2'>📊 REGIONAL COMPARISON (" + wkKey + ")</h4>";
+    html += "    <div class='w-full max-w-[280px] h-[190px] mx-auto flex justify-center items-center my-1'><canvas id='pie-chart-week-" + w + "'></canvas></div>";
+    html += "    <div class='w-full pt-3 border-t border-slate-100 mt-2'>";
+    var regTotalsMap = {};
+    var maxRegTotal = 1;
+    for (var r = 0; r < regionNames.length; r++) {
+      var reg = regionNames[r];
+      var rTot = 0;
+      var dMap = wkObj.regions[reg];
+      for (var dt in dMap) rTot += dMap[dt].total;
+      regTotalsMap[reg] = rTot;
+      if (rTot > maxRegTotal) maxRegTotal = rTot;
+    }
+    for (var r = 0; r < regionNames.length; r++) {
+      var reg = regionNames[r];
+      var rTot = regTotalsMap[reg];
+      var rPct = wkObj.totalQty > 0 ? Math.round((rTot / wkObj.totalQty) * 100) : 0;
+      var barWidth = Math.round((rTot / maxRegTotal) * 100);
+      if (barWidth < 5 && rTot > 0) barWidth = 5;
+      var regHex = getRegionColorHex(reg);
+      html += "      <div class='mb-1.5'><div class='flex justify-between text-xs mb-0.5'><span class='flex items-center gap-1.5'><span class='w-2.5 h-2.5 rounded-full inline-block' style='background-color: " + regHex + ";'></span>" + reg + " Total</span><span>" + rTot.toLocaleString() + " (" + rPct + "%)</span></div><div class='w-full bg-slate-100 rounded-full h-2 overflow-hidden'><div class='h-full rounded-full' style='width: " + barWidth + "%; background-color: " + regHex + ";'></div></div></div>";
+    }
+    html += "    </div></div>";
+    html += "</div>";
+    
+    html += "<div class='bg-white p-6 rounded-2xl border border-slate-200 shadow-sm font-bold'>";
+    html += "  <h3 class='text-base font-extrabold text-slate-900 mb-4'>📋 " + wkKey + " Detailed Inbound Report</h3>";
+    html += "  <div class='overflow-x-auto rounded-xl border border-slate-200'><table class='w-auto min-w-full text-left text-sm'>";
+    html += "    <thead class='bg-slate-800 text-white uppercase text-xs font-extrabold'><tr><th class='p-3 text-center'>Regional</th><th class='p-3 text-center'>Date</th>";
+    for (var c = 0; c < cpeTypesList.length; c++) html += "<th class='p-3 text-center'>" + cpeTypesList[c] + "</th>";
+    html += "<th class='p-3 text-center bg-slate-900 text-white'>Daily Total</th></tr></thead><tbody class='divide-y divide-slate-200'>";
+    
+    var cpeColumnTotals = {};
+    for (var c = 0; c < cpeTypesList.length; c++) cpeColumnTotals[cpeTypesList[c]] = 0;
+    var weekGrandTotal = 0;
+    
+    for (var r = 0; r < regionNames.length; r++) {
+      var reg = regionNames[r];
+      var datesMap = wkObj.regions[reg];
+      var datesList = Object.keys(datesMap).sort();
+      var regCpeSubtotals = {};
+      for (var c = 0; c < cpeTypesList.length; c++) regCpeSubtotals[cpeTypesList[c]] = 0;
+      var regGrandTotal = 0;
+      var badgeStyle = getRegionBadgeStyle(reg);
+      var subtotalRowStyle = getRegionSubtotalStyle(reg);
+      
+      for (var d = 0; d < datesList.length; d++) {
+        var dtStr = datesList[d];
+        var dtObj = datesMap[dtStr];
+        html += "<tr class='hover:bg-slate-50'>";
+        if (d === 0) html += "<td rowspan='" + datesList.length + "' class='p-3 text-center bg-slate-50/50 align-middle'><span class='px-3 py-1.5 rounded-lg text-xs tracking-wide inline-block " + badgeStyle + "'>" + reg + "</span></td>";
+        html += "<td class='p-3 text-center text-slate-700'>" + dtStr + "</td>";
+        for (var c = 0; c < cpeTypesList.length; c++) {
+          var val = dtObj.cpes[cpeTypesList[c]] || 0;
+          cpeColumnTotals[cpeTypesList[c]] += val;
+          regCpeSubtotals[cpeTypesList[c]] += val;
+          html += "<td class='p-3 text-center text-slate-800'>" + (val > 0 ? val : "-") + "</td>";
         }
+        html += "<td class='p-3 text-center font-extrabold bg-slate-50/50'>" + dtObj.total + "</td></tr>";
+        regGrandTotal += dtObj.total;
+        weekGrandTotal += dtObj.total;
+      }
+      html += "<tr class='" + subtotalRowStyle + "'><td colspan='2' class='p-3 text-right text-xs uppercase'>📌 " + reg + " Total:</td>";
+      for (var c = 0; c < cpeTypesList.length; c++) html += "<td class='p-3 text-center'>" + (regCpeSubtotals[cpeTypesList[c]] > 0 ? regCpeSubtotals[cpeTypesList[c]] : "-") + "</td>";
+      html += "<td class='p-3 text-center text-base'>" + regGrandTotal.toLocaleString() + "</td></tr>";
+    }
+    html += "<tr class='bg-slate-900 text-white font-black text-sm'><td colspan='2' class='p-3.5 text-right uppercase'>Grand Total</td>";
+    for (var c = 0; c < cpeTypesList.length; c++) html += "<td class='p-3.5 text-center text-emerald-400'>" + (cpeColumnTotals[cpeTypesList[c]] > 0 ? cpeColumnTotals[cpeTypesList[c]].toLocaleString() : "-") + "</td>";
+    html += "<td class='p-3.5 text-center text-amber-300 text-base'>" + weekGrandTotal.toLocaleString() + "</td></tr>";
+    html += "</tbody></table></div></div></div>";
+  }
+  
+  html += "<div id='week-comparison' class='content-card hidden'>";
+  html += "<div class='bg-white p-6 rounded-2xl border border-slate-200 shadow-sm font-bold mb-6'>";
+  html += "<h3 class='text-lg font-extrabold text-slate-900 mb-2'>📊 Week-by-Week Regional Comparison Dashboard</h3>";
+  html += "<p class='text-xs text-slate-500 mb-6 font-bold'>4-Week Period Performance Breakdown across Regions and CPE Types.</p>";
+  html += "<div class='grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6'>";
+  html += "<div class='bg-slate-50 p-6 rounded-2xl border border-slate-200'><h4 class='text-sm font-extrabold uppercase mb-4'>📈 OVERALL CPE-TYPE COMPARISON</h4>";
+  var overallCpeMap = {};
+  var maxOverallCpe = 1;
+  for (var c = 0; c < allCpeList.length; c++) {
+    var cpe = allCpeList[c];
+    var cTot = 0;
+    for (var wk in allWeeksComparison) if (allWeeksComparison[wk].cpes[cpe]) cTot += allWeeksComparison[wk].cpes[cpe];
+    overallCpeMap[cpe] = cTot;
+    if (cTot > maxOverallCpe) maxOverallCpe = cTot;
+  }
+  for (var c = 0; c < allCpeList.length; c++) {
+    var cpe = allCpeList[c];
+    var cTot = overallCpeMap[cpe];
+    var pct = Math.round((cTot / maxOverallCpe) * 100);
+    if (pct < 5 && cTot > 0) pct = 5;
+    html += "<div class='mb-3'><div class='flex justify-between text-xs mb-1'><span>" + cpe + "</span><span>" + cTot.toLocaleString() + " units</span></div><div class='w-full bg-slate-200 rounded-full h-3 overflow-hidden'><div class='bg-indigo-600 h-full rounded-full' style='width: " + pct + "%;'></div></div></div>";
+  }
+  html += "</div>";
+  html += "<div class='bg-slate-50 p-6 rounded-2xl border border-slate-200 flex flex-col justify-between'><h4 class='text-sm font-extrabold uppercase mb-2 w-full'>📊 OVERALL REGIONAL COMPARISON</h4>";
+  html += "<div class='w-full max-w-[280px] h-[190px] mx-auto flex justify-center items-center my-1'><canvas id='pie-chart-overall'></canvas></div>";
+  html += "<div class='w-full pt-3 border-t border-slate-200 mt-2'>";
+  var overallRegTotals = {};
+  var maxOverallReg = 1;
+  var overallGrandTotalAll = 0;
+  for (var r = 0; r < allRegionList.length; r++) {
+    var reg = allRegionList[r];
+    var rTot = 0;
+    for (var wk in allWeeksComparison) if (allWeeksComparison[wk].regions[reg]) rTot += allWeeksComparison[wk].regions[reg];
+    overallRegTotals[reg] = rTot;
+    overallGrandTotalAll += rTot;
+    if (rTot > maxOverallReg) maxOverallReg = rTot;
+  }
+  for (var r = 0; r < allRegionList.length; r++) {
+    var reg = allRegionList[r];
+    var rTot = overallRegTotals[reg];
+    var rPct = overallGrandTotalAll > 0 ? Math.round((rTot / overallGrandTotalAll) * 100) : 0;
+    var barWidth = Math.round((rTot / maxOverallReg) * 100);
+    if (barWidth < 5 && rTot > 0) barWidth = 5;
+    var regHex = getRegionColorHex(reg);
+    html += "  <div class='mb-1.5'><div class='flex justify-between text-xs mb-0.5'><span class='flex items-center gap-1.5'><span class='w-2.5 h-2.5 rounded-full inline-block' style='background-color: " + regHex + ";'></span>" + reg + " Total</span><span>" + rTot.toLocaleString() + " (" + rPct + "%)</span></div><div class='w-full bg-slate-200 rounded-full h-2 overflow-hidden'><div class='h-full rounded-full' style='width: " + barWidth + "%; background-color: " + regHex + ";'></div></div></div>";
+  }
+  html += "</div></div></div>";
+  html += "<h4 class='text-sm font-extrabold text-slate-900 uppercase tracking-wide mb-3'>🗓️ 4-WEEK REGIONAL INBOUND COMPARISON TABLE</h4>";
+  html += "<div class='overflow-x-auto rounded-xl border border-slate-200 mb-6'><table class='w-auto min-w-full text-left text-sm'>";
+  html += "  <thead class='bg-slate-800 text-white uppercase text-xs font-extrabold'><tr><th class='p-3 text-center'>Region</th>";
+  for (var w = 0; w < weekKeys.length; w++) html += "<th class='p-3 text-center'>" + weekKeys[w] + "</th>";
+  html += "<th class='p-3 text-center bg-slate-900 text-white'>4-Week Total</th></tr></thead><tbody class='divide-y divide-slate-200'>";
+  var weekTotalsCol = {};
+  for (var w = 0; w < weekKeys.length; w++) weekTotalsCol[weekKeys[w]] = 0;
+  for (var r = 0; r < allRegionList.length; r++) {
+    var reg = allRegionList[r];
+    var badgeStyle = getRegionBadgeStyle(reg);
+    var reg4WeekTot = 0;
+    html += "<tr class='hover:bg-slate-50'><td class='p-3 text-center font-extrabold bg-slate-50/50'><span class='px-3 py-1.5 rounded-lg text-xs tracking-wide inline-block " + badgeStyle + "'>" + reg + "</span></td>";
+    for (var w = 0; w < weekKeys.length; w++) {
+      var wKey = weekKeys[w];
+      var val = allWeeksComparison[wKey].regions[reg] || 0;
+      weekTotalsCol[wKey] += val;
+      reg4WeekTot += val;
+      html += "<td class='p-3 text-center text-slate-800 font-extrabold'>" + (val > 0 ? val.toLocaleString() : "-") + "</td>";
+    }
+    html += "<td class='p-3 text-center font-black text-blue-950 bg-slate-100 text-base'>" + reg4WeekTot.toLocaleString() + "</td></tr>";
+  }
+  html += "<tr class='bg-slate-900 text-white font-black text-sm'><td class='p-3.5 text-right uppercase'>Overall Total</td>";
+  for (var w = 0; w < weekKeys.length; w++) {
+    var wKey = weekKeys[w];
+    html += "<td class='p-3.5 text-center text-emerald-400 text-base'>" + (weekTotalsCol[wKey] > 0 ? weekTotalsCol[wKey].toLocaleString() : "-") + "</td>";
+  }
+  html += "<td class='p-3.5 text-center text-amber-300 text-lg font-black'>" + overallGrandTotalAll.toLocaleString() + "</td></tr>";
+  html += "</tbody></table></div></div></div>";
+  html += "</div>";
+  
+  html += "<div id='section-onu' class='dashboard-section hidden space-y-6'>";
+  html += "  <div class='bg-indigo-600 shadow-md rounded-2xl p-4 flex flex-col md:flex-row justify-between items-center gap-3'>";
+  html += "    <div class='flex items-center space-x-3'><span class='bg-white p-2 rounded-lg shadow text-indigo-600 font-bold'>📊</span><h2 class='text-xl sm:text-2xl font-bold text-white whitespace-nowrap'>ONU Inspection Dashboard</h2></div>";
+  html += "    <div class='strict-row-nav bg-indigo-700 p-1 rounded-xl shadow-inner'>";
+  html += "      <button id='tab-first' onclick='switchTestType(\"first\")' class='px-3 py-1.5 rounded-lg text-sm font-semibold transition text-white hover:bg-indigo-600 whitespace-nowrap'>First Test</button>";
+  html += "      <button id='tab-second' onclick='switchTestType(\"second\")' class='px-3 py-1.5 rounded-lg text-sm font-semibold transition text-white hover:bg-indigo-600 whitespace-nowrap'>Second Test</button>";
+  html += "      <button id='tab-exchange' onclick='switchTestType(\"exchange\")' class='px-3 py-1.5 rounded-lg text-sm font-semibold transition text-white hover:bg-indigo-600 whitespace-nowrap'>Exchange Devices</button>";
+  html += "      <button id='tab-daily' onclick='switchTestType(\"daily\")' class='px-3 py-1.5 rounded-lg text-sm font-semibold transition text-white hover:bg-indigo-600 whitespace-nowrap'>Daily</button>";
+  html += "      <button id='tab-weekly' onclick='switchTestType(\"weekly\")' class='px-3 py-1.5 rounded-lg text-sm font-semibold transition text-white hover:bg-indigo-600 whitespace-nowrap'>Weekly</button>";
+  html += "      <button id='tab-monthly' onclick='switchTestType(\"monthly\")' class='px-3 py-1.5 rounded-lg text-sm font-semibold transition text-white hover:bg-indigo-600 whitespace-nowrap'>Monthly</button>";
+  html += "    </div>";
+  html += "    <div class='flex items-center space-x-3'><div class='flex items-center space-x-2 bg-indigo-700/50 px-3 py-1.5 rounded-lg border border-indigo-500/30'><span class='relative flex h-2.5 w-2.5'><span class='animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75'></span><span class='relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500'></span></span><span id='last-updated' class='text-xs text-indigo-200'>Connected</span></div></div>";
+  html += "  </div>";
 
-        function renderONUSection() {
-            let rows = masterData.exchangeTest || [];
-            if (currentONUTest === 'first') rows = masterData.firstTest || [];
-            if (currentONUTest === 'second') rows = masterData.secondTest || [];
+  html += "  <div id='daily-container' class='hidden bg-white p-4 rounded-xl shadow-sm flex items-center space-x-4'><label for='daily-date-input' class='text-sm font-semibold text-gray-700'>Select Date:</label><input type='date' id='daily-date-input' onchange='onDateChanged()' class='px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500'><span id='daily-selected-label' class='text-xs text-gray-500'></span></div>";
 
-            const tbody = document.getElementById('onu-table-body');
-            tbody.innerHTML = '';
+  html += "  <div id='weekly-container' class='hidden mb-6'><div class='flex space-x-2 border-b border-gray-200 pb-3 overflow-x-auto'>";
+  html += "    <button onclick='switchWeek(\"week1\")' id='subtab-week1' class='px-4 py-2 text-sm font-semibold rounded-lg bg-indigo-600 text-white shadow whitespace-nowrap'>Week 1 Test</button>";
+  html += "    <button onclick='switchWeek(\"week2\")' id='subtab-week2' class='px-4 py-2 text-sm font-semibold rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition whitespace-nowrap'>Week 2 Test</button>";
+  html += "    <button onclick='switchWeek(\"week3\")' id='subtab-week3' class='px-4 py-2 text-sm font-semibold rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition whitespace-nowrap'>Week 3 Test</button>";
+  html += "    <button onclick='switchWeek(\"week4\")' id='subtab-week4' class='px-4 py-2 text-sm font-semibold rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition whitespace-nowrap'>Week 4 Test</button>";
+  html += "    <button onclick='switchWeek(\"comparison\")' id='subtab-comparison' class='px-4 py-2 text-sm font-semibold rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition whitespace-nowrap'>📊 Week-by-Week Comparison</button>";
+  html += "  </div></div>";
 
-            if (rows.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-slate-400">No ONU records found.</td></tr>`;
-                return;
-            }
+  html += "  <div id='monthly-container' class='hidden mb-6 overflow-x-auto'><div class='flex space-x-2 border-b border-gray-200 pb-3 whitespace-nowrap'>";
+  var monthsArr = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+  for(var m=0; m<monthsArr.length; m++) {
+    var mName = monthsArr[m];
+    var activeCls = (m === 0) ? 'bg-indigo-600 text-white shadow' : 'bg-gray-100 text-gray-700 hover:bg-gray-200 transition';
+    html += "<button onclick='switchMonth(\"" + mName + "\")' id='subtab-" + mName + "' class='px-3 py-1.5 text-sm font-semibold rounded-lg " + activeCls + "'>" + mName.toUpperCase() + "</button>";
+  }
+  html += "<button onclick='switchMonth(\"comparison\")' id='subtab-monthly-comparison' class='px-3 py-1.5 text-sm font-semibold rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition'>📊 Comparison</button>";
+  html += "  </div></div>";
 
-            rows.forEach(r => {
-                let status = r['Overall Pass/Fail'] || '';
-                let badge = status.toLowerCase() === 'pass' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800';
-                tbody.innerHTML += `
-                    <tr class="hover:bg-slate-50 border-b border-slate-100">
-                        <td class="p-3.5 text-left text-slate-700 font-bold">${r.Time || r.Date || ''}</td>
-                        <td class="p-3.5 text-center text-slate-600">${r['Olt Hostname'] || ''}</td>
-                        <td class="p-3.5 text-center text-slate-600">${r['Devices Name'] || ''}</td>
-                        <td class="p-3.5 text-right"><span class="px-2.5 py-1 rounded-full text-xs font-bold ${badge}">${status}</span></td>
-                    </tr>`;
-            });
-        }
+  html += "  <div class='bg-white p-4 rounded-xl shadow-sm flex flex-col sm:flex-row justify-between items-center gap-4'><span class='text-sm font-semibold text-gray-600 uppercase tracking-wider'><span id='active-test-label'>Exchange Devices</span> - Select Region:</span>";
+  html += "    <div class='flex flex-wrap gap-2' id='region-filters'>";
+  html += "      <button onclick='filterRegion(\"All\")' class='px-4 py-2 text-sm font-medium rounded-lg bg-indigo-600 text-white transition shadow' data-region='All'>All Regions</button>";
+  html += "      <button onclick='filterRegion(\"OVF-Provision-HGAO\")' class='px-4 py-2 text-sm font-medium rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition' data-region='OVF-Provision-HGAO'>OVF-Provision-HGAO</button>";
+  html += "      <button onclick='filterRegion(\"OVF-Provision-ENUO\")' class='px-4 py-2 text-sm font-medium rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition' data-region='OVF-Provision-ENUO'>OVF-Provision-ENUO</button>";
+  html += "      <button onclick='filterRegion(\"OVF-Provision-MDY\")' class='px-4 py-2 text-sm font-medium rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition' data-region='OVF-Provision-MDY'>OVF-Provision-MDY</button>";
+  html += "    </div>";
+  html += "  </div>";
 
-        // Initialize Load
-        loadData();
-    </script>
-</body>
-</html>
+  html += "  <div class='grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4'>";
+  html += "    <div class='bg-white p-5 rounded-xl shadow-sm border-t-4 border-indigo-500'><p class='text-xs font-semibold text-gray-400 uppercase'>Total Tested</p><p id='kpi-total' class='mt-2 text-2xl sm:text-3xl font-bold text-gray-900'>0</p></div>";
+  html += "    <div class='bg-white p-5 rounded-xl shadow-sm border-t-4 border-emerald-500'><p class='text-xs font-semibold text-gray-400 uppercase'>Passed Units</p><p id='kpi-passed' class='mt-2 text-2xl sm:text-3xl font-bold text-emerald-600'>0</p></div>";
+  html += "    <div class='bg-white p-5 rounded-xl shadow-sm border-t-4 border-rose-500'><p class='text-xs font-semibold text-gray-400 uppercase'>Failed Units</p><p id='kpi-failed' class='mt-2 text-2xl sm:text-3xl font-bold text-rose-600'>0</p></div>";
+  html += "    <div class='bg-white p-5 rounded-xl shadow-sm border-t-4 border-blue-500'><p class='text-xs font-semibold text-gray-400 uppercase'>Pass Rate</p><p id='kpi-pass-rate' class='mt-2 text-2xl sm:text-3xl font-bold text-blue-600'>0.00%</p></div>";
+  html += "    <div class='bg-white p-5 rounded-xl shadow-sm border-t-4 border-amber-500 col-span-2 sm:col-span-1'><p class='text-xs font-semibold text-gray-400 uppercase'>Fail Rate</p><p id='kpi-fail-rate' class='mt-2 text-2xl sm:text-3xl font-bold text-amber-600'>0.00%</p></div>";
+  html += "  </div>";
+
+  html += "  <div id='comparison-card' class='bg-white p-4 rounded-xl shadow mb-6 hidden'><h3 id='comparison-card-title' class='text-md font-bold text-gray-800 mb-3'>Comparison Breakdown</h3><div id='comparison-content' class='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4'></div></div>";
+
+  html += "  <div class='grid grid-cols-1 lg:grid-cols-2 gap-6'>";
+  html += "    <div class='bg-white p-6 rounded-xl shadow-sm'><h3 id='olt-chart-title' class='text-base font-bold text-gray-800 mb-4'>Pass vs Fail & Total Comparison (All Regions)</h3><div class='relative h-72'><canvas id='oltChart'></canvas></div></div>";
+  html += "    <div class='bg-white p-6 rounded-xl shadow-sm'><h3 class='text-base font-bold text-gray-800 mb-4'>Failure Reasons Breakdown</h3><div class='relative h-72 flex justify-center'><canvas id='failureChart'></canvas></div></div>";
+  html += "  </div>";
+
+  html += "  <div class='grid grid-cols-1 lg:grid-cols-2 gap-6'>";
+  html += "    <div class='bg-white rounded-xl shadow-sm overflow-hidden'><div class='px-6 py-4 bg-gray-50 border-b border-gray-100'><h3 class='text-base font-bold text-gray-800'>Inspection Parameters Failure Summary</h3></div><div class='overflow-x-auto'><table class='min-w-full divide-y divide-gray-200 text-sm'><thead class='bg-gray-50 text-gray-500 uppercase text-xs'><tr><th class='px-6 py-3 text-left font-semibold'>Parameter</th><th class='px-6 py-3 text-right font-semibold'>Failed Count</th><th class='px-6 py-3 text-right font-semibold'>Share (%)</th></tr></thead><tbody id='parameter-table-body' class='divide-y divide-gray-200 bg-white'></tbody></table></div></div>";
+  html += "    <div class='bg-white rounded-xl shadow-sm overflow-hidden'><div class='px-6 py-4 bg-gray-50 border-b border-gray-100'><h3 class='text-base font-bold text-gray-800'>Device Models Performance & Failures</h3></div><div class='overflow-x-auto'><table class='min-w-full divide-y divide-gray-200 text-sm'><thead class='bg-gray-50 text-gray-500 uppercase text-xs'><tr><th class='px-6 py-3 text-left font-semibold'>Period</th><th class='px-6 py-3 text-right font-semibold'>Total Tested</th><th class='px-6 py-3 text-right font-semibold'>Passed</th><th class='px-6 py-3 text-right font-semibold'>Failed</th><th class='px-6 py-3 text-right font-semibold'>Fail Rate</th></tr></thead><tbody id='device-table-body' class='divide-y divide-gray-200 bg-white'></tbody></table></div></div>";
+  html += "  </div>";
+  html += "</div>";
+
+  html += "</main>";
+  
+  html += "<script>";
+  html += "var weeksDataJS = " + JSON.stringify(weeksMap) + ";";
+  html += "var allWeeksCompJS = " + JSON.stringify(allWeeksComparison) + ";";
+  html += "function getRegionColorJS(regName) {";
+  html += "  var r = String(regName).toUpperCase();";
+  html += "  if (r.indexOf('ENUO') !== -1) return '#2563eb';";
+  html += "  if (r.indexOf('HGAO') !== -1) return '#f59e0b';";
+  html += "  if (r.indexOf('MDY') !== -1 || r.indexOf('MYFO') !== -1) return '#10b981';";
+  html += "  return '#8b5cf6';";
+  html += "}";
+  html += "window.onload = function() { renderPieCharts(); fetchSheetData(); };";
+  html += "function renderPieCharts() {";
+  html += "  var wkKeys = Object.keys(weeksDataJS);";
+  html += "  for (var w = 0; w < wkKeys.length; w++) {";
+  html += "    var wkObj = weeksDataJS[wkKeys[w]];";
+  html += "    var regNames = Object.keys(wkObj.regions).sort();";
+  html += "    var regVals = []; var regCols = [];";
+  html += "    for (var r = 0; r < regNames.length; r++) {";
+  html += "      var rTot = 0; var dMap = wkObj.regions[regNames[r]];";
+  html += "      for (var dt in dMap) rTot += dMap[dt].total;";
+  html += "      regVals.push(rTot); regCols.push(getRegionColorJS(regNames[r]));";
+  html += "    }";
+  html += "    var el = document.getElementById('pie-chart-week-' + w);";
+  html += "    if (el && regNames.length > 0) {";
+  html += "      new Chart(el, { type: 'doughnut', data: { labels: regNames, datasets: [{ data: regVals, backgroundColor: regCols }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { font: { weight: 'bold', size: 10 } } } } } });";
+  html += "    }";
+  html += "  }";
+  html += "  var overallRegMap = {};";
+  html += "  for (var wk in allWeeksCompJS) {";
+  html += "    var rMap = allWeeksCompJS[wk].regions;";
+  html += "    for (var reg in rMap) { overallRegMap[reg] = (overallRegMap[reg] || 0) + rMap[reg]; }";
+  html += "  }";
+  html += "  var oNames = Object.keys(overallRegMap).sort();";
+  html += "  var oVals = oNames.map(function(k){ return overallRegMap[k]; });";
+  html += "  var oCols = oNames.map(function(k){ return getRegionColorJS(k); });";
+  html += "  var oEl = document.getElementById('pie-chart-overall');";
+  html += "  if (oEl && oNames.length > 0) {";
+  html += "    new Chart(oEl, { type: 'doughnut', data: { labels: oNames, datasets: [{ data: oVals, backgroundColor: oCols }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { font: { weight: 'bold', size: 10 } } } } } });";
+  html += "  }";
+  html += "}";
+
+  html += "function switchMasterTab(evt, sectionId) {";
+  html += "  var sections = document.getElementsByClassName('dashboard-section');";
+  html += "  for (var i = 0; i < sections.length; i++) sections[i].classList.add('hidden');";
+  html += "  document.getElementById(sectionId).classList.remove('hidden');";
+  html += "  document.getElementById('master-btn-hc').className = 'px-4 py-2 text-sm font-bold rounded-lg text-slate-300 hover:text-white transition';";
+  html += "  document.getElementById('master-btn-inbound').className = 'px-4 py-2 text-sm font-bold rounded-lg text-slate-300 hover:text-white transition';";
+  html += "  document.getElementById('master-btn-onu').className = 'px-4 py-2 text-sm font-bold rounded-lg text-slate-300 hover:text-white transition';";
+  html += "  evt.currentTarget.className = 'px-4 py-2 text-sm font-bold rounded-lg bg-blue-600 text-white transition shadow';";
+  html += "}";
+
+  html += "function openStaff(evt, staffId) {";
+  html += "  var cards = document.querySelectorAll('#section-hc .content-card');";
+  html += "  for (var i = 0; i < cards.length; i++) cards[i].classList.add('hidden');";
+  html += "  var btns = document.querySelectorAll('#section-hc button');";
+  html += "  for (var i = 0; i < btns.length; i++) btns[i].className = 'px-4 py-2 text-sm font-bold rounded-xl transition bg-white text-slate-800 hover:bg-slate-100 border border-slate-300';";
+  html += "  document.getElementById(staffId).classList.remove('hidden');";
+  html += "  evt.currentTarget.className = 'px-4 py-2 text-sm font-bold rounded-xl transition bg-blue-600 text-white shadow';";
+  html += "}";
+
+  html += "function openWeek(evt, weekId) {";
+  html += "  var cards = document.querySelectorAll('#section-inbound .content-card');";
+  html += "  for (var i = 0; i < cards.length; i++) cards[i].classList.add('hidden');";
+  html += "  var btns = document.querySelectorAll('#section-inbound button');";
+  html += "  for (var i = 0; i < btns.length; i++) btns[i].className = 'px-4 py-2 text-sm font-bold rounded-xl transition bg-white text-slate-800 hover:bg-slate-100 border border-slate-300';";
+  html += "  document.getElementById(weekId).classList.remove('hidden');";
+  html += "  evt.currentTarget.className = 'px-4 py-2 text-sm font-extrabold rounded-xl transition bg-blue-600 text-white shadow';";
+  html += "}";
+
+  html += "let allData = { firstTest: [], secondTest: [], exchangeTest: [] };";
+  html += "let currentTestType = 'exchange';";
+  html += "let currentRegion = 'All';";
+  html += "let currentWeek = 'week1';";
+  html += "let currentMonth = 'jan';";
+  html += "let oltChartInstance = null;";
+  html += "let failureChartInstance = null;";
+  
+  html += "function monthNames_getCode(dateObj) {";
+  html += "  const monthsCode = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];";
+  html += "  return monthsCode[dateObj.getMonth()];";
+  html += "}";
+
+  html += "function fetchSheetData() {";
+  html += "  fetch(window.location.href + '?format=json')";
+  html += "    .then(response => response.json())";
+  html += "    .then(data => {";
+  html += "       allData = { firstTest: data.firstTest || [], secondTest: data.secondTest || [], exchangeTest: data.exchangeTest || [] };";
+  html += "       const el = document.getElementById('last-updated'); if(el) el.innerText = 'Last Synced: ' + new Date().toLocaleTimeString();";
+  html += "       const dateInput = document.getElementById('daily-date-input'); if (dateInput && !dateInput.value) { dateInput.value = new Date().toISOString().split('T')[0]; }";
+  html += "       updateDashboard();";
+  html += "    })";
+  html += "    .catch(err => { console.error('Sync Error:', err); const el = document.getElementById('last-updated'); if(el) el.innerText = 'Sync Failed'; });";
+  html += "}";
+
+  html += "function switchTestType(type) {";
+  html += "  currentTestType = type; currentRegion = 'All';";
+  html += "  document.querySelectorAll('#region-filters button').forEach(btn => {";
+  html += "    if(btn.getAttribute('data-region') === 'All') btn.className = 'px-4 py-2 text-sm font-medium rounded-lg bg-indigo-600 text-white transition shadow';";
+  html += "    else btn.className = 'px-4 py-2 text-sm font-medium rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition';";
+  html += "  });";
+  html += "  const inactiveStyle = 'px-3 py-1.5 rounded-lg text-sm font-semibold transition text-white hover:bg-indigo-600 whitespace-nowrap';";
+  html += "  const activeStyle = 'px-3 py-1.5 rounded-lg text-sm font-semibold transition bg-white text-indigo-600 shadow whitespace-nowrap';";
+  html += "  ['first', 'second', 'exchange', 'daily', 'weekly', 'monthly'].forEach(t => { let el = document.getElementById(`tab-${t}`); if(el) el.className = inactiveStyle; });";
+  html += "  let activeTabEl = document.getElementById(`tab-${type}`); if(activeTabEl) activeTabEl.className = activeStyle;";
+  html += "  const dailyContainer = document.getElementById('daily-container'); const weeklyContainer = document.getElementById('weekly-container'); const monthlyContainer = document.getElementById('monthly-container');";
+  html += "  if(dailyContainer) dailyContainer.classList.add('hidden'); if(weeklyContainer) weeklyContainer.classList.add('hidden'); if(monthlyContainer) monthlyContainer.classList.add('hidden');";
+  html += "  if (type === 'first') document.getElementById('active-test-label').innerText = 'First Test';";
+  html += "  else if (type === 'second') document.getElementById('active-test-label').innerText = 'Second Test';";
+  html += "  else if (type === 'exchange') document.getElementById('active-test-label').innerText = 'Exchange Devices';";
+  html += "  else if (type === 'daily') { document.getElementById('active-test-label').innerText = 'Daily Analytics'; if(dailyContainer) dailyContainer.classList.remove('hidden'); }";
+  html += "  else if (type === 'weekly') { document.getElementById('active-test-label').innerText = 'Weekly Analytics'; if(weeklyContainer) weeklyContainer.classList.remove('hidden'); }";
+  html += "  else if (type === 'monthly') { document.getElementById('active-test-label').innerText = 'Monthly Analytics'; if(monthlyContainer) monthlyContainer.classList.remove('hidden'); }";
+  html += "  updateDashboard();";
+  html += "}";
+
+  html += "function onDateChanged() { updateDashboard(); }";
+  html += "function switchWeek(week) {";
+  html += "  currentWeek = week;";
+  html += "  ['week1', 'week2', 'week3', 'week4', 'comparison'].forEach(w => {";
+  html += "    const btn = document.getElementById(`subtab-${w}`);";
+  html += "    if (btn) btn.className = (w === week) ? 'px-4 py-2 text-sm font-semibold rounded-lg bg-indigo-600 text-white shadow whitespace-nowrap' : 'px-4 py-2 text-sm font-semibold rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition whitespace-nowrap';";
+  html += "  });";
+  html += "  if (week === 'comparison') renderWeeklyComparison(); else updateDashboard();";
+  html += "}";
+
+  html += "function renderWeeklyComparison() {";
+  html += "  const tableBody = document.getElementById('device-table-body'); if (!tableBody) return;";
+  html += "  tableBody.innerHTML = ''; let activeData = getCurrentActiveDataset() || []; if (!Array.isArray(activeData)) activeData = [];";
+  html += "  const weeks = ['week1', 'week2', 'week3', 'week4']; let sumTot = 0, sumPas = 0, sumFai = 0;";
+  html += "  weeks.forEach((wk, index) => {";
+  html += "    let weekRows = activeData.filter(row => {";
+  html += "      if (!row) return false; let d = getDateObj(row);";
+  html += "      if (d) { let dayOfMonth = d.getDate(); let calcWeek = dayOfMonth <= 7 ? 'week1' : (dayOfMonth <= 14 ? 'week2' : (dayOfMonth <= 21 ? 'week3' : 'week4')); return calcWeek === wk; }";
+  html += "      return false;";
+  html += "    });";
+  html += "    let wTot = weekRows.length; let wPas = weekRows.filter(row => getStatus(row, 'Overall Pass/Fail') === 'pass').length; let wFai = wTot - wPas; let wRate = wTot > 0 ? ((wFai / wTot) * 100).toFixed(2) + '%' : '0.00%';";
+  html += "    sumTot += wTot; sumPas += wPas; sumFai += wFai;";
+  html += "    tableBody.innerHTML += `<tr class='border-b hover:bg-gray-50'><td class='px-6 py-3 font-medium text-gray-900'>Week ${index + 1} Test</td><td class='px-6 py-3 text-right text-gray-900'>${wTot.toLocaleString()}</td><td class='px-6 py-3 text-right text-emerald-600 font-medium'>${wPas.toLocaleString()}</td><td class='px-6 py-3 text-right text-rose-600 font-medium'>${wFai.toLocaleString()}</td><td class='px-6 py-3 text-right text-gray-600 font-semibold'>${wRate}</td></tr>`;";
+  html += "  });";
+  html += "  let overallFailRate = sumTot > 0 ? ((sumFai / sumTot) * 100).toFixed(2) + '%' : '0.00%';";
+  html += "  tableBody.innerHTML += `<tr class='bg-gray-50 font-bold border-t-2 border-gray-200'><td class='px-6 py-3 text-gray-900'>Total Comparison</td><td class='px-6 py-3 text-right text-gray-900'>${sumTot.toLocaleString()}</td><td class='px-6 py-3 text-right text-emerald-600'>${sumPas.toLocaleString()}</td><td class='px-6 py-3 text-right text-rose-600'>${sumFai.toLocaleString()}</td><td class='px-6 py-3 text-right text-gray-600 font-semibold'>${overallFailRate}</td></tr>`;";
+  html += "  document.getElementById('kpi-total').innerText = sumTot.toLocaleString();";
+  html += "  document.getElementById('kpi-passed').innerText = sumPas.toLocaleString();";
+  html += "  document.getElementById('kpi-failed').innerText = sumFai.toLocaleString();";
+  html += "  document.getElementById('kpi-pass-rate').innerText = sumTot > 0 ? ((sumPas / sumTot) * 100).toFixed(2) + '%' : '0.00%';";
+  html += "  document.getElementById('kpi-fail-rate').innerText = overallFailRate;";
+  html += "  renderCharts(activeData, activeData); renderTables(activeData);";
+  html += "}";
+
+  html += "function switchMonth(month) {";
+  html += "  currentMonth = month;";
+  html += "  ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec', 'comparison'].forEach(m => {";
+  html += "    const btn = document.getElementById(`subtab-${m}`);";
+  html += "    if (btn) btn.className = (m === month) ? 'px-3 py-1.5 text-sm font-semibold rounded-lg bg-indigo-600 text-white shadow whitespace-nowrap' : 'px-3 py-1.5 text-sm font-semibold rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition whitespace-nowrap';";
+  html += "  });";
+  html += "  updateDashboard();";
+  html += "}";
+
+  html += "function filterRegion(region) {";
+  html += "  currentRegion = region;";
+  html += "  document.querySelectorAll('#region-filters button').forEach(btn => {";
+  html += "    btn.className = (btn.getAttribute('data-region') === region) ? 'px-4 py-2 text-sm font-medium rounded-lg bg-indigo-600 text-white transition shadow' : 'px-4 py-2 text-sm font-medium rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition';";
+  html += "  });";
+  html += "  updateDashboard();";
+  html += "}";
+
+  html += "function cleanKey(k) { return k ? k.toString().trim().toLowerCase().replace(/[^a-z0-9]/g, '') : ''; }";
+  html += "function getVal(row, key) { let target = cleanKey(key); for (let k in row) { if (cleanKey(k) === target) return row[k] ? row[k].toString().trim() : ''; } return ''; }";
+  html += "function getStatus(row, key) { return getVal(row, key).toLowerCase(); }";
+  
+  html += "function getDateObj(row) {";
+  html += "  let val = getVal(row, 'Time') || getVal(row, 'Latest Time') || getVal(row, 'Date'); if (!val) return null;";
+  html += "  let datePart = val.toString().split(' ')[0]; let parts = datePart.split('/');";
+  html += "  if (parts.length === 3) { let m = parseInt(parts[0], 10), d = parseInt(parts[1], 10), y = parseInt(parts[2], 10); if (!isNaN(y) && !isNaN(m) && !isNaN(d)) return new Date(y, m - 1, d); }";
+  html += "  let dt = new Date(val); return !isNaN(dt.getTime()) ? dt : null;";
+  html += "}";
+
+  html += "function getCurrentActiveDataset() {";
+  html += "  if (currentTestType === 'first') return allData.firstTest;";
+  html += "  if (currentTestType === 'second') return allData.secondTest;";
+  html += "  if (currentTestType === 'exchange') return allData.exchangeTest;";
+  html += "  return (allData.firstTest && allData.firstTest.length > 0) ? allData.firstTest : allData.exchangeTest;";
+  html += "}";
+
+  html += "function updateDashboard() {";
+  html += "  if (currentTestType === 'weekly' && currentWeek === 'comparison') { renderWeeklyComparison(); return; }";
+  html += "  let rawDataSet = getCurrentActiveDataset();";
+  html += "  if (!rawDataSet || rawDataSet.length === 0) {";
+  html += "    document.getElementById('kpi-total').innerText = '0'; document.getElementById('kpi-passed').innerText = '0'; document.getElementById('kpi-failed').innerText = '0'; document.getElementById('kpi-pass-rate').innerText = '0.00%'; document.getElementById('kpi-fail-rate').innerText = '0.00%';";
+  html += "    renderCharts([], []); renderTables([]); return;";
+  html += "  }";
+  html += "  let filteredData = rawDataSet;";
+  html += "  if (currentTestType === 'daily') {";
+  html += "    const selDate = document.getElementById('daily-date-input').value;";
+  html += "    if (selDate) { filteredData = rawDataSet.filter(row => { let d = getDateObj(row); if (d) { let y = d.getFullYear(), m = String(d.getMonth() + 1).padStart(2, '0'), day = String(d.getDate()).padStart(2, '0'); return `${y}-${m}-${day}` === selDate; } return false; }); } else { filteredData = []; }";
+  html += "  } else if (currentTestType === 'weekly') {";
+  html += "    filteredData = rawDataSet.filter(row => { let d = getDateObj(row); if (d) { let dayOfMonth = d.getDate(); let calcWeek = dayOfMonth <= 7 ? 'week1' : (dayOfMonth <= 14 ? 'week2' : (dayOfMonth <= 21 ? 'week3' : 'week4')); return calcWeek === currentWeek; } return false; });";
+  html += "  } else if (currentTestType === 'monthly') {";
+  html += "    if (currentMonth !== 'comparison') { filteredData = rawDataSet.filter(row => { let d = getDateObj(row); return d && monthNames_getCode(d) === currentMonth.toLowerCase(); }); }";
+  html += "  }";
+  html += "  if (currentRegion !== 'All') filteredData = filteredData.filter(row => getVal(row, 'Olt Hostname') === currentRegion);";
+  html += "  let totalTested = filteredData.length; let passedCount = filteredData.filter(row => getStatus(row, 'Overall Pass/Fail') === 'pass').length; let failedCount = totalTested - passedCount;";
+  html += "  document.getElementById('kpi-total').innerText = totalTested.toLocaleString();";
+  html += "  document.getElementById('kpi-passed').innerText = passedCount.toLocaleString();";
+  html += "  document.getElementById('kpi-failed').innerText = failedCount.toLocaleString();";
+  html += "  document.getElementById('kpi-pass-rate').innerText = totalTested > 0 ? ((passedCount / totalTested) * 100).toFixed(2) + '%' : '0.00%';";
+  html += "  document.getElementById('kpi-fail-rate').innerText = totalTested > 0 ? ((failedCount / totalTested) * 100).toFixed(2) + '%' : '0.00%';";
+  html += "  renderCharts(rawDataSet, filteredData); renderTables(filteredData);";
+  html += "}";
+
+  html += "function renderCharts(rawDataSet, filteredData) {";
+  html += "  let regionsList = ['OVF-Provision-HGAO', 'OVF-Provision-ENUO', 'OVF-Provision-MDY'];";
+  html += "  let oltTotals = [], oltPassed = [], oltFailed = [];";
+  html += "  regionsList.forEach(reg => {";
+  html += "    let rData = filteredData.filter(row => getVal(row, 'Olt Hostname') === reg);";
+  html += "    let tot = rData.length; let pas = rData.filter(row => getStatus(row, 'Overall Pass/Fail') === 'pass').length;";
+  html += "    oltTotals.push(tot); oltPassed.push(pas); oltFailed.push(tot - pas);";
+  html += "  });";
+  html += "  if (oltChartInstance) oltChartInstance.destroy();";
+  html += "  oltChartInstance = new Chart(document.getElementById('oltChart'), {";
+  html += "    type: 'bar', data: { labels: ['HGAO', 'ENUO', 'MDY'], datasets: [{ label: 'Total Tested', data: oltTotals, backgroundColor: '#3B82F6', borderRadius: 4 }, { label: 'Passed', data: oltPassed, backgroundColor: '#10B981', borderRadius: 4 }, { label: 'Failed', data: oltFailed, backgroundColor: '#EF4444', borderRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false }";
+  html += "  });";
+  html += "  let rxFail = filteredData.filter(row => getStatus(row, 'Rx Pass/Fail') === 'fail').length;";
+  html += "  let biasFail = filteredData.filter(row => getStatus(row, 'Bias Pass/Fail') === 'fail').length;";
+  html += "  let tempFail = filteredData.filter(row => getStatus(row, 'Temp Pass/Fail') === 'fail').length;";
+  html += "  let txFail = filteredData.filter(row => getStatus(row, 'Tx Pass/Fail') === 'fail').length;";
+  html += "  let voltFail = filteredData.filter(row => getStatus(row, 'Voltage Pass/Fail') === 'fail').length;";
+  html += "  if(failureChartInstance) failureChartInstance.destroy();";
+  html += "  failureChartInstance = new Chart(document.getElementById('failureChart'), {";
+  html += "    type: 'doughnut', data: { labels: ['Rx Power', 'Bias Current', 'Temperature', 'Tx Power', 'Voltage'], datasets: [{ data: [rxFail, biasFail, tempFail, txFail, voltFail], backgroundColor: ['#3B82F6', '#8B5CF6', '#10B981', '#F59E0B', '#EC4899'] }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }";
+  html += "  });";
+  html += "}";
+
+  html += "function renderTables(data) {";
+  html += "  let rxFail = data.filter(row => getStatus(row, 'Rx Pass/Fail') === 'fail').length;";
+  html += "  let biasFail = data.filter(row => getStatus(row, 'Bias Pass/Fail') === 'fail').length;";
+  html += "  let tempFail = data.filter(row => getStatus(row, 'Temp Pass/Fail') === 'fail').length;";
+  html += "  let txFail = data.filter(row => getStatus(row, 'Tx Pass/Fail') === 'fail').length;";
+  html += "  let voltFail = data.filter(row => getStatus(row, 'Voltage Pass/Fail') === 'fail').length;";
+  html += "  let totalActualFailed = data.filter(row => getStatus(row, 'Overall Pass/Fail') === 'fail').length;";
+  html += "  let params = [{ name: 'Rx Power', count: rxFail }, { name: 'Bias Current', count: biasFail }, { name: 'Temperature', count: tempFail }, { name: 'Tx Power', count: txFail }, { name: 'Voltage', count: voltFail }];";
+  html += "  const paramTable = document.getElementById('parameter-table-body'); paramTable.innerHTML = '';";
+  html += "  params.forEach(p => { paramTable.innerHTML += `<tr><td class='px-6 py-3 font-medium text-gray-900'>${p.name}</td><td class='px-6 py-3 text-right text-rose-600 font-semibold'>${p.count}</td><td class='px-6 py-3 text-right text-gray-600'>-</td></tr>`; });";
+  html += "  let deviceNames = ['FFO', 'FFG', 'SCP', 'FFA', 'BFFA']; const deviceTable = document.getElementById('device-table-body'); deviceTable.innerHTML = '';";
+  html += "  deviceNames.forEach(dev => {";
+  html += "    let dRows = data.filter(row => getVal(row, 'Devices Name').toUpperCase() === dev);";
+  html += "    let dTot = dRows.length, dPas = dRows.filter(row => getStatus(row, 'Overall Pass/Fail') === 'pass').length, dFai = dTot - dPas;";
+  html += "    deviceTable.innerHTML += `<tr><td class='px-6 py-3 font-medium text-gray-900'>${dev}</td><td class='px-6 py-3 text-right text-gray-700'>${dTot}</td><td class='px-6 py-3 text-right text-emerald-600 font-medium'>${dPas}</td><td class='px-6 py-3 text-right text-rose-600 font-medium'>${dFai}</td><td class='px-6 py-3 text-right text-gray-600 font-semibold'>${dTot > 0 ? ((dFai/dTot)*100).toFixed(2)+'%' : '0.00%'}</td></tr>`;";
+  html += "  });";
+  html += "}";
+  html += "</script>";
+
+  html += "</body></html>";
+  
+  htmlOutput.setContent(html);
+  return htmlOutput;
+}
