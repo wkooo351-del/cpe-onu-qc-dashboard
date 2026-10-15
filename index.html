@@ -252,7 +252,9 @@
         }
 
         function parseLocalDate(dateRaw) {
-            if (!dateRaw) return "";
+            if (!dateRaw && dateRaw !== 0) return "";
+            
+            // Handle Google GViz Date string: Date(2026,9,15)
             if (typeof dateRaw === 'string' && dateRaw.startsWith('Date(')) {
                 let parts = dateRaw.match(/\d+/g);
                 if (parts && parts.length >= 3) {
@@ -262,10 +264,24 @@
                     return `${y}-${m}-${d}`;
                 }
             }
+            
+            // Handle standard date strings
             let str = String(dateRaw).trim();
-            if (str.includes('T')) {
-                return str.split('T')[0];
+            if (/^\d{4}-\d{2}-\d{2}/.test(str)) {
+                return str.substring(0, 10);
             }
+            
+            // Universal date parsing using local components to avoid UTC timezone shifts
+            let parsed = new Date(dateRaw);
+            if (!isNaN(parsed.getTime())) {
+                let y = parsed.getFullYear();
+                let m = String(parsed.getMonth() + 1).padStart(2, '0');
+                let d = String(parsed.getDate()).padStart(2, '0');
+                if (y > 2000) {
+                    return `${y}-${m}-${d}`;
+                }
+            }
+            
             return str;
         }
 
