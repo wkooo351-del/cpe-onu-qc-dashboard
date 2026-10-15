@@ -76,7 +76,7 @@
             </div>
         </div>
 
-        <!-- SECTION 2: Inbound Regional KPI View (Original Restored) -->
+        <!-- SECTION 2: Inbound Regional KPI View -->
         <div id="section-inbound" class="dashboard-section hidden space-y-6">
             <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-wrap items-center justify-between gap-3">
                 <div id="inbound-weeks-container" class="strict-row-nav gap-2">
@@ -133,7 +133,7 @@
             </div>
         </div>
 
-        <!-- SECTION 3: ONU Inspection View (Original Restored) -->
+        <!-- SECTION 3: ONU Inspection View -->
         <div id="section-onu" class="dashboard-section hidden space-y-6">
             <div class="bg-indigo-600 shadow-md rounded-2xl p-4 flex flex-col md:flex-row justify-between items-center gap-3">
                 <div class="flex items-center space-x-3">
@@ -261,7 +261,8 @@
                 let name = String(row['Name'] || row['Staff Name'] || row['col_1'] || '').trim();
                 let device = String(row['Device Name'] || row['col_2'] || '-').trim();
                 let jd = String(row['Daily (JD)'] || row['col_3'] || '-').trim();
-                let qty = parseFloat(row['Qty'] || row['Quantity'] || row['Total'] || row['col_4'] || 0) || 0;
+                let qty = parseFloat(row['Qty'] || row['Quantity'] || row['Total'] || row['col_4'] || 1) || 1;
+                let mac = String(row['MAC'] || row['col_5'] || '').trim();
                 let isLeave = String(row['Leave'] || row['col_5'] || jd || '').toLowerCase().includes('leave');
 
                 if (!name || name.toLowerCase() === 'name' || name === '') return;
@@ -283,13 +284,34 @@
 
                 if (isLeave && dateStr) {
                     staffGroupedData[name].leaves.add(dateStr);
+                    return;
                 }
 
-                if (dateStr) {
+                if (dateStr && jd) {
                     if (!staffGroupedData[name].dates[dateStr]) {
-                        staffGroupedData[name].dates[dateStr] = [];
+                        staffGroupedData[name].dates[dateStr] = { devices: {} };
                     }
-                    staffGroupedData[name].dates[dateStr].push({ device, jd, qty });
+                    let devKey = device || '-';
+                    if (!staffGroupedData[name].dates[dateStr].devices[devKey]) {
+                        staffGroupedData[name].dates[dateStr].devices[devKey] = {};
+                    }
+
+                    let jdLower = jd.toLowerCase();
+                    let increment = qty;
+                    if (jdLower === "run" || jdLower === "default") {
+                        let hasValidMac = (mac && mac !== "" && mac !== "#N/A") ? 1 : 0;
+                        if (hasValidMac === 0 && mac !== "") {
+                            // If MAC is empty or invalid for run/default, count as 1 or skip based on preference
+                            increment = 1;
+                        } else {
+                            increment = 1; // Count per row/mac occurrence
+                        }
+                    }
+
+                    if (!staffGroupedData[name].dates[dateStr].devices[devKey][jd]) {
+                        staffGroupedData[name].dates[dateStr].devices[devKey][jd] = 0;
+                    }
+                    staffGroupedData[name].dates[dateStr].devices[devKey][jd] += increment;
                 }
             });
 
@@ -341,13 +363,19 @@
             let sortedDates = Object.keys(sData.dates).sort();
             let tableRowsHtml = "";
 
-            if (sortedDates.length === 0) {
+            if (sortedDates.length === 0 && sData.leaves.size === 0) {
                 tableRowsHtml = `<tr><td colspan="5" class="py-6 text-center text-slate-400 font-bold">No activity records found for ${name}.</td></tr>`;
             }
 
             sortedDates.forEach(date => {
-                let items = sData.dates[date];
-                let dailyTotal = items.reduce((sum, item) => sum + item.qty, 0);
+                let dayObj = sData.dates[date];
+                let devices = dayObj.devices;
+                let deviceKeys = Object.keys(devices);
+
+                let dailyTotal = 0;
+                deviceKeys.forEach(dev => {
+                    Object.values(devices[dev]).forEach(val => { dailyTotal += val; });
+                });
 
                 if (dailyTotal > 0 && dailyTotal < TARGET_KPI) {
                     alertsHtml += `
@@ -361,16 +389,28 @@
                     ? `<span class="inline-block px-3 py-1 bg-emerald-100 text-emerald-800 font-extrabold rounded-lg text-xs">Pass (${dailyTotal})</span>`
                     : `<span class="inline-block px-3 py-1 bg-red-100 text-red-800 font-extrabold rounded-lg text-xs">Fail (${dailyTotal})</span>`;
 
-                items.forEach((item, index) => {
-                    tableRowsHtml += `
-                        <tr class="hover:bg-slate-50/60 transition">
-                            ${index === 0 ? `<td class="py-4 px-6 text-center font-bold text-slate-700 align-middle bg-slate-50/30" rowspan="${items.length}">${date}</td>` : ''}
-                            <td class="py-3 px-6 text-center font-extrabold text-slate-800 align-middle">${item.device}</td>
-                            <td class="py-3 px-6 text-center font-bold text-slate-700 align-middle"><div class="flex justify-between items-center max-w-[200px] mx-auto"><span>${item.jd}</span><span class="font-extrabold text-blue-600">${item.qty || ''}</span></div></td>
-                            ${index === 0 ? `<td class="py-4 px-6 text-center font-black text-slate-900 align-middle bg-slate-50/30" rowspan="${items.length}">${dailyTotal}</td>` : ''}
-                            ${index === 0 ? `<td class="py-4 px-6 text-center align-middle bg-slate-50/30" rowspan="${items.length}">${passFailBadge}</td>` : ''}
-                        </tr>
-                    `;
+                let totalRowsForDate = 0;
+                deviceKeys.forEach(dev => { totalRowsForDate += Object.keys(devices[dev]).length; });
+
+                let firstRowForDate = true;
+
+                deviceKeys.forEach(dev => {
+                    let jdMap = devices[dev];
+                    let jdKeys = Object.keys(jdMap);
+
+                    jdKeys.forEach((jdName) => {
+                        let jdVal = jdMap[jdName];
+                        tableRowsHtml += `
+                            <tr class="hover:bg-slate-50/60 transition">
+                                ${firstRowForDate ? `<td class="py-4 px-6 text-center font-bold text-slate-700 align-middle bg-slate-50/30" rowspan="${totalRowsForDate}">${date}</td>` : ''}
+                                <td class="py-3 px-6 text-center font-extrabold text-slate-800 align-middle">${dev}</td>
+                                <td class="py-3 px-6 text-center font-bold text-slate-700 align-middle"><div class="flex justify-between items-center max-w-[200px] mx-auto"><span>${jdName}</span><span class="font-extrabold text-blue-600">${jdVal || ''}</span></div></td>
+                                ${firstRowForDate ? `<td class="py-4 px-6 text-center font-black text-slate-900 align-middle bg-slate-50/30" rowspan="${totalRowsForDate}">${dailyTotal}</td>` : ''}
+                                ${firstRowForDate ? `<td class="py-4 px-6 text-center align-middle bg-slate-50/30" rowspan="${totalRowsForDate}">${passFailBadge}</td>` : ''}
+                            </tr>
+                        `;
+                        firstRowForDate = false;
+                    });
                 });
             });
 
