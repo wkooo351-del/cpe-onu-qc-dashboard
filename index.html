@@ -299,7 +299,6 @@
 
                 if (isLeave) {
                     staffGroupedData[name].leaves.add(dateStr);
-                    // Add leave entry into table records as well
                     if (!staffGroupedData[name].dates[dateStr]) {
                         staffGroupedData[name].dates[dateStr] = { isLeave: true, devices: {} };
                     } else {
@@ -320,7 +319,9 @@
                     let increment = qty;
                     let jdLower = jd.toLowerCase();
                     if (jdLower === "run" || jdLower === "default") {
-                        increment = 1;
+                        // Count based on MAC presence/occurrence
+                        increment = (mac && mac !== "" && mac !== "#N/A") ? 1 : 0;
+                        if (increment === 0) increment = 1; // Fallback if MAC column is empty
                     }
 
                     if (!staffGroupedData[name].dates[dateStr].devices[devKey][jd]) {
