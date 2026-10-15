@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Unified ISP Operations & Dashboard</title>
+    <title>Unified ISP Operations Dashboard</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <!-- Chart.js CDN -->
@@ -273,7 +273,6 @@
 
     <!-- JavaScript Local Mock Data & Logic -->
     <script>
-        // Mock Data for Staff & Inbound
         const mockStaffData = [
             { Date: '2026-10-01', Name: 'Ko AKT', 'Device Name': 'FFO', JD: 'Completed', Qty: 150 },
             { Date: '2026-10-01', Name: 'မသီရိနွယ်', 'Device Name': 'FFG', JD: 'Completed', Qty: 145 },
@@ -287,16 +286,14 @@
             { Region: 'OVF-Provision-MDY', Date: '2026-10-02', 'CPE Type': 'Standard', Qty: 400 }
         ];
 
-        // Mock ONU Inspection Data Generator
         function generateMockONUData() {
             let records = [];
             let regions = ['OVF-Provision-HGAO', 'OVF-Provision-ENUO', 'OVF-Provision-MDY'];
             let devices = ['FFO', 'FFG', 'SCP', 'FFA', 'BFFA'];
-            let statuses = ['pass', 'fail'];
             
             for(let i=1; i<=150; i++) {
                 records.push({
-                    'Time': '10/1/' + (2026) + ' 10:00:00',
+                    'Time': '10/1/2026 10:00:00',
                     'Olt Hostname': regions[Math.floor(Math.random() * regions.length)],
                     'Devices Name': devices[Math.floor(Math.random() * devices.length)],
                     'Overall Pass/Fail': Math.random() > 0.15 ? 'pass' : 'fail',
@@ -318,9 +315,6 @@
 
         let currentTestType = 'exchange'; 
         let currentRegion = 'All';
-        let currentWeek = 'week1';
-        let currentMonth = 'oct';
-
         let oltChartInstance = null;
         let failureChartInstance = null;
 
@@ -347,6 +341,7 @@
 
         function renderStaffTable(rows) {
             const tbody = document.getElementById('staff-table-body');
+            if (!tbody) return;
             tbody.innerHTML = '';
             rows.forEach(r => {
                 tbody.innerHTML += `
@@ -363,6 +358,7 @@
 
         function renderInboundTable(rows) {
             const tbody = document.getElementById('inbound-table-body');
+            if (!tbody) return;
             tbody.innerHTML = '';
             rows.forEach(r => {
                 tbody.innerHTML += `
@@ -375,94 +371,14 @@
             });
         }
 
-        function monthNames_getCode(dateObj) {
-            const monthsCode = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
-            return monthsCode[dateObj.getMonth()];
-        }
-
         function switchTestType(type) {
             currentTestType = type;
             currentRegion = 'All'; 
-            
-            document.querySelectorAll('#region-filters button').forEach(btn => {
-                if(btn.getAttribute('data-region') === 'All') {
-                    btn.className = 'px-4 py-2 text-sm font-medium rounded-lg bg-indigo-600 text-white transition shadow';
-                } else {
-                    btn.className = 'px-4 py-2 text-sm font-medium rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition';
-                }
-            });
-
-            const inactiveStyle = 'px-3 py-1.5 rounded-lg text-sm font-semibold transition text-white hover:bg-indigo-600 whitespace-nowrap';
-            const activeStyle = 'px-3 py-1.5 rounded-lg text-sm font-semibold transition bg-white text-indigo-600 shadow whitespace-nowrap';
-
-            ['first', 'second', 'exchange', 'daily', 'weekly', 'monthly'].forEach(t => {
-                let el = document.getElementById(`tab-${t}`);
-                if(el) el.className = inactiveStyle;
-            });
-
-            let activeTabEl = document.getElementById(`tab-${type}`);
-            if(activeTabEl) activeTabEl.className = activeStyle;
-
-            const dailyContainer = document.getElementById('daily-container');
-            const weeklyContainer = document.getElementById('weekly-container');
-            const monthlyContainer = document.getElementById('monthly-container');
-
-            if(dailyContainer) dailyContainer.classList.add('hidden');
-            if(weeklyContainer) weeklyContainer.classList.add('hidden');
-            if(monthlyContainer) monthlyContainer.classList.add('hidden');
-
-            if (type === 'daily') {
-                if(dailyContainer) dailyContainer.classList.remove('hidden');
-            } else if (type === 'weekly') {
-                if(weeklyContainer) weeklyContainer.classList.remove('hidden');
-            } else if (type === 'monthly') {
-                if(monthlyContainer) monthlyContainer.classList.remove('hidden');
-            }
-            updateDashboard();
-        }
-
-        function onDateChanged() { updateDashboard(); }
-
-        function switchWeek(week) {
-            currentWeek = week;
-            ['week1', 'week2', 'week3', 'week4', 'comparison'].forEach(w => {
-                const btn = document.getElementById(`subtab-${w}`);
-                if (btn) {
-                    if (w === week) {
-                        btn.className = 'px-4 py-2 text-sm font-semibold rounded-lg bg-indigo-600 text-white shadow whitespace-nowrap';
-                    } else {
-                        btn.className = 'px-4 py-2 text-sm font-semibold rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition whitespace-nowrap';
-                    }
-                }
-            });
-            updateDashboard();
-        }
-
-        function switchMonth(month) {
-            currentMonth = month;
-            const months = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec', 'comparison'];
-            months.forEach(m => {
-                const btn = document.getElementById(`subtab-${m}`);
-                if (btn) {
-                    if (m === month) {
-                        btn.className = 'px-3 py-1.5 text-sm font-semibold rounded-lg bg-indigo-600 text-white shadow whitespace-nowrap';
-                    } else {
-                        btn.className = 'px-3 py-1.5 text-sm font-semibold rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition whitespace-nowrap';
-                    }
-                }
-            });
             updateDashboard();
         }
 
         function filterRegion(region) {
             currentRegion = region;
-            document.querySelectorAll('#region-filters button').forEach(btn => {
-                if(btn.getAttribute('data-region') === region) {
-                    btn.className = 'px-4 py-2 text-sm font-medium rounded-lg bg-indigo-600 text-white transition shadow';
-                } else {
-                    btn.className = 'px-4 py-2 text-sm font-medium rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition';
-                }
-            });
             updateDashboard();
         }
 
@@ -477,13 +393,6 @@
         }
 
         function getStatus(row, key) { return getVal(row, key).toLowerCase(); }
-
-        function getDateObj(row) {
-            let val = getVal(row, 'Time') || getVal(row, 'Latest Time') || getVal(row, 'Date');
-            if (!val) return null;
-            let d = new Date(val);
-            return !isNaN(d.getTime()) ? d : new Date();
-        }
 
         function getCurrentActiveDataset() {
             if (currentTestType === 'first') return allData.firstTest;
@@ -509,11 +418,11 @@
             document.getElementById('kpi-pass-rate').innerText = totalTested > 0 ? ((passedCount / totalTested) * 100).toFixed(2) + '%' : '0.00%';
             document.getElementById('kpi-fail-rate').innerText = totalTested > 0 ? ((failedCount / totalTested) * 100).toFixed(2) + '%' : '0.00%';
 
-            renderCharts(rawDataSet, filteredData);
+            renderCharts(filteredData);
             renderTables(filteredData);
         }
 
-        function renderCharts(rawDataSet, filteredData) {
+        function renderCharts(filteredData) {
             let regionsList = ['OVF-Provision-HGAO', 'OVF-Provision-ENUO', 'OVF-Provision-MDY'];
             let oltTotals = [], oltPassed = [], oltFailed = [];
 
@@ -557,45 +466,49 @@
 
         function renderTables(data) {
             const paramTable = document.getElementById('parameter-table-body');
-            paramTable.innerHTML = `
-                <tr><td class="px-6 py-3 font-medium">Rx Power</td><td class="px-6 py-3 text-right text-rose-600 font-semibold">5</td><td class="px-6 py-3 text-right">50.00%</td></tr>
-                <tr><td class="px-6 py-3 font-medium">Bias Current</td><td class="px-6 py-3 text-right text-rose-600 font-semibold">3</td><td class="px-6 py-3 text-right">30.00%</td></tr>
-                <tr class="bg-gray-50 font-bold"><td class="px-6 py-3">Total</td><td class="px-6 py-3 text-right text-rose-600">8</td><td class="px-6 py-3 text-right">100.00%</td></tr>`;
+            if (paramTable) {
+                paramTable.innerHTML = `
+                    <tr><td class="px-6 py-3 font-medium">Rx Power</td><td class="px-6 py-3 text-right text-rose-600 font-semibold">5</td><td class="px-6 py-3 text-right">50.00%</td></tr>
+                    <tr><td class="px-6 py-3 font-medium">Bias Current</td><td class="px-6 py-3 text-right text-rose-600 font-semibold">3</td><td class="px-6 py-3 text-right">30.00%</td></tr>
+                    <tr class="bg-gray-50 font-bold"><td class="px-6 py-3">Total</td><td class="px-6 py-3 text-right text-rose-600">8</td><td class="px-6 py-3 text-right">100.00%</td></tr>`;
+            }
 
             let deviceNames = ['FFO', 'FFG', 'SCP', 'FFA', 'BFFA'];
             const deviceTable = document.getElementById('device-table-body');
-            deviceTable.innerHTML = '';
-            
-            let sumTot = 0, sumPas = 0, sumFai = 0;
-            deviceNames.forEach(dev => {
-                let dRows = data.filter(row => getVal(row, 'Devices Name').toUpperCase() === dev);
-                let dTot = dRows.length || 10;
-                let dPas = Math.floor(dTot * 0.9);
-                let dFai = dTot - dPas;
-                sumTot += dTot; sumPas += dPas; sumFai += dFai;
+            if (deviceTable) {
+                deviceTable.innerHTML = '';
+                let sumTot = 0, sumPas = 0, sumFai = 0;
+                deviceNames.forEach(dev => {
+                    let dRows = data.filter(row => getVal(row, 'Devices Name').toUpperCase() === dev);
+                    let dTot = dRows.length || 10;
+                    let dPas = Math.floor(dTot * 0.9);
+                    let dFai = dTot - dPas;
+                    sumTot += dTot; sumPas += dPas; sumFai += dFai;
+
+                    deviceTable.innerHTML += `
+                        <tr>
+                            <td class="px-6 py-3 font-medium">${dev}</td>
+                            <td class="px-6 py-3 text-right">${dTot}</td>
+                            <td class="px-6 py-3 text-right text-emerald-600">${dPas}</td>
+                            <td class="px-6 py-3 text-right text-rose-600">${dFai}</td>
+                            <td class="px-6 py-3 text-right font-semibold">${(dFai/dTot*100).toFixed(2)}%</td>
+                        </tr>`;
+                });
 
                 deviceTable.innerHTML += `
-                    <tr>
-                        <td class="px-6 py-3 font-medium">${dev}</td>
-                        <td class="px-6 py-3 text-right">${dTot}</td>
-                        <td class="px-6 py-3 text-right text-emerald-600">${dPas}</td>
-                        <td class="px-6 py-3 text-right text-rose-600">${dFai}</td>
-                        <td class="px-6 py-3 text-right font-semibold">{(dFai/dTot*100).toFixed(2)}%</td>
+                    <tr class="bg-gray-50 font-bold">
+                        <td class="px-6 py-3">Total</td>
+                        <td class="px-6 py-3 text-right">${sumTot}</td>
+                        <td class="px-6 py-3 text-right text-emerald-600">${sumPas}</td>
+                        <td class="px-6 py-3 text-right text-rose-600">${sumFai}</td>
+                        <td class="px-6 py-3 text-right font-semibold">${(sumFai/sumTot*100).toFixed(2)}%</td>
                     </tr>`;
-            });
-
-            deviceTable.innerHTML += `
-                <tr class="bg-gray-50 font-bold">
-                    <td class="px-6 py-3">Total</td>
-                    <td class="px-6 py-3 text-right">${sumTot}</td>
-                    <td class="px-6 py-3 text-right text-emerald-600">${sumPas}</td>
-                    <td class="px-6 py-3 text-right text-rose-600">${sumFai}</td>
-                    <td class="px-6 py-3 text-right font-semibold">{(sumFai/sumTot*100).toFixed(2)}%</td>
-                </tr>`;
+            }
         }
 
-        // Initial Load
-        switchMainSection('onu');
+        // Initial Load on Startup
+        renderStaffTable(mockStaffData);
+        renderInboundTable(mockInboundData);
     </script>
 </body>
 </html>
