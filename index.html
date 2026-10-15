@@ -320,10 +320,9 @@
                     let jdLower = jd.toLowerCase();
 
                     if (jdLower === "run" || jdLower === "default") {
-                        // Count based on valid MAC presence
-                        let hasValidMac = (mac && mac !== "" && mac !== "#N/A") ? 1 : 0;
-                        if (hasValidMac === 0) return; // Skip if no valid MAC for run/default
-                        addedValue = 1;
+                        // Strict check: Only count if MAC column has actual valid address data
+                        let hasValidMac = (mac && mac !== "" && mac !== "#N/A" && mac.toLowerCase() !== "null") ? 1 : 0;
+                        addedValue = hasValidMac; 
                     } else {
                         // For other activities, take the QTY number
                         addedValue = qty;
