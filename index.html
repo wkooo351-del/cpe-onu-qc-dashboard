@@ -62,8 +62,8 @@
                                 <th class="p-3 text-center">Staff Name</th>
                                 <th class="p-3 text-center">Device Name</th>
                                 <th class="p-3 text-center">Daily (JD)</th>
-                                <th class="p-3 text-center">Total</th>
-                                <th class="p-3 text-center">Status</th>
+                                <th class="p-3 text-center">Qty</th>
+                                <th class="p-3 text-center">MAC</th>
                             </tr>
                         </thead>
                         <tbody id="staff-table-body" class="divide-y divide-slate-200 bg-white">
@@ -85,10 +85,12 @@
                     <table class="w-full text-left text-sm font-bold">
                         <thead class="bg-slate-800 text-white uppercase text-xs font-extrabold">
                             <tr>
-                                <th class="p-3 text-center">Regional</th>
                                 <th class="p-3 text-center">Date</th>
-                                <th class="p-3 text-center">CPE Types</th>
-                                <th class="p-3 text-center bg-slate-900 text-white">Daily Total</th>
+                                <th class="p-3 text-center">Regional</th>
+                                <th class="p-3 text-center">Service Type</th>
+                                <th class="p-3 text-center">CPE Type</th>
+                                <th class="p-3 text-center">Run / Tarfile</th>
+                                <th class="p-3 text-center bg-slate-900 text-white">Daily KPI</th>
                             </tr>
                         </thead>
                         <tbody id="inbound-table-body" class="divide-y divide-slate-200 bg-white">
@@ -271,19 +273,17 @@
 
     </main>
 
-    <!-- JavaScript Local Mock Data & Logic -->
+    <!-- JavaScript Data & Logic -->
     <script>
         const mockStaffData = [
-            { Date: '2026-10-01', Name: 'Ko AKT', 'Device Name': 'FFO', JD: 'Completed', Qty: 150 },
-            { Date: '2026-10-01', Name: 'မသီရိနွယ်', 'Device Name': 'FFG', JD: 'Completed', Qty: 145 },
-            { Date: '2026-10-02', Name: 'ကိုသက်', 'Device Name': 'SCP', JD: 'Completed', Qty: 160 },
-            { Date: '2026-10-02', Name: 'ကိုAKO', 'Device Name': 'FFA', JD: 'Completed', Qty: 155 }
+            { Date: '01-Oct-2026', Name: 'Soe Huan', 'Device Name': '', 'Daily (JD)': 'MAC', Qty: 50, MAC: '2830AC8...' },
+            { Date: '01-Oct-2026', Name: 'Htut Khaung Win', 'Device Name': 'ECJ', 'Daily (JD)': 'Run', Qty: 120, MAC: '2830AC8...' },
+            { Date: '01-Oct-2026', Name: 'Htut Khaung Win', 'Device Name': 'ECJ', 'Daily (JD)': 'Run', Qty: 130, MAC: '2830AC8...' }
         ];
 
         const mockInboundData = [
-            { Region: 'OVF-Provision-HGAO', Date: '2026-10-01', 'CPE Type': 'Standard', Qty: 300 },
-            { Region: 'OVF-Provision-ENUO', Date: '2026-10-01', 'CPE Type': 'Mini', Qty: 250 },
-            { Region: 'OVF-Provision-MDY', Date: '2026-10-02', 'CPE Type': 'Standard', Qty: 400 }
+            { Date: '01-Oct-2026', Regional: 'ENUO', 'Service Type': 'Gen2', 'CPE Type': 'ECJ', 'Run/ Tarfile': 'Run', 'Daily KPI': 'Reproprovisioning' },
+            { Date: '01-Oct-2026', Regional: 'ENUO', 'Service Type': 'Gen2', 'CPE Type': 'ECJ', 'Run/ Tarfile': 'Run', 'Daily KPI': 'Reproprovisioning' }
         ];
 
         function generateMockONUData() {
@@ -349,9 +349,9 @@
                         <td class="p-3 text-center">${r.Date}</td>
                         <td class="p-3 text-center font-bold">${r.Name}</td>
                         <td class="p-3 text-center">${r['Device Name']}</td>
-                        <td class="p-3 text-center">${r.JD}</td>
+                        <td class="p-3 text-center">${r['Daily (JD)']}</td>
                         <td class="p-3 text-center font-extrabold text-blue-600">${r.Qty}</td>
-                        <td class="p-3 text-center"><span class="px-2.5 py-1 bg-emerald-100 text-emerald-800 rounded-full text-xs">Active</span></td>
+                        <td class="p-3 text-center text-xs text-slate-500">${r.MAC}</td>
                     </tr>`;
             });
         }
@@ -363,10 +363,12 @@
             rows.forEach(r => {
                 tbody.innerHTML += `
                     <tr class="hover:bg-slate-50">
-                        <td class="p-3 text-center font-bold">${r.Region}</td>
                         <td class="p-3 text-center">${r.Date}</td>
+                        <td class="p-3 text-center font-bold">${r.Regional}</td>
+                        <td class="p-3 text-center">${r['Service Type']}</td>
                         <td class="p-3 text-center">${r['CPE Type']}</td>
-                        <td class="p-3 text-center font-extrabold text-indigo-900">${r.Qty}</td>
+                        <td class="p-3 text-center">${r['Run/ Tarfile']}</td>
+                        <td class="p-3 text-center font-extrabold text-indigo-900">${r['Daily KPI']}</td>
                     </tr>`;
             });
         }
