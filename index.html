@@ -320,11 +320,11 @@
                     let jdLower = jd.toLowerCase();
 
                     if (jdLower === "run" || jdLower === "default") {
-                        // Strict check: Only count if MAC column has actual valid address data
-                        let hasValidMac = (mac && mac !== "" && mac !== "#N/A" && mac.toLowerCase() !== "null") ? 1 : 0;
-                        addedValue = hasValidMac; 
+                        // MAC ကော်လံ (Column F) မှာ တကယ့်တမ်း MAC address စာသား ရှိမှသာ (အလွတ်မဟုတ်၊ #N/A မဖြစ်မှသာ) Count မည်
+                        let hasValidMac = (mac && mac !== "" && mac !== "#N/A" && mac.toLowerCase() !== "null" && !mac.includes("#N/A")) ? 1 : 0;
+                        addedValue = hasValidMac;
                     } else {
-                        // For other activities, take the QTY number
+                        // ကျန်တဲ့ လုပ်ဆောင်ချက်များအတွက် QTY တန်ဖိုးကို ယူမည်
                         addedValue = qty;
                     }
 
