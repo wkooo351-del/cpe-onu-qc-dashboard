@@ -76,7 +76,7 @@
             </div>
         </div>
 
-        <!-- SECTION 2: Inbound Regional KPI View -->
+        <!-- SECTION 2: Inbound Regional KPI View (Original Restored) -->
         <div id="section-inbound" class="dashboard-section hidden space-y-6">
             <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-wrap items-center justify-between gap-3">
                 <div id="inbound-weeks-container" class="strict-row-nav gap-2">
@@ -133,7 +133,7 @@
             </div>
         </div>
 
-        <!-- SECTION 3: ONU Inspection View -->
+        <!-- SECTION 3: ONU Inspection View (Original Restored) -->
         <div id="section-onu" class="dashboard-section hidden space-y-6">
             <div class="bg-indigo-600 shadow-md rounded-2xl p-4 flex flex-col md:flex-row justify-between items-center gap-3">
                 <div class="flex items-center space-x-3">
@@ -239,7 +239,6 @@
         }
 
         async function loadAllDashboardData() {
-            // Fetch ONU Data Across Regions
             onuData.firstTest = await fetchGoogleSheetData(ONU_SS_ID, "First Test");
             onuData.secondTest = await fetchGoogleSheetData(ONU_SS_ID, "Second Test");
             onuData.exchangeTest = await fetchGoogleSheetData(ONU_SS_ID, "Exchange");
@@ -331,7 +330,6 @@
             let sData = staffGroupedData[name] || { leaves: new Set(), dates: {} };
             let alertsHtml = "";
 
-            // Render Leave Notices matching image format
             sData.leaves.forEach(date => {
                 alertsHtml += `
                     <div class="p-3.5 bg-amber-50/90 border-l-4 border-amber-500 text-amber-900 text-xs sm:text-sm font-bold rounded-r-xl flex items-center gap-2">
