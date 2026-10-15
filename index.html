@@ -29,13 +29,13 @@
             <div class="flex items-center space-x-3 border-b border-slate-100 pb-4">
                 <span class="bg-blue-100 text-blue-600 p-3 rounded-xl font-bold">👤</span>
                 <div>
-                    <h2 id="active-staff-name" class="text-xl font-extrabold text-slate-900">Aung Aung14</h2>
+                    <h2 id="active-staff-name" class="text-xl font-extrabold text-slate-900">Soe Huan</h2>
                     <p class="text-xs text-slate-400 font-bold">Performance & Daily Activities</p>
                 </div>
             </div>
 
-            <!-- Leave Notices (Dynamic) -->
-            <div id="staff-leave-notices" class="space-y-2">
+            <!-- KPI & Leave Alert Notices -->
+            <div id="staff-alerts-container" class="space-y-2">
                 <!-- Populated via JS -->
             </div>
 
@@ -47,7 +47,8 @@
                             <th class="py-3 px-4">DATE</th>
                             <th class="py-3 px-4">DEVICE NAME</th>
                             <th class="py-3 px-4">DAILY (JD)</th>
-                            <th class="py-3 px-4 text-right">TOTAL</th>
+                            <th class="py-3 px-4 text-center">TOTAL</th>
+                            <th class="py-3 px-4 text-right">STATUS</th>
                         </tr>
                     </thead>
                     <tbody id="staff-table-body" class="text-sm divide-y divide-slate-100">
@@ -64,15 +65,8 @@
             "Aung Aung14", "Aung Myint Myat", "Aung Zaw Htet", "Chit Bhone", 
             "Htet Myat Hlaing", "Htet Naing Win4", "Min Maw Kun2", "Myat Htet Kyaw", 
             "Myat Zaw Soe", "Myint Kyaw Aung", "Myo Aung", "Phyo Wai Aung", 
-            "Soe Hua", "Win Ko Oo", "Zin Khant"
+            "Soe Huan", "Win Ko Oo", "Zin Khant"
         ];
-
-        // Sample leave records mapping for demonstration
-        const leaveRecords = {
-            "Aung Aung14": ["2026-10-12", "2026-10-13"],
-            "Chit Bhone": ["2026-10-10"],
-            "Win Ko Oo": ["2026-10-08", "2026-10-09"]
-        };
 
         function initStaffKpi() {
             let container = document.getElementById('staff-buttons-container');
@@ -80,82 +74,122 @@
             staffList.forEach((name, idx) => {
                 let btn = document.createElement('button');
                 btn.innerText = name;
-                btn.className = idx === 0 
+                btn.className = name === "Soe Huan"
                     ? 'px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-blue-600 text-white shadow whitespace-nowrap' 
                     : 'px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 whitespace-nowrap';
                 btn.onclick = () => selectStaff(name, btn);
                 container.appendChild(btn);
             });
 
-            selectStaff(staffList[0], container.children[0]);
+            selectStaff("Soe Huan", container.children[12] || container.children[0]);
         }
 
         function selectStaff(name, btnElement) {
             document.querySelectorAll('#staff-buttons-container button').forEach(b => {
                 b.className = 'px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 whitespace-nowrap';
             });
-            btnElement.className = 'px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-blue-600 text-white shadow whitespace-nowrap';
+            if(btnElement) btnElement.className = 'px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-blue-600 text-white shadow whitespace-nowrap';
             document.getElementById('active-staff-name').innerText = name;
 
-            // Render Leave Notices if available for this staff
-            let leaveDiv = document.getElementById('staff-leave-notices');
-            let staffLeaves = leaveRecords[name] || [];
-            if (staffLeaves.length > 0) {
-                leaveDiv.innerHTML = staffLeaves.map(date => `
-                    <div class="p-3 bg-amber-50 border-l-4 border-amber-500 text-amber-800 text-xs font-bold rounded-r-xl">
-                        ⚠️ ${name} is on Leave on ${date}
-                    </div>
-                `).join('');
-            } else {
-                leaveDiv.innerHTML = `
-                    <div class="p-3 bg-emerald-50 border-l-4 border-emerald-500 text-emerald-800 text-xs font-bold rounded-r-xl">
-                        ✅ No leave records for ${name}. Active on duty.
-                    </div>
-                `;
-            }
+            // Render KPI Missed & Leave Alerts (Exact match to User Image)
+            let alertsDiv = document.getElementById('staff-alerts-container');
+            alertsDiv.innerHTML = `
+                <div class="p-3 bg-red-50 border-l-4 border-red-500 text-red-800 text-xs font-bold rounded-r-xl">
+                    ⚠️ ${name} No Meet Daily KPI. 2026-10-07 (Total: 104 / Target: 150)
+                </div>
+                <div class="p-3 bg-amber-50 border-l-4 border-amber-500 text-amber-800 text-xs font-bold rounded-r-xl">
+                    ⚠️ ${name} is on Leave on 2026-10-12
+                </div>
+                <div class="p-3 bg-red-50 border-l-4 border-red-500 text-red-800 text-xs font-bold rounded-r-xl">
+                    ⚠️ ${name} No Meet Daily KPI. 2026-10-14 (Total: 142 / Target: 150)
+                </div>
+            `;
 
-            // Render table activities
+            // Render Table (Exact match to User Image with Pass/Fail Status)
             let tbody = document.getElementById('staff-table-body');
             tbody.innerHTML = `
+                <!-- 2026-10-01 -->
                 <tr class="hover:bg-slate-50/50">
-                    <td class="py-3 px-4 text-slate-600 align-middle">2026-10-02</td>
-                    <td class="py-3 px-4 font-bold text-slate-800 align-middle">ECJ</td>
-                    <td class="py-3 px-4 text-slate-700">Speed Test</td>
-                    <td class="py-3 px-4 text-right font-bold text-blue-600 align-middle">220</td>
-                </tr>
-                <tr class="hover:bg-slate-50/50 border-b border-slate-100">
-                    <td class="py-3 px-4 text-slate-600 align-middle"></td>
-                    <td class="py-3 px-4 font-bold text-slate-800 align-middle">FFO</td>
+                    <td class="py-3 px-4 text-slate-600 font-bold align-middle" rowspan="2">2026-10-01</td>
+                    <td class="py-3 px-4 text-slate-400 align-middle">-</td>
                     <td class="py-3 px-4 text-slate-700">MAC</td>
-                    <td class="py-3 px-4 text-right font-bold text-blue-600 align-middle">17</td>
+                    <td class="py-3 px-4 text-center font-bold text-blue-600">50</td>
+                    <td class="py-3 px-4 text-right align-middle" rowspan="2"></td>
                 </tr>
-                <tr class="bg-slate-50/80 font-bold">
-                    <td colspan="3" class="py-2.5 px-4 text-right text-slate-500 text-xs uppercase">Total for 2026-10-02:</td>
-                    <td class="py-2.5 px-4 text-right text-slate-900">237</td>
+                <tr class="hover:bg-slate-50/50 border-b border-slate-200">
+                    <td class="py-3 px-4 font-bold text-slate-800 align-middle">FFO</td>
+                    <td class="py-3 px-4 text-slate-700">Lan Port Test</td>
+                    <td class="py-3 px-4 text-center font-bold text-blue-600">150</td>
                 </tr>
+                <tr class="bg-slate-50/80 border-b border-slate-200">
+                    <td colspan="3" class="py-2.5 px-4 text-right text-slate-500 text-xs font-bold uppercase">Daily Total:</td>
+                    <td class="py-2.5 px-4 text-center font-black text-slate-900">200</td>
+                    <td class="py-2.5 px-4 text-right font-black text-emerald-600">Pass (200)</td>
+                </tr>
+
+                <!-- 2026-10-02 -->
                 <tr class="hover:bg-slate-50/50">
-                    <td class="py-3 px-4 text-slate-600 align-middle">2026-10-05</td>
-                    <td class="py-3 px-4 font-bold text-slate-800 align-middle">FFG</td>
-                    <td class="py-3 px-4 text-slate-700">Cleaning</td>
-                    <td class="py-3 px-4 text-right font-bold text-blue-600 align-middle">310</td>
+                    <td class="py-3 px-4 text-slate-600 font-bold align-middle" rowspan="2">2026-10-02</td>
+                    <td class="py-3 px-4 font-bold text-slate-800 align-middle">Exchange Test</td>
+                    <td class="py-3 px-4 text-slate-700">Exchange Test</td>
+                    <td class="py-3 px-4 text-center font-bold text-blue-600">32</td>
+                    <td class="py-3 px-4 text-right align-middle" rowspan="2"></td>
                 </tr>
-                <tr class="bg-slate-50/80 font-bold">
-                    <td colspan="3" class="py-2.5 px-4 text-right text-slate-500 text-xs uppercase">Total for 2026-10-05:</td>
-                    <td class="py-2.5 px-4 text-right text-slate-900">310</td>
+                <tr class="hover:bg-slate-50/50 border-b border-slate-200">
+                    <td class="py-3 px-4 font-bold text-slate-800 align-middle">FFO</td>
+                    <td class="py-3 px-4 text-slate-700">Lan Port Test</td>
+                    <td class="py-3 px-4 text-center font-bold text-blue-600">75</td>
                 </tr>
+                <tr class="bg-slate-50/80 border-b border-slate-200">
+                    <td colspan="3" class="py-2.5 px-4 text-right text-slate-500 text-xs font-bold uppercase">Daily Total:</td>
+                    <td class="py-2.5 px-4 text-center font-black text-slate-900">107</td>
+                    <td class="py-2.5 px-4 text-right font-black text-rose-600">Fail (107)</td>
+                </tr>
+
+                <!-- 2026-10-03 -->
+                <tr class="hover:bg-slate-50/50 border-b border-slate-200">
+                    <td class="py-3 px-4 text-slate-600 font-bold align-middle">2026-10-03</td>
+                    <td class="py-3 px-4 font-bold text-slate-800 align-middle">FFO</td>
+                    <td class="py-3 px-4 text-slate-700">Lan Port Test</td>
+                    <td class="py-3 px-4 text-center font-bold text-blue-600">534</td>
+                    <td class="py-3 px-4 text-right font-black text-emerald-600 align-middle">Pass (534)</td>
+                </tr>
+
+                <!-- 2026-10-06 -->
+                <tr class="hover:bg-slate-50/50 border-b border-slate-200">
+                    <td class="py-3 px-4 text-slate-600 font-bold align-middle">2026-10-06</td>
+                    <td class="py-3 px-4 text-slate-400 align-middle">-</td>
+                    <td class="py-3 px-4 text-slate-700">Exchange Test</td>
+                    <td class="py-3 px-4 text-center font-bold text-blue-600">80</td>
+                    <td class="py-3 px-4 text-right font-black text-rose-600 align-middle">Fail (80)</td>
+                </tr>
+
+                <!-- 2026-10-07 -->
                 <tr class="hover:bg-slate-50/50">
-                    <td class="py-3 px-4 text-slate-600 align-middle" rowspan="2">2026-10-06</td>
-                    <td class="py-3 px-4 font-bold text-slate-800 align-middle" rowspan="2">FFG</td>
-                    <td class="py-3 px-4 text-slate-700">Cleaning</td>
-                    <td class="py-3 px-4 text-right font-bold text-blue-600 align-middle">42</td>
+                    <td class="py-3 px-4 text-slate-600 font-bold align-middle" rowspan="2">2026-10-07</td>
+                    <td class="py-3 px-4 text-slate-400 align-middle">-</td>
+                    <td class="py-3 px-4 text-slate-700">MAC</td>
+                    <td class="py-3 px-4 text-center font-bold text-blue-600">20</td>
+                    <td class="py-3 px-4 text-right align-middle" rowspan="2"></td>
                 </tr>
-                <tr class="hover:bg-slate-50/50 border-b border-slate-100">
-                    <td class="py-3 px-4 text-slate-700">Default</td>
-                    <td class="py-3 px-4 text-right font-bold text-blue-600 align-middle">19</td>
+                <tr class="hover:bg-slate-50/50 border-b border-slate-200">
+                    <td class="py-3 px-4 font-bold text-slate-800 align-middle">FFO</td>
+                    <td class="py-3 px-4 text-slate-700">RMA</td>
+                    <td class="py-3 px-4 text-center font-bold text-blue-600">84</td>
                 </tr>
-                <tr class="bg-slate-50/80 font-bold">
-                    <td colspan="3" class="py-2.5 px-4 text-right text-slate-500 text-xs uppercase">Total for 2026-10-06:</td>
-                    <td class="py-2.5 px-4 text-right text-slate-900">161</td>
+                <tr class="bg-slate-50/80 border-b border-slate-200">
+                    <td colspan="3" class="py-2.5 px-4 text-right text-slate-500 text-xs font-bold uppercase">Daily Total:</td>
+                    <td class="py-2.5 px-4 text-center font-black text-slate-900">104</td>
+                    <td class="py-2.5 px-4 text-right font-black text-rose-600">Fail (104)</td>
+                </tr>
+
+                <!-- 2026-10-08 -->
+                <tr class="hover:bg-slate-50/50 border-b border-slate-200">
+                    <td class="py-3 px-4 text-slate-600 font-bold align-middle">2026-10-08</td>
+                    <td class="py-3 px-4 text-slate-400 align-middle">-</td>
+                    <td class="py-3 px-4 text-slate-700">RMA</td>
+                    <td class="py-3 px-4 text-center font-bold text-blue-600">178</td>
+                    <td class="py-3 px-4 text-right font-black text-emerald-600 align-middle">Pass (178)</td>
                 </tr>
             `;
         }
