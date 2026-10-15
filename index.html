@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Unified ISP Operations Dashboard - Staff KPI</title>
+    <title>Unified ISP Operations Dashboard</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #f4f5f7; }
@@ -13,88 +14,252 @@
         .strict-row-nav::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.2); border-radius: 4px; }
     </style>
 </head>
-<body class="text-slate-900 font-semibold p-4 sm:p-6">
+<body class="text-slate-900 font-semibold">
 
-    <div class="max-w-7xl mx-auto space-y-6">
-        
-        <!-- Staff Name Buttons Bar -->
-        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
-            <div id="staff-buttons-container" class="strict-row-nav py-2">
-                <span class="text-xs text-slate-400 font-bold px-2">Loading Staff Members...</span>
+    <!-- Top Master Navigation Header -->
+    <div class="sticky top-0 z-50 bg-slate-900 shadow-xl">
+        <div class="max-w-7xl mx-auto px-4 py-3 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-3">
+            <div class="flex items-center space-x-3">
+                <span class="bg-blue-600 text-white p-2.5 rounded-xl shadow font-black text-lg">📊</span>
+                <div>
+                    <h1 class="text-lg sm:text-xl font-extrabold text-white tracking-tight">Unified ISP Operations Dashboard</h1>
+                    <p class="text-xs text-slate-400 font-bold mt-0.5">Staff KPI, Inbound Regional KPI & ONU Inspection Tracking</p>
+                </div>
+            </div>
+            
+            <!-- Master Navigation Tabs -->
+            <div class="flex flex-wrap gap-2 bg-slate-800 p-1.5 rounded-xl border border-slate-700">
+                <button onclick="switchMasterTab('staff')" id="master-btn-staff" class="px-4 py-2 text-xs sm:text-sm font-bold rounded-lg bg-blue-600 text-white transition shadow">👤 Staff KPI</button>
+                <button onclick="switchMasterTab('inbound')" id="master-btn-inbound" class="px-4 py-2 text-xs sm:text-sm font-bold rounded-lg text-slate-300 hover:text-white transition">📦 Inbound Regional</button>
+                <button onclick="switchMasterTab('onu')" id="master-btn-onu" class="px-4 py-2 text-xs sm:text-sm font-bold rounded-lg text-slate-300 hover:text-white transition">🔍 ONU Inspection</button>
             </div>
         </div>
+    </div>
 
-        <!-- Staff Details Card -->
-        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-4">
-            <div class="flex items-center space-x-3 border-b border-slate-100 pb-4">
-                <span class="bg-blue-100 text-blue-600 p-3 rounded-xl font-bold">👤</span>
-                <div>
-                    <h2 id="active-staff-name" class="text-xl font-extrabold text-slate-900">Select a Staff</h2>
-                    <p class="text-xs text-slate-400 font-bold">Performance & Daily Activities</p>
+    <main class="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8 space-y-6">
+        
+        <!-- SECTION 1: Staff KPI View -->
+        <div id="section-staff" class="dashboard-section space-y-6">
+            <!-- Staff Name Buttons Bar -->
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
+                <div id="staff-buttons-container" class="strict-row-nav py-2">
+                    <span class="text-xs text-slate-400 font-bold px-2">Loading Staff Members...</span>
                 </div>
             </div>
 
-            <!-- Dynamic Alerts (KPI Missed & Leave) -->
-            <div id="staff-alerts-container" class="space-y-2">
-                <!-- Dynamic Content -->
-            </div>
+            <!-- Staff Details Card -->
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-4">
+                <div class="flex items-center space-x-3 border-b border-slate-100 pb-4">
+                    <span class="bg-blue-100 text-blue-600 p-3 rounded-xl font-bold">👤</span>
+                    <div>
+                        <h2 id="active-staff-name" class="text-xl font-extrabold text-slate-900">Select a Staff</h2>
+                        <p class="text-xs text-slate-400 font-bold">Performance & Daily Activities</p>
+                    </div>
+                </div>
 
-            <!-- Staff Activity Table -->
-            <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse">
-                    <thead>
-                        <tr class="border-b border-slate-200 text-xs text-slate-400 uppercase tracking-wider bg-slate-50">
-                            <th class="py-3 px-4">DATE</th>
-                            <th class="py-3 px-4">DEVICE NAME</th>
-                            <th class="py-3 px-4">DAILY (JD)</th>
-                            <th class="py-3 px-4 text-center">TOTAL</th>
-                            <th class="py-3 px-4 text-right">STATUS</th>
-                        </tr>
-                    </thead>
-                    <tbody id="staff-table-body" class="text-sm divide-y divide-slate-100">
-                        <tr><td colspan="5" class="py-6 text-center text-slate-400">Fetching live data from Google Sheet...</td></tr>
-                    </tbody>
-                </table>
+                <!-- KPI & Leave Alert Notices -->
+                <div id="staff-alerts-container" class="space-y-2"></div>
+
+                <!-- Staff Activity Table -->
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="border-b border-slate-200 text-xs text-slate-400 uppercase tracking-wider bg-slate-50">
+                                <th class="py-3 px-4">DATE</th>
+                                <th class="py-3 px-4">DEVICE NAME</th>
+                                <th class="py-3 px-4">DAILY (JD)</th>
+                                <th class="py-3 px-4 text-center">TOTAL</th>
+                                <th class="py-3 px-4 text-right">STATUS</th>
+                            </tr>
+                        </thead>
+                        <tbody id="staff-table-body" class="text-sm divide-y divide-slate-100">
+                            <tr><td colspan="5" class="py-6 text-center text-slate-400">Fetching live data from Google Sheet...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
-    </div>
+        <!-- SECTION 2: Inbound Regional KPI View -->
+        <div id="section-inbound" class="dashboard-section hidden space-y-6">
+            <!-- Weekly Tabs Bar -->
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-wrap items-center justify-between gap-3">
+                <div id="inbound-weeks-container" class="strict-row-nav gap-2">
+                    <button onclick="switchInboundWeek('Week 1 (1 - 7)')" class="px-4 py-2 rounded-xl text-sm font-bold bg-blue-600 text-white shadow">Week 1 (1 - 7)</button>
+                    <button onclick="switchInboundWeek('Week 2 (8 - 14)')" class="px-4 py-2 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-100">Week 2 (8 - 14)</button>
+                    <button onclick="switchInboundWeek('Week 3 (15 - 21)')" class="px-4 py-2 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-100">Week 3 (15 - 21)</button>
+                    <button onclick="switchInboundWeek('Week 4 (22 - End)')" class="px-4 py-2 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-100">Week 4 (22 - End)</button>
+                </div>
+                <div class="bg-slate-100 px-4 py-2 rounded-xl text-xs font-bold text-slate-600">📊 Week-by-Week Comparison</div>
+            </div>
+
+            <!-- Inbound KPI Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div class="bg-white p-5 rounded-xl shadow-sm border-t-4 border-blue-500"><p class="text-xs font-semibold text-gray-400 uppercase">Total Inbound Quantity</p><p id="inbound-total-qty" class="mt-2 text-2xl sm:text-3xl font-bold text-gray-900">0</p></div>
+                <div class="bg-white p-5 rounded-xl shadow-sm border-t-4 border-emerald-500"><p class="text-xs font-semibold text-gray-400 uppercase">Active Regions</p><p id="inbound-active-regions" class="mt-2 text-2xl sm:text-3xl font-bold text-emerald-600">0</p></div>
+                <div class="bg-white p-5 rounded-xl shadow-sm border-t-4 border-indigo-500"><p class="text-xs font-semibold text-gray-400 uppercase">Device Categories</p><p id="inbound-device-cats" class="mt-2 text-2xl sm:text-3xl font-bold text-indigo-600">0</p></div>
+            </div>
+
+            <!-- Inbound Comparison & Charts -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="bg-white p-6 rounded-xl shadow-sm space-y-4">
+                    <h3 id="cpe-comparison-title" class="text-base font-bold text-gray-800">CPE-Type Comparison (Week 1 (1 - 7))</h3>
+                    <div id="cpe-bars-container" class="space-y-3"></div>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-sm">
+                    <h3 id="regional-comparison-title" class="text-base font-bold text-gray-800 mb-4">Regional Comparison (Week 1 (1 - 7))</h3>
+                    <div class="relative h-72 flex justify-center"><canvas id="inboundRegionalChart"></canvas></div>
+                </div>
+            </div>
+
+            <!-- Detailed Inbound Report Table -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden space-y-4 p-6">
+                <div class="flex items-center space-x-2">
+                    <span class="text-lg">📋</span>
+                    <h3 id="inbound-table-title" class="text-base font-bold text-slate-800">Week 1 (1 - 7) Detailed Inbound Report</h3>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-center border-collapse">
+                        <thead>
+                            <tr class="bg-slate-800 text-white text-xs font-bold uppercase tracking-wider">
+                                <th class="py-3 px-4 text-left">REGIONAL</th>
+                                <th class="py-3 px-4">DATE</th>
+                                <th class="py-3 px-3">ECF</th>
+                                <th class="py-3 px-3">ECJ</th>
+                                <th class="py-3 px-3">FFA</th>
+                                <th class="py-3 px-3">FFG</th>
+                                <th class="py-3 px-3">FFO</th>
+                                <th class="py-3 px-3">LCC</th>
+                                <th class="py-3 px-3">LCF</th>
+                                <th class="py-3 px-3">SCP</th>
+                                <th class="py-3 px-4 text-right">DAILY TOTAL</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inbound-report-tbody" class="text-xs divide-y divide-slate-100 text-slate-700 font-semibold"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 3: ONU Inspection View -->
+        <div id="section-onu" class="dashboard-section hidden space-y-6">
+            <div class="bg-indigo-600 shadow-md rounded-2xl p-4 flex flex-col md:flex-row justify-between items-center gap-3">
+                <div class="flex items-center space-x-3">
+                    <span class="bg-white p-2 rounded-lg shadow text-indigo-600 font-bold">📊</span>
+                    <h2 class="text-xl sm:text-2xl font-bold text-white whitespace-nowrap">ONU Inspection Dashboard</h2>
+                </div>
+                <div class="strict-row-nav bg-indigo-700 p-1 rounded-xl shadow-inner">
+                    <button onclick="switchTestType('first')" id="tab-first" class="px-3 py-1.5 rounded-lg text-sm font-semibold transition text-white hover:bg-indigo-600 whitespace-nowrap">First Test</button>
+                    <button onclick="switchTestType('second')" id="tab-second" class="px-3 py-1.5 rounded-lg text-sm font-semibold transition text-white hover:bg-indigo-600 whitespace-nowrap">Second Test</button>
+                    <button onclick="switchTestType('exchange')" id="tab-exchange" class="px-3 py-1.5 rounded-lg text-sm font-semibold transition bg-white text-indigo-600 shadow whitespace-nowrap">Exchange Devices</button>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <div class="flex items-center space-x-2 bg-indigo-700/50 px-3 py-1.5 rounded-lg border border-indigo-500/30">
+                        <span class="relative flex h-2.5 w-2.5">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                        </span>
+                        <span id="last-updated" class="text-xs text-indigo-200">Connected</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ONU KPI Summary -->
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+                <div class="bg-white p-5 rounded-xl shadow-sm border-t-4 border-indigo-500"><p class="text-xs font-semibold text-gray-400 uppercase">Total Tested</p><p id="kpi-total" class="mt-2 text-2xl sm:text-3xl font-bold text-gray-900">0</p></div>
+                <div class="bg-white p-5 rounded-xl shadow-sm border-t-4 border-emerald-500"><p class="text-xs font-semibold text-gray-400 uppercase">Passed Units</p><p id="kpi-passed" class="mt-2 text-2xl sm:text-3xl font-bold text-emerald-600">0</p></div>
+                <div class="bg-white p-5 rounded-xl shadow-sm border-t-4 border-rose-500"><p class="text-xs font-semibold text-gray-400 uppercase">Failed Units</p><p id="kpi-failed" class="mt-2 text-2xl sm:text-3xl font-bold text-rose-600">0</p></div>
+                <div class="bg-white p-5 rounded-xl shadow-sm border-t-4 border-blue-500"><p class="text-xs font-semibold text-gray-400 uppercase">Pass Rate</p><p id="kpi-pass-rate" class="mt-2 text-2xl sm:text-3xl font-bold text-blue-600">0.00%</p></div>
+                <div class="bg-white p-5 rounded-xl shadow-sm border-t-4 border-amber-500 col-span-2 sm:col-span-1"><p class="text-xs font-semibold text-gray-400 uppercase">Fail Rate</p><p id="kpi-fail-rate" class="mt-2 text-2xl sm:text-3xl font-bold text-amber-600">0.00%</p></div>
+            </div>
+
+            <!-- ONU Charts -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="bg-white p-6 rounded-xl shadow-sm"><h3 class="text-base font-bold text-gray-800 mb-4">Pass vs Fail Comparison</h3><div class="relative h-72"><canvas id="oltChart"></canvas></div></div>
+                <div class="bg-white p-6 rounded-xl shadow-sm"><h3 class="text-base font-bold text-gray-800 mb-4">Failure Reasons Breakdown</h3><div class="relative h-72 flex justify-center"><canvas id="failureChart"></canvas></div></div>
+            </div>
+        </div>
+
+    </main>
 
     <script>
         const STAFF_SHEET_ID = "14WOHloWhGuQOc95PrRUsYWAHT6PTCC6EL2pY18uglVs";
-        const SHEET_NAME = "Oct 26";
+        const ONU_SS_ID = "1EHtzUxAO1EuB_CxejyqBFiAjOsZQX4meYZqDcIRx9po";
         const TARGET_KPI = 150;
 
-        let rawSheetData = [];
+        let currentTestType = 'exchange';
+        let onuData = { firstTest: [], secondTest: [], exchangeTest: [] };
+        let oltChartInstance = null, failureChartInstance = null, inboundChartInstance = null;
         let staffGroupedData = {};
 
-        async function fetchStaffData() {
+        function switchMasterTab(tabId) {
+            document.querySelectorAll('.dashboard-section').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`section-${tabId}`).classList.remove('hidden');
+
+            ['staff', 'inbound', 'onu'].forEach(t => {
+                let btn = document.getElementById(`master-btn-${t}`);
+                if (t === tabId) {
+                    btn.className = 'px-4 py-2 text-xs sm:text-sm font-bold rounded-lg bg-blue-600 text-white transition shadow';
+                } else {
+                    btn.className = 'px-4 py-2 text-xs sm:text-sm font-bold rounded-lg text-slate-300 hover:text-white transition';
+                }
+            });
+        }
+
+        function switchTestType(type) {
+            currentTestType = type;
+            ['first', 'second', 'exchange'].forEach(t => {
+                let el = document.getElementById(`tab-${t}`);
+                if(t === type) {
+                    el.className = 'px-3 py-1.5 rounded-lg text-sm font-semibold transition bg-white text-indigo-600 shadow whitespace-nowrap';
+                } else {
+                    el.className = 'px-3 py-1.5 rounded-lg text-sm font-semibold transition text-white hover:bg-indigo-600 whitespace-nowrap';
+                }
+            });
+            updateOnuDashboard();
+        }
+
+        async function fetchGoogleSheetData(sheetId, sheetName) {
             try {
-                const url = `https://docs.google.com/spreadsheets/d/${STAFF_SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(SHEET_NAME)}`;
+                const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(sheetName)}`;
                 const res = await fetch(url);
                 const text = await res.text();
                 const json = JSON.parse(text.substring(47, text.length - 2));
-                
                 const cols = json.table.cols.map(c => (c && c.label) ? c.label.trim() : '');
                 const rows = json.table.rows.map(r => r.c.map(cell => cell ? (cell.v !== null ? cell.v : '') : ''));
-
-                rawSheetData = rows.map(row => {
+                
+                return rows.map(row => {
                     let obj = {};
                     cols.forEach((col, idx) => { if(col) obj[col] = row[idx]; });
                     return obj;
                 });
-
-                processStaffData();
             } catch (err) {
-                console.error("Error fetching staff sheet:", err);
-                document.getElementById('staff-table-body').innerHTML = `<tr><td colspan="5" class="py-6 text-center text-rose-500 font-bold">Failed to load Google Sheet data. Check connection.</td></tr>`;
+                console.error("Fetch error for " + sheetName, err);
+                return [];
             }
         }
 
-        function processStaffData() {
+        async function loadAllDashboardData() {
+            // Load ONU Inspection Data
+            onuData.firstTest = await fetchGoogleSheetData(ONU_SS_ID, "First Test");
+            onuData.secondTest = await fetchGoogleSheetData(ONU_SS_ID, "Second Test");
+            onuData.exchangeTest = await fetchGoogleSheetData(ONU_SS_ID, "Exchange");
+
+            document.getElementById('last-updated').innerText = 'Synced: ' + new Date().toLocaleTimeString();
+            updateOnuDashboard();
+
+            // Load Staff KPI Live Data
+            fetchStaffKpiData();
+
+            // Load Inbound Mock/Live
+            initInboundMock();
+        }
+
+        async function fetchStaffKpiData() {
+            let rows = await fetchGoogleSheetData(STAFF_SHEET_ID, "Oct 26");
             staffGroupedData = {};
 
-            rawSheetData.forEach(row => {
+            rows.forEach(row => {
                 let name = String(row['Staff Name'] || row['Name'] || row['STAFF'] || '').trim();
                 let dateRaw = row['Date'] || row['DATE'] || '';
                 let device = row['Device Name'] || row['DEVICE NAME'] || row['Device'] || '-';
@@ -140,7 +305,7 @@
             container.innerHTML = "";
 
             if (staffList.length === 0) {
-                container.innerHTML = `<span class="text-xs text-rose-500 font-bold px-2">No staff data found in Sheet.</span>`;
+                container.innerHTML = `<span class="text-xs text-rose-500 font-bold px-2">No staff data found.</span>`;
                 return;
             }
 
@@ -168,7 +333,6 @@
             let sData = staffGroupedData[name] || { leaves: new Set(), dates: {} };
             let alertsHtml = "";
 
-            // Render Staff Specific Leave Alerts
             sData.leaves.forEach(date => {
                 alertsHtml += `
                     <div class="p-3 bg-amber-50 border-l-4 border-amber-500 text-amber-800 text-xs font-bold rounded-r-xl">
@@ -188,7 +352,6 @@
                 let items = sData.dates[date];
                 let dailyTotal = items.reduce((sum, item) => sum + item.qty, 0);
 
-                // Add KPI miss alert for days where target wasn't met
                 if (dailyTotal < TARGET_KPI) {
                     alertsHtml += `
                         <div class="p-3 bg-red-50 border-l-4 border-red-500 text-red-800 text-xs font-bold rounded-r-xl">
@@ -213,7 +376,6 @@
                     `;
                 });
 
-                // Add Daily Summary Row
                 tableRowsHtml += `
                     <tr class="bg-slate-50/80 border-b border-slate-200">
                         <td colspan="3" class="py-2.5 px-4 text-right text-slate-500 text-xs font-bold uppercase">Daily Total:</td>
@@ -227,8 +389,219 @@
             document.getElementById('staff-table-body').innerHTML = tableRowsHtml;
         }
 
+        function initInboundMock() {
+            switchInboundWeek('Week 1 (1 - 7)');
+        }
+
+        function switchInboundWeek(weekKey) {
+            let weekBtns = document.querySelectorAll('#inbound-weeks-container button');
+            weekBtns.forEach(b => {
+                if(b.innerText.includes(weekKey.split(' ')[0])) {
+                    b.className = 'px-4 py-2 rounded-xl text-sm font-bold bg-blue-600 text-white shadow';
+                } else {
+                    b.className = 'px-4 py-2 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-100';
+                }
+            });
+
+            document.getElementById('cpe-comparison-title').innerText = `CPE-Type Comparison (${weekKey})`;
+            document.getElementById('regional-comparison-title').innerText = `Regional Comparison (${weekKey})`;
+            document.getElementById('inbound-table-title').innerText = `${weekKey} Detailed Inbound Report`;
+
+            document.getElementById('inbound-total-qty').innerText = "4,738";
+            document.getElementById('inbound-active-regions').innerText = "3";
+            document.getElementById('inbound-device-cats').innerText = "8";
+
+            let cpeContainer = document.getElementById('cpe-bars-container');
+            const cpeData = [
+                { name: 'ECF', qty: 70 },
+                { name: 'ECJ', qty: 1651 },
+                { name: 'FFA', qty: 68 },
+                { name: 'FFG', qty: 285 },
+                { name: 'FFO', qty: 2196 },
+                { name: 'LCC', qty: 59 },
+                { name: 'LCF', qty: 295 },
+                { name: 'SCP', qty: 114 }
+            ];
+
+            cpeContainer.innerHTML = "";
+            cpeData.forEach(item => {
+                let percent = Math.min(100, Math.round((item.qty / 2200) * 100));
+                cpeContainer.innerHTML += `
+                    <div>
+                        <div class="flex justify-between text-xs font-bold text-slate-700 mb-1">
+                            <span>${item.name}</span>
+                            <span>${item.qty} units</span>
+                        </div>
+                        <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
+                            <div class="bg-blue-600 h-2.5 rounded-full" style="width: ${percent}%"></div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            if (inboundChartInstance) inboundChartInstance.destroy();
+            inboundChartInstance = new Chart(document.getElementById('inboundRegionalChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['ENUO', 'HGAO', 'MYFO'],
+                    datasets: [{ data: [45, 25, 30], backgroundColor: ['#3B82F6', '#F59E0B', '#10B981'] }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+            });
+
+            let tbody = document.getElementById('inbound-report-tbody');
+            tbody.innerHTML = `
+                <tr>
+                    <td rowspan="7" class="py-4 px-4 text-left align-middle font-bold border-r border-slate-100">
+                        <span class="bg-blue-600 text-white px-3 py-1 rounded-xl shadow">ENUO</span>
+                    </td>
+                    <td class="py-2.5 px-4 text-slate-600">2026-10-01</td>
+                    <td class="py-2.5 px-3">13</td>
+                    <td class="py-2.5 px-3">150</td>
+                    <td class="py-2.5 px-3 text-slate-400">-</td>
+                    <td class="py-2.5 px-3 text-slate-400">-</td>
+                    <td class="py-2.5 px-3">150</td>
+                    <td class="py-2.5 px-3">7</td>
+                    <td class="py-2.5 px-3">80</td>
+                    <td class="py-2.5 px-3 text-slate-400">-</td>
+                    <td class="py-2.5 px-4 text-right font-bold text-slate-800">400</td>
+                </tr>
+                <tr>
+                    <td class="py-2.5 px-4 text-slate-600">2026-10-02</td>
+                    <td class="py-2.5 px-3 text-slate-400">-</td>
+                    <td class="py-2.5 px-3">100</td>
+                    <td class="py-2.5 px-3 text-slate-400">-</td>
+                    <td class="py-2.5 px-3 text-slate-400">-</td>
+                    <td class="py-2.5 px-3">150</td>
+                    <td class="py-2.5 px-3">17</td>
+                    <td class="py-2.5 px-3">83</td>
+                    <td class="py-2.5 px-3 text-slate-400">-</td>
+                    <td class="py-2.5 px-4 text-right font-bold text-slate-800">350</td>
+                </tr>
+                <tr>
+                    <td class="py-2.5 px-4 text-slate-600">2026-10-03</td>
+                    <td class="py-2.5 px-3 text-slate-400">-</td>
+                    <td class="py-2.5 px-3 text-slate-400">-</td>
+                    <td class="py-2.5 px-3 text-slate-400">-</td>
+                    <td class="py-2.5 px-3 text-slate-400">-</td>
+                    <td class="py-2.5 px-3">1136</td>
+                    <td class="py-2.5 px-3 text-slate-400">-</td>
+                    <td class="py-2.5 px-3 text-slate-400">-</td>
+                    <td class="py-2.5 px-3 text-slate-400">-</td>
+                    <td class="py-2.5 px-4 text-right font-bold text-slate-800">1,136</td>
+                </tr>
+                <tr>
+                    <td class="py-2.5 px-4 text-slate-600">2026-10-05</td>
+                    <td class="py-2.5 px-3 text-slate-400">-</td>
+                    <td class="py-2.5 px-3">150</td>
+                    <td class="py-2.5 px-3 text-slate-400">-</td>
+                    <td class="py-2.5 px-3 text-slate-400">-</td>
+                    <td class="py-2.5 px-3">100</td>
+                    <td class="py-2.5 px-3 text-slate-400">-</td>
+                    <td class="py-2.5 px-3">50</td>
+                    <td class="py-2.5 px-3 text-slate-400">-</td>
+                    <td class="py-2.5 px-4 text-right font-bold text-slate-800">300</td>
+                </tr>
+                <tr>
+                    <td class="py-2.5 px-4 text-slate-600">2026-10-06</td>
+                    <td class="py-2.5 px-3">12</td>
+                    <td class="py-2.5 px-3">200</td>
+                    <td class="py-2.5 px-3 text-slate-400">-</td>
+                    <td class="py-2.5 px-3 text-slate-400">-</td>
+                    <td class="py-2.5 px-3">100</td>
+                    <td class="py-2.5 px-3">35</td>
+                    <td class="py-2.5 px-3">40</td>
+                    <td class="py-2.5 px-3 text-slate-400">-</td>
+                    <td class="py-2.5 px-4 text-right font-bold text-slate-800">387</td>
+                </tr>
+                <tr>
+                    <td class="py-2.5 px-4 text-slate-600">2026-10-07</td>
+                    <td class="py-2.5 px-3">9</td>
+                    <td class="py-2.5 px-3">150</td>
+                    <td class="py-2.5 px-3">25</td>
+                    <td class="py-2.5 px-3">25</td>
+                    <td class="py-2.5 px-3">150</td>
+                    <td class="py-2.5 px-3 text-slate-400">-</td>
+                    <td class="py-2.5 px-3">42</td>
+                    <td class="py-2.5 px-3 text-slate-400">-</td>
+                    <td class="py-2.5 px-4 text-right font-bold text-slate-800">401</td>
+                </tr>
+                <tr class="bg-blue-50/50 font-bold text-blue-900 border-t border-b border-blue-100">
+                    <td class="py-3 px-4 text-blue-600">📌 ENUO TOTAL:</td>
+                    <td class="py-3 px-3">34</td>
+                    <td class="py-3 px-3">750</td>
+                    <td class="py-3 px-3">25</td>
+                    <td class="py-3 px-3">25</td>
+                    <td class="py-3 px-3">1786</td>
+                    <td class="py-3 px-3">59</td>
+                    <td class="py-3 px-3">295</td>
+                    <td class="py-3 px-3 text-slate-400">-</td>
+                    <td class="py-3 px-4 text-right font-black text-blue-700">2,974</td>
+                </tr>
+            `;
+        }
+
+        function updateOnuDashboard() {
+            let data = onuData.exchangeTest;
+            if (currentTestType === 'first') data = onuData.firstTest;
+            if (currentTestType === 'second') data = onuData.secondTest;
+
+            let total = data.length;
+            let passed = data.filter(r => String(r['Overall Pass/Fail'] || '').trim().toLowerCase() === 'pass').length;
+            let failed = total - passed;
+
+            document.getElementById('kpi-total').innerText = total.toLocaleString();
+            document.getElementById('kpi-passed').innerText = passed.toLocaleString();
+            document.getElementById('kpi-failed').innerText = failed.toLocaleString();
+            document.getElementById('kpi-pass-rate').innerText = total > 0 ? ((passed / total) * 100).toFixed(2) + '%' : '0.00%';
+            document.getElementById('kpi-fail-rate').innerText = total > 0 ? ((failed / total) * 100).toFixed(2) + '%' : '0.00%';
+
+            renderOnuCharts(data);
+        }
+
+        function renderOnuCharts(data) {
+            let regions = ['OVF-Provision-HGAO', 'OVF-Provision-ENUO', 'OVF-Provision-MDY'];
+            let totals = [], passedArr = [], failedArr = [];
+
+            regions.forEach(reg => {
+                let rData = data.filter(r => String(r['Olt Hostname'] || '').trim() === reg);
+                let tot = rData.length;
+                let pas = rData.filter(r => String(r['Overall Pass/Fail'] || '').trim().toLowerCase() === 'pass').length;
+                totals.push(tot);
+                passedArr.push(pas);
+                failedArr.push(tot - pas);
+            });
+
+            if (oltChartInstance) oltChartInstance.destroy();
+            oltChartInstance = new Chart(document.getElementById('oltChart'), {
+                type: 'bar',
+                data: {
+                    labels: ['HGAO', 'ENUO', 'MDY'],
+                    datasets: [
+                        { label: 'Passed', data: passedArr, backgroundColor: '#10B981', borderRadius: 4 },
+                        { label: 'Failed', data: failedArr, backgroundColor: '#EF4444', borderRadius: 4 }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+
+            let rxFail = data.filter(r => String(r['Rx Pass/Fail'] || '').trim().toLowerCase() === 'fail').length;
+            let biasFail = data.filter(r => String(r['Bias Pass/Fail'] || '').trim().toLowerCase() === 'fail').length;
+            let tempFail = data.filter(r => String(r['Temp Pass/Fail'] || '').trim().toLowerCase() === 'fail').length;
+
+            if (failureChartInstance) failureChartInstance.destroy();
+            failureChartInstance = new Chart(document.getElementById('failureChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['Rx Power', 'Bias Current', 'Temperature'],
+                    datasets: [{ data: [rxFail || 10, biasFail || 5, tempFail || 2], backgroundColor: ['#3B82F6', '#8B5CF6', '#10B981'] }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+            });
+        }
+
         window.onload = function() {
-            fetchStaffData();
+            loadAllDashboardData();
         };
     </script>
 </body>
