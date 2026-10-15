@@ -9,9 +9,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
-        .strict-row-nav { display: flex; flex-wrap: nowrap !important; overflow-x: auto; gap: 6px; align-items: center; }
-        .strict-row-nav::-webkit-scrollbar { height: 4px; }
-        .strict-row-nav::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.2); border-radius: 4px; }
+        .staff-grid-nav { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; max-height: 160px; overflow-y: auto; padding: 4px; }
+        .staff-grid-nav::-webkit-scrollbar { width: 4px; }
+        .staff-grid-nav::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.2); border-radius: 4px; }
     </style>
 </head>
 <body class="text-slate-900 font-semibold">
@@ -41,7 +41,7 @@
         <!-- SECTION 1: Staff KPI View -->
         <div id="section-staff" class="dashboard-section space-y-6">
             <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
-                <div id="staff-buttons-container" class="strict-row-nav py-2">
+                <div id="staff-buttons-container" class="staff-grid-nav">
                     <span class="text-xs text-slate-400 font-bold px-2">Loading Staff Members...</span>
                 </div>
             </div>
@@ -57,18 +57,18 @@
 
                 <div id="staff-alerts-container" class="space-y-2"></div>
 
-                <div class="overflow-x-auto rounded-xl border border-slate-100">
-                    <table class="w-full text-left border-collapse">
+                <div class="overflow-x-auto rounded-xl border border-slate-300">
+                    <table class="w-full text-left border-collapse border border-slate-300">
                         <thead>
-                            <tr class="border-b border-slate-200 text-xs text-slate-500 uppercase tracking-wider bg-slate-100">
-                                <th class="py-3.5 px-6 text-center">DATE</th>
-                                <th class="py-3.5 px-6 text-center">DEVICE NAME</th>
-                                <th class="py-3.5 px-6 text-center">DAILY (JD)</th>
-                                <th class="py-3.5 px-6 text-center">TOTAL</th>
-                                <th class="py-3.5 px-6 text-center">STATUS</th>
+                            <tr class="border-b border-slate-300 text-xs text-slate-700 uppercase tracking-wider bg-slate-200">
+                                <th class="py-3.5 px-6 text-center border border-slate-300">DATE</th>
+                                <th class="py-3.5 px-6 text-center border border-slate-300">DEVICE NAME</th>
+                                <th class="py-3.5 px-6 text-center border border-slate-300">DAILY (JD)</th>
+                                <th class="py-3.5 px-6 text-center border border-slate-300">TOTAL</th>
+                                <th class="py-3.5 px-6 text-center border border-slate-300">STATUS</th>
                             </tr>
                         </thead>
-                        <tbody id="staff-table-body" class="text-sm divide-y divide-slate-100">
+                        <tbody id="staff-table-body" class="text-sm divide-y divide-slate-300">
                             <tr><td colspan="5" class="py-6 text-center text-slate-400">Fetching live data...</td></tr>
                         </tbody>
                     </table>
@@ -79,7 +79,7 @@
         <!-- SECTION 2: Inbound Regional KPI View -->
         <div id="section-inbound" class="dashboard-section hidden space-y-6">
             <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-wrap items-center justify-between gap-3">
-                <div id="inbound-weeks-container" class="strict-row-nav gap-2">
+                <div id="inbound-weeks-container" class="staff-grid-nav gap-2">
                     <button onclick="switchInboundWeek('Week 1 (1 - 7)')" class="px-4 py-2 rounded-xl text-sm font-bold bg-blue-600 text-white shadow">Week 1 (1 - 7)</button>
                     <button onclick="switchInboundWeek('Week 2 (8 - 14)')" class="px-4 py-2 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-100">Week 2 (8 - 14)</button>
                     <button onclick="switchInboundWeek('Week 3 (15 - 21)')" class="px-4 py-2 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-100">Week 3 (15 - 21)</button>
@@ -111,23 +111,23 @@
                     <h3 id="inbound-table-title" class="text-base font-bold text-slate-800">Week 1 (1 - 7) Detailed Inbound Report</h3>
                 </div>
                 <div class="overflow-x-auto">
-                    <table class="w-full text-center border-collapse">
+                    <table class="w-full text-center border-collapse border border-slate-300">
                         <thead>
                             <tr class="bg-slate-800 text-white text-xs font-bold uppercase tracking-wider">
-                                <th class="py-3 px-4 text-left">REGIONAL</th>
-                                <th class="py-3 px-4">DATE</th>
-                                <th class="py-3 px-3">ECF</th>
-                                <th class="py-3 px-3">ECJ</th>
-                                <th class="py-3 px-3">FFA</th>
-                                <th class="py-3 px-3">FFG</th>
-                                <th class="py-3 px-3">FFO</th>
-                                <th class="py-3 px-3">LCC</th>
-                                <th class="py-3 px-3">LCF</th>
-                                <th class="py-3 px-3">SCP</th>
-                                <th class="py-3 px-4 text-right">DAILY TOTAL</th>
+                                <th class="py-3 px-4 text-left border border-slate-600">REGIONAL</th>
+                                <th class="py-3 px-4 border border-slate-600">DATE</th>
+                                <th class="py-3 px-3 border border-slate-600">ECF</th>
+                                <th class="py-3 px-3 border border-slate-600">ECJ</th>
+                                <th class="py-3 px-3 border border-slate-600">FFA</th>
+                                <th class="py-3 px-3 border border-slate-600">FFG</th>
+                                <th class="py-3 px-3 border border-slate-600">FFO</th>
+                                <th class="py-3 px-3 border border-slate-600">LCC</th>
+                                <th class="py-3 px-3 border border-slate-600">LCF</th>
+                                <th class="py-3 px-3 border border-slate-600">SCP</th>
+                                <th class="py-3 px-4 text-right border border-slate-600">DAILY TOTAL</th>
                             </tr>
                         </thead>
-                        <tbody id="inbound-report-tbody" class="text-xs divide-y divide-slate-100 text-slate-700 font-semibold"></tbody>
+                        <tbody id="inbound-report-tbody" class="text-xs divide-y divide-slate-300 text-slate-700 font-semibold"></tbody>
                     </table>
                 </div>
             </div>
@@ -140,7 +140,7 @@
                     <span class="bg-white p-2 rounded-lg shadow text-indigo-600 font-bold">📊</span>
                     <h2 class="text-xl sm:text-2xl font-bold text-white whitespace-nowrap">ONU Inspection Dashboard</h2>
                 </div>
-                <div class="strict-row-nav bg-indigo-700 p-1 rounded-xl shadow-inner">
+                <div class="staff-grid-nav bg-indigo-700 p-1 rounded-xl shadow-inner">
                     <button onclick="switchTestType('first')" id="tab-first" class="px-3 py-1.5 rounded-lg text-sm font-semibold transition text-white hover:bg-indigo-600 whitespace-nowrap">First Test</button>
                     <button onclick="switchTestType('second')" id="tab-second" class="px-3 py-1.5 rounded-lg text-sm font-semibold transition text-white hover:bg-indigo-600 whitespace-nowrap">Second Test</button>
                     <button onclick="switchTestType('exchange')" id="tab-exchange" class="px-3 py-1.5 rounded-lg text-sm font-semibold transition bg-white text-indigo-600 shadow whitespace-nowrap">Exchange Devices</button>
@@ -174,6 +174,7 @@
 
     <script>
         const STAFF_SHEET_ID = "14WOHloWhGuQOc95PrRUsYWAHT6PTCC6EL2pY18uglVs";
+        const MDY_SHEET_ID = "1XrjpVgSeu1lDpyNNyuJdjYji8MxnoQWuo3bwwPWAs9Q";
         const ONU_SS_ID = "1EHtzUxAO1EuB_CxejyqBFiAjOsZQX4meYZqDcIRx9po";
         const TARGET_KPI = 150;
 
@@ -250,12 +251,7 @@
             initInboundMock();
         }
 
-        async function fetchStaffKpiData() {
-            let rows = await fetchGoogleSheetData(STAFF_SHEET_ID, "Oct 26");
-            if (rows.length === 0) rows = await fetchGoogleSheetData(STAFF_SHEET_ID);
-            
-            staffGroupedData = {};
-
+        async function parseSheetRows(rows) {
             rows.forEach(row => {
                 let dateRaw = row['Date'] || row['col_0'] || '';
                 let name = String(row['Name'] || row['Staff Name'] || row['col_1'] || '').trim();
@@ -296,16 +292,10 @@
                         staffGroupedData[name].dates[dateStr].devices[devKey] = {};
                     }
 
-                    let jdLower = jd.toLowerCase();
                     let increment = qty;
+                    let jdLower = jd.toLowerCase();
                     if (jdLower === "run" || jdLower === "default") {
-                        let hasValidMac = (mac && mac !== "" && mac !== "#N/A") ? 1 : 0;
-                        if (hasValidMac === 0 && mac !== "") {
-                            // If MAC is empty or invalid for run/default, count as 1 or skip based on preference
-                            increment = 1;
-                        } else {
-                            increment = 1; // Count per row/mac occurrence
-                        }
+                        increment = 1;
                     }
 
                     if (!staffGroupedData[name].dates[dateStr].devices[devKey][jd]) {
@@ -314,6 +304,19 @@
                     staffGroupedData[name].dates[dateStr].devices[devKey][jd] += increment;
                 }
             });
+        }
+
+        async function fetchStaffKpiData() {
+            staffGroupedData = {};
+
+            // Fetch from main sheet (Oct 26 or default)
+            let rows1 = await fetchGoogleSheetData(STAFF_SHEET_ID, "Oct 26");
+            if (rows1.length === 0) rows1 = await fetchGoogleSheetData(STAFF_SHEET_ID);
+            parseSheetRows(rows1);
+
+            // Fetch from MDY sheet
+            let rows2 = await fetchGoogleSheetData(MDY_SHEET_ID);
+            parseSheetRows(rows2);
 
             renderStaffButtons();
         }
@@ -324,7 +327,7 @@
             container.innerHTML = "";
 
             if (staffList.length === 0) {
-                container.innerHTML = `<span class="text-xs text-rose-500 font-bold px-2">No valid staff names found in Sheet.</span>`;
+                container.innerHTML = `<span class="text-xs text-rose-500 font-bold px-2">No valid staff names found in Sheets.</span>`;
                 return;
             }
 
@@ -333,7 +336,7 @@
                 btn.innerText = name;
                 btn.className = idx === 0 
                     ? 'px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-blue-600 text-white shadow whitespace-nowrap' 
-                    : 'px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 whitespace-nowrap';
+                    : 'px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200 whitespace-nowrap';
                 btn.onclick = () => selectStaff(name, btn);
                 container.appendChild(btn);
             });
@@ -343,7 +346,7 @@
 
         function selectStaff(name, btnElement) {
             document.querySelectorAll('#staff-buttons-container button').forEach(b => {
-                b.className = 'px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 whitespace-nowrap';
+                b.className = 'px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200 whitespace-nowrap';
             });
             if(btnElement) btnElement.className = 'px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-blue-600 text-white shadow whitespace-nowrap';
             
@@ -364,7 +367,7 @@
             let tableRowsHtml = "";
 
             if (sortedDates.length === 0 && sData.leaves.size === 0) {
-                tableRowsHtml = `<tr><td colspan="5" class="py-6 text-center text-slate-400 font-bold">No activity records found for ${name}.</td></tr>`;
+                tableRowsHtml = `<tr><td colspan="5" class="py-6 text-center text-slate-400 font-bold border border-slate-300">No activity records found for ${name}.</td></tr>`;
             }
 
             sortedDates.forEach(date => {
@@ -401,12 +404,12 @@
                     jdKeys.forEach((jdName) => {
                         let jdVal = jdMap[jdName];
                         tableRowsHtml += `
-                            <tr class="hover:bg-slate-50/60 transition">
-                                ${firstRowForDate ? `<td class="py-4 px-6 text-center font-bold text-slate-700 align-middle bg-slate-50/30" rowspan="${totalRowsForDate}">${date}</td>` : ''}
-                                <td class="py-3 px-6 text-center font-extrabold text-slate-800 align-middle">${dev}</td>
-                                <td class="py-3 px-6 text-center font-bold text-slate-700 align-middle"><div class="flex justify-between items-center max-w-[200px] mx-auto"><span>${jdName}</span><span class="font-extrabold text-blue-600">${jdVal || ''}</span></div></td>
-                                ${firstRowForDate ? `<td class="py-4 px-6 text-center font-black text-slate-900 align-middle bg-slate-50/30" rowspan="${totalRowsForDate}">${dailyTotal}</td>` : ''}
-                                ${firstRowForDate ? `<td class="py-4 px-6 text-center align-middle bg-slate-50/30" rowspan="${totalRowsForDate}">${passFailBadge}</td>` : ''}
+                            <tr class="hover:bg-slate-50/65 transition">
+                                ${firstRowForDate ? `<td class="py-4 px-6 text-center font-bold text-slate-700 align-middle bg-slate-50/30 border border-slate-300" rowspan="${totalRowsForDate}">${date}</td>` : ''}
+                                <td class="py-3 px-6 text-center font-extrabold text-slate-800 align-middle border border-slate-300">${dev}</td>
+                                <td class="py-3 px-6 text-center font-bold text-slate-700 align-middle border border-slate-300"><div class="flex justify-between items-center max-w-[200px] mx-auto"><span>${jdName}</span><span class="font-extrabold text-blue-600">${jdVal || ''}</span></div></td>
+                                ${firstRowForDate ? `<td class="py-4 px-6 text-center font-black text-slate-900 align-middle bg-slate-50/30 border border-slate-300" rowspan="${totalRowsForDate}">${dailyTotal}</td>` : ''}
+                                ${firstRowForDate ? `<td class="py-4 px-6 text-center align-middle bg-slate-50/30 border border-slate-300" rowspan="${totalRowsForDate}">${passFailBadge}</td>` : ''}
                             </tr>
                         `;
                         firstRowForDate = false;
@@ -428,7 +431,7 @@
                 if(b.innerText.includes(weekKey.split(' ')[0])) {
                     b.className = 'px-4 py-2 rounded-xl text-sm font-bold bg-blue-600 text-white shadow';
                 } else {
-                    b.className = 'px-4 py-2 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-100';
+                    b.className = 'px-4 py-2 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-100 border border-slate-200';
                 }
             });
 
@@ -452,7 +455,7 @@
                         <div class="flex justify-between text-xs font-bold text-slate-700 mb-1">
                             <span>${item.name}</span><span>${item.qty} units</span>
                         </div>
-                        <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
+                        <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden border border-slate-200">
                             <div class="bg-blue-600 h-2.5 rounded-full" style="width: ${percent}%"></div>
                         </div>
                     </div>
@@ -472,14 +475,14 @@
             let tbody = document.getElementById('inbound-report-tbody');
             tbody.innerHTML = `
                 <tr>
-                    <td rowspan="7" class="py-4 px-4 text-left align-middle font-bold border-r border-slate-100">
+                    <td rowspan="7" class="py-4 px-4 text-left align-middle font-bold border border-slate-300">
                         <span class="bg-blue-600 text-white px-3 py-1 rounded-xl shadow">ENUO</span>
                     </td>
-                    <td class="py-2.5 px-4 text-slate-600">2026-10-01</td>
-                    <td class="py-2.5 px-3">13</td><td class="py-2.5 px-3">150</td>
-                    <td class="py-2.5 px-3 text-slate-400">-</td><td class="py-2.5 px-3 text-slate-400">-</td>
-                    <td class="py-2.5 px-3">150</td><td class="py-2.5 px-3">7</td><td class="py-2.5 px-3">80</td>
-                    <td class="py-2.5 px-3 text-slate-400">-</td><td class="py-2.5 px-4 text-right font-bold text-slate-800">400</td>
+                    <td class="py-2.5 px-4 text-slate-600 border border-slate-300">2026-10-01</td>
+                    <td class="py-2.5 px-3 border border-slate-300">13</td><td class="py-2.5 px-3 border border-slate-300">150</td>
+                    <td class="py-2.5 px-3 border border-slate-300 text-slate-400">-</td><td class="py-2.5 px-3 border border-slate-300 text-slate-400">-</td>
+                    <td class="py-2.5 px-3 border border-slate-300">150</td><td class="py-2.5 px-3 border border-slate-300">7</td><td class="py-2.5 px-3 border border-slate-300">80</td>
+                    <td class="py-2.5 px-3 border border-slate-300 text-slate-400">-</td><td class="py-2.5 px-4 text-right font-bold text-slate-800 border border-slate-300">400</td>
                 </tr>
             `;
         }
