@@ -251,38 +251,19 @@
         }
 
         async function fetchStaffKpiData() {
-            let rows = await fetchGoogleSheetData(STAFF_SHEET_ID);
+            let rows = await fetchGoogleSheetData(STAFF_SHEET_ID, "Oct 26");
+            if (rows.length === 0) rows = await fetchGoogleSheetData(STAFF_SHEET_ID);
+            
             staffGroupedData = {};
 
             rows.forEach(row => {
-                // Ensure we pick text name instead of Date() strings for staff names
-                let name = "";
-                let dateRaw = "";
-                let device = "";
-                let jd = "";
-                let qty = 0;
-                let isLeave = false;
+                let dateRaw = row['Date'] || row['col_0'] || '';
+                let name = String(row['Name'] || row['Staff Name'] || row['col_1'] || '').trim();
+                let device = String(row['Device Name'] || row['col_2'] || '-').trim();
+                let jd = String(row['Daily (JD)'] || row['col_3'] || '-').trim();
+                let qty = parseFloat(row['Qty'] || row['Quantity'] || row['Total'] || row['col_4'] || 0) || 0;
 
-                // Loop through columns to find valid text name and date
-                let vals = Object.values(row);
-                for(let i=0; i<vals.length; i++) {
-                    let valStr = String(vals[i] || '').trim();
-                    if (!name && valStr && !valStr.startsWith('Date(') && isNaN(valStr) && valStr.length > 2) {
-                        name = valStr;
-                    } else if (!dateRaw && (valStr.startsWith('Date(') || valStr.match(/^\d{4}-\d{2}-\d{2}/))) {
-                        dateRaw = valStr;
-                    }
-                }
-
-                // Fallbacks
-                name = String(row['Staff Name'] || row['Name'] || row['col_0'] || name || '').trim();
-                dateRaw = row['Date'] || row['DATE'] || row['col_1'] || dateRaw || '';
-                device = String(row['Device Name'] || row['DEVICE NAME'] || row['col_2'] || '-').trim();
-                jd = String(row['Daily (JD)'] || row['DAILY (JD)'] || row['col_3'] || '-').trim();
-                qty = parseFloat(row['Quantity'] || row['QTY'] || row['Total'] || row['col_4'] || 0) || 0;
-                isLeave = String(row['Leave'] || row['STATUS'] || row['col_5'] || '').toLowerCase().includes('leave');
-
-                if (!name || name.toLowerCase().includes('staff') || name.startsWith('Date(')) return;
+                if (!name || name.toLowerCase() === 'name' || name === '') return;
 
                 let dateStr = "";
                 if (typeof dateRaw === 'string' && dateRaw.startsWith('Date(')) {
@@ -296,14 +277,10 @@
                 }
 
                 if (!staffGroupedData[name]) {
-                    staffGroupedData[name] = { leaves: new Set(), dates: {} };
+                    staffGroupedData[name] = { dates: {} };
                 }
 
-                if (isLeave && dateStr) {
-                    staffGroupedData[name].leaves.add(dateStr);
-                }
-
-                if (dateStr && (qty > 0 || jd !== '-')) {
+                if (dateStr) {
                     if (!staffGroupedData[name].dates[dateStr]) {
                         staffGroupedData[name].dates[dateStr] = [];
                     }
@@ -345,17 +322,8 @@
             
             document.getElementById('active-staff-name').innerText = name;
 
-            let sData = staffGroupedData[name] || { leaves: new Set(), dates: {} };
+            let sData = staffGroupedData[name] || { dates: {} };
             let alertsHtml = "";
-
-            sData.leaves.forEach(date => {
-                alertsHtml += `
-                    <div class="p-3 bg-amber-50 border-l-4 border-amber-500 text-amber-800 text-xs font-bold rounded-r-xl">
-                        ⚠️ ${name} is on Leave on ${date}
-                    </div>
-                `;
-            });
-
             let sortedDates = Object.keys(sData.dates).sort();
             let tableRowsHtml = "";
 
