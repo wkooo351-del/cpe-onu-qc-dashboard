@@ -33,7 +33,7 @@
 
     <main class="max-w-7xl mx-auto space-y-6">
         
-        <!-- SECTION 1: Staff KPI View (Untouched) -->
+        <!-- SECTION 1: Staff KPI View -->
         <div id="section-hc" class="dashboard-section space-y-6">
             <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
                 <div id="staff-buttons-container" class="staff-grid-nav justify-center">
@@ -124,9 +124,12 @@
     </main>
 
     <script>
+        // သီးခြား Google Sheet ID သုံးခု ခွဲခြားထားခြင်း
         const STAFF_SHEET_ID = "14WOHloWhGuQOc95PrRUsYWAHT6PTCC6EL2pY18uglVs";
-        const MDY_SHEET_ID = "1XrjpVgSeu1lDpyNNyuJdjYji8MxnoQWuo3bwwPWAs9Q";
+        const INBOUND_SHEET_ID = "1PK1Bz7gRg8x3L8IOr7Xx8ntMADaznWWhYyEjchzuM6M"; // Daily Inbound KPI 2026 Sheet
         const ONU_SS_ID = "1EHtzUxAO1EuB_CxejyqBFiAjOsZQX4meYZqDcIRx9po";
+        
+        const MDY_SHEET_ID = "1XrjpVgSeu1lDpyNNyuJdjYji8MxnoQWuo3bwwPWAs9Q";
         const DAILY_TARGET = 150;
 
         let staffGroupedData = {};
@@ -136,7 +139,6 @@
         let oltChartInstance = null, failureChartInstance = null, pieChartInstance = null;
         let currentTestType = 'exchange';
 
-        // Inbound တက်လာမည့် တရားဝင် Regions များ
         const VALID_REGIONS = ["ENUO", "HGAO", "MYFO", "MDY"];
 
         function switchMasterTab(sectionId, btn) {
@@ -215,6 +217,7 @@
         }
 
         async function loadAllData() {
+            // 1. Staff KPI Sheet မှ ဒေတာ ရယူခြင်း
             let rows1 = await fetchGoogleSheetData(STAFF_SHEET_ID, "Oct 26");
             if (rows1.length === 0) rows1 = await fetchGoogleSheetData(STAFF_SHEET_ID);
             processStaffRows(rows1);
@@ -223,12 +226,13 @@
             processStaffRows(rows2);
             renderStaffButtons();
 
-            // Inbound Tab စာရွက်သီးသန့်ရှိပါက ဆွဲမည်၊ မရှိပါက တခြား Row များကို စစ်ထုတ်မည်
-            let inboundRows = await fetchGoogleSheetData(STAFF_SHEET_ID, "Inbound");
-            if (inboundRows.length === 0) inboundRows = rows1;
+            // 2. Daily Inbound KPI 2026 Sheet မှ သီးသန့် Live Data ရယူခြင်း
+            let inboundRows = await fetchGoogleSheetData(INBOUND_SHEET_ID, "Oct'26");
+            if (inboundRows.length === 0) inboundRows = await fetchGoogleSheetData(INBOUND_SHEET_ID);
             processInboundLiveRows(inboundRows);
             renderInboundWeek(activeInboundWeek);
 
+            // 3. ONU Inspection Sheet မှ ဒေတာ ရယူခြင်း
             onuData.firstTest = await fetchGoogleSheetData(ONU_SS_ID, "First Test");
             onuData.secondTest = await fetchGoogleSheetData(ONU_SS_ID, "Second Test");
             onuData.exchangeTest = await fetchGoogleSheetData(ONU_SS_ID, "Exchange");
@@ -286,7 +290,6 @@
             });
         }
 
-        // Strictly filter pure regional rows for Inbound KPI
         function processInboundLiveRows(rows) {
             inboundLiveData = {
                 "Week 1 (1 - 7)": { totalQty: 0, activeRegions: new Set(), cpeTypes: new Set(), cpeTotals: {}, regionalTotals: {}, rawRows: [] },
@@ -305,14 +308,11 @@
                 else if (dayNum >= 15 && dayNum <= 21) weekKey = "Week 3 (15 - 21)";
                 else if (dayNum >= 22) weekKey = "Week 4 (22 - End)";
 
-                // Filter out Staff Names and keep strictly VALID_REGIONS
                 let possibleRegion = String(r['Regional'] || r['Region'] || r['col_1'] || '').trim().toUpperCase();
                 let region = VALID_REGIONS.find(v => possibleRegion.includes(v));
-
-                // If row contains staff name instead of region, skip or default
                 if (!region) return;
 
-                let device = String(r['Device Name'] || r['Device'] || r['col_2'] || 'ECJ').trim().toUpperCase();
+                let device = String(r['CPE Type'] || r['Device Name'] || r['Device'] || r['col_3'] || 'ECJ').trim().toUpperCase();
                 if (device.toLowerCase().includes("name") || device === "-") device = "ECJ";
 
                 let qty = parseFloat(r['Qty'] || r['Quantity'] || r['Total'] || r['col_4'] || 1) || 1;
@@ -430,7 +430,6 @@
             document.getElementById('staff-table-body').innerHTML = tableRowsHtml;
         }
 
-        // Render Inbound KPI & Week-by-Week Comparison
         function renderInboundWeek(weekKey, btn) {
             activeInboundWeek = weekKey;
             if (btn) {
