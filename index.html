@@ -286,8 +286,8 @@
                 let jd = String(row['Daily (JD)'] || row['col_3'] || '-').trim();
                 let qty = parseFloat(row['Qty'] || row['Quantity'] || row['Total'] || row['col_4'] || 0) || 0;
                 
-                // MAC ကော်လံ (Column F / Index 5) ပါ values များကို တိကျစွာဖမ်းရန်
-                let mac = String(row['MAC'] || row['MAC Vlookup'] || row['col_5'] || '').trim();
+                // တိကျစွာ MAC ကော်လံ (Column F / col_5) ကိုသာ ယူပါမည် (Vlookup ကော်လံများ လုံးဝမပါဝင်ပါ)
+                let mac = String(row['MAC'] || row['col_5'] || '').trim();
                 let isLeave = String(row['Leave'] || row['col_5'] || jd || '').toLowerCase().includes('leave');
 
                 if (!name || name.toLowerCase() === 'name' || name === '') return;
@@ -322,11 +322,11 @@
                     let jdLower = jd.toLowerCase();
 
                     if (jdLower === "run" || jdLower === "default") {
-                        // MAC ကော်လံမှာ အမှန်တကယ် MAC Address ဖြည့်ထားမှသာ Count မည် (အလွတ်ဖြစ်နေလျှင် သို့မဟုတ် #N/A ဖြစ်နေလျှင် 0 သာယူမည်)
-                        let isValidMac = mac !== "" && mac !== "#N/A" && mac.toLowerCase() !== "null" && !mac.includes("#N/A");
-                        addedValue = isValidMac ? 1 : 0;
+                        // RUN နှင့် Default တွေအတွက် MAC ကော်လံတွင် တကယ်တမ်း valid ဖြစ်သော MAC ရှိမှသာ 1 ဟုရေတွက်မည်
+                        let hasValidMac = (mac !== "" && mac !== "#N/A" && mac.toLowerCase() !== "null");
+                        addedValue = hasValidMac ? 1 : 0;
                     } else {
-                        // ကျန်တဲ့ လုပ်ဆောင်ချက်များအတွက် QTY ကော်လံထဲက တန်ဖိုးကို ယူမည်
+                        // အခြား JD များ (ဥပမာ- Cleaning) အတွက် Qty ကော်လံထဲက အရေအတွက်ကို တိုက်ရိုက်ယူမည်
                         addedValue = qty;
                     }
 
