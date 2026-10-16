@@ -94,6 +94,7 @@
                         <span class="bg-white p-2 rounded-lg shadow text-indigo-600 font-bold">📊</span>
                         <h2 class="text-xl sm:text-2xl font-bold text-white whitespace-nowrap">ONU Inspection Dashboard</h2>
                     </div>
+                    <!-- Test Type / Period Tabs -->
                     <div class="staff-grid-nav bg-indigo-700 p-1 rounded-xl shadow-inner">
                         <button onclick="switchTestType('first', this)" id="tab-first" class="px-3 py-1.5 rounded-lg text-sm font-semibold transition bg-white text-indigo-600 shadow whitespace-nowrap">First Test</button>
                         <button onclick="switchTestType('second', this)" id="tab-second" class="px-3 py-1.5 rounded-lg text-sm font-semibold transition text-white hover:bg-indigo-600 whitespace-nowrap">Second Test</button>
@@ -112,12 +113,12 @@
                     </div>
                 </div>
 
-                <!-- Sticky Regional Filter Tabs -->
+                <!-- Sticky Regional Filter Tabs (OVF ဖြုတ်ထားသည်) -->
                 <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-md flex flex-wrap gap-2 justify-center">
                     <button onclick="switchOnuRegion('All Region', this)" class="onu-region-btn px-4 py-2 text-sm font-bold rounded-xl bg-indigo-600 text-white shadow transition">All Region</button>
-                    <button onclick="switchOnuRegion('OVF-Provision-HGAO', this)" class="onu-region-btn px-4 py-2 text-sm font-bold rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300 transition">OVF-Provision-HGAO</button>
-                    <button onclick="switchOnuRegion('OVF-Provision-ENUO', this)" class="onu-region-btn px-4 py-2 text-sm font-bold rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300 transition">OVF-Provision-ENUO</button>
-                    <button onclick="switchOnuRegion('OVF-Provision-MDY', this)" class="onu-region-btn px-4 py-2 text-sm font-bold rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300 transition">OVF-Provision-MDY</button>
+                    <button onclick="switchOnuRegion('HGAO', this)" class="onu-region-btn px-4 py-2 text-sm font-bold rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300 transition">HGAO</button>
+                    <button onclick="switchOnuRegion('ENUO', this)" class="onu-region-btn px-4 py-2 text-sm font-bold rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300 transition">ENUO</button>
+                    <button onclick="switchOnuRegion('MDY', this)" class="onu-region-btn px-4 py-2 text-sm font-bold rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300 transition">MDY</button>
                 </div>
             </div>
 
@@ -155,7 +156,7 @@
         let activeInboundWeek = 'Week 1 (1 - 7)';
         let onuData = { firstTest: [], secondTest: [], exchangeTest: [] };
         let oltChartInstance = null, failureChartInstance = null, pieChartInstance = null, multiBarChartInstance = null;
-        let currentTestType = 'first'; // Start with First Test as requested
+        let currentTestType = 'first';
         let currentOnuRegion = 'All Region';
 
         const VALID_REGIONS = ["ENUO", "HGAO", "MYFO"];
@@ -260,9 +261,14 @@
             processInboundLiveRows(inboundRows);
             renderInboundWeek(activeInboundWeek);
 
+            // Fetch distinct sheets for First Test, Second Test, and Exchange
             onuData.firstTest = await fetchGoogleSheetData(ONU_SS_ID, "First Test");
             onuData.secondTest = await fetchGoogleSheetData(ONU_SS_ID, "Second Test");
             onuData.exchangeTest = await fetchGoogleSheetData(ONU_SS_ID, "Exchange");
+            if (onuData.exchangeTest.length === 0) {
+                onuData.exchangeTest = await fetchGoogleSheetData(ONU_SS_ID, "Exchange Devices");
+            }
+
             document.getElementById('last-updated').innerText = 'Synced: ' + new Date().toLocaleTimeString();
             updateOnuDashboard();
         }
@@ -824,16 +830,20 @@
         }
 
         function updateOnuDashboard() {
-            let rawData = onuData.exchangeTest;
-            if (currentTestType === 'first') rawData = onuData.firstTest;
-            if (currentTestType === 'second') rawData = onuData.secondTest;
-            if (currentTestType === 'exchange') rawData = onuData.exchangeTest;
-            // For daily/monthly placeholder if needed, fall back to exchange or first
-            if (currentTestType === 'daily' || currentTestType === 'monthly') rawData = onuData.firstTest;
+            let rawData = [];
+            // Map main tabs to exact Google Sheet Data Sources
+            if (currentTestType === 'first' || currentTestType === 'daily' || currentTestType === 'monthly') {
+                rawData = onuData.firstTest;
+            } else if (currentTestType === 'second') {
+                rawData = onuData.secondTest;
+            } else if (currentTestType === 'exchange') {
+                rawData = onuData.exchangeTest;
+            }
 
+            // Filter by Region (HGAO, ENUO, MDY matches OVF-Provision-...)
             let data = rawData;
             if (currentOnuRegion !== 'All Region') {
-                data = rawData.filter(r => String(r['Olt Hostname'] || '').trim() === currentOnuRegion);
+                data = rawData.filter(r => String(r['Olt Hostname'] || '').includes(currentOnuRegion));
             }
 
             let total = data.length;
@@ -854,9 +864,9 @@
             let container = document.getElementById('onu-dynamic-container');
             if (!container) return;
 
-            let regions = ['OVF-Provision-HGAO', 'OVF-Provision-ENUO', 'OVF-Provision-MDY'];
+            let targetRegions = ['HGAO', 'ENUO', 'MDY'];
             if (currentOnuRegion !== 'All Region') {
-                regions = [currentOnuRegion];
+                targetRegions = [currentOnuRegion];
             }
 
             let html = `
@@ -867,15 +877,15 @@
                     </div>
             `;
 
-            regions.forEach(reg => {
-                let regRows = rawData.filter(r => String(r['Olt Hostname'] || '').trim() === reg);
+            targetRegions.forEach(regShort => {
+                let regRows = rawData.filter(r => String(r['Olt Hostname'] || '').includes(regShort));
                 let regTotal = regRows.length;
+                
                 if (regTotal === 0 && currentOnuRegion !== 'All Region') {
-                    html += `<div class="p-4 bg-slate-50 rounded-xl text-center text-slate-400">No records found for ${reg}</div>`;
+                    html += `<div class="p-4 bg-slate-50 rounded-xl text-center text-slate-400">No records found for ${regShort}</div>`;
                     return;
                 }
 
-                // Group by Device / Model if available, or list stats
                 let passed = regRows.filter(r => String(r['Overall Pass/Fail'] || '').trim().toLowerCase() === 'pass').length;
                 let failed = regTotal - passed;
                 let passRate = regTotal > 0 ? ((passed / regTotal) * 100).toFixed(1) : 0;
@@ -884,13 +894,13 @@
                 let biasFail = regRows.filter(r => String(r['Bias Pass/Fail'] || '').trim().toLowerCase() === 'fail').length;
                 let tempFail = regRows.filter(r => String(r['Temp Pass/Fail'] || '').trim().toLowerCase() === 'fail').length;
 
-                let badgeColor = reg.includes('HGAO') ? 'bg-amber-500' : (reg.includes('ENUO') ? 'bg-blue-600' : 'bg-emerald-600');
+                let badgeColor = regShort === 'HGAO' ? 'bg-amber-500' : (regShort === 'ENUO' ? 'bg-blue-600' : 'bg-emerald-600');
 
                 html += `
                     <div class="p-5 rounded-xl border border-slate-200 bg-slate-50/50 space-y-4">
                         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-slate-200 pb-3">
-                            <span class="px-3 py-1.5 rounded-lg text-xs font-black text-white ${badgeColor}">${reg}</span>
-                            <div class="flex gap-4 text-xs">
+                            <span class="px-3 py-1.5 rounded-lg text-xs font-black text-white ${badgeColor}">${regShort} Region</span>
+                            <div class="flex flex-wrap gap-3 text-xs">
                                 <span class="text-slate-700">Total: <strong class="text-slate-900">${regTotal}</strong></span>
                                 <span class="text-emerald-600">Passed: <strong>${passed}</strong></span>
                                 <span class="text-rose-600">Failed: <strong>${failed}</strong></span>
@@ -921,11 +931,11 @@
         }
 
         function renderOnuCharts(data) {
-            let regions = ['OVF-Provision-HGAO', 'OVF-Provision-ENUO', 'OVF-Provision-MDY'];
+            let regions = ['HGAO', 'ENUO', 'MDY'];
             let passedArr = [], failedArr = [];
 
             regions.forEach(reg => {
-                let rData = data.filter(r => String(r['Olt Hostname'] || '').trim() === reg);
+                let rData = data.filter(r => String(r['Olt Hostname'] || '').includes(reg));
                 let tot = rData.length;
                 let pas = rData.filter(r => String(r['Overall Pass/Fail'] || '').trim().toLowerCase() === 'pass').length;
                 passedArr.push(pas);
