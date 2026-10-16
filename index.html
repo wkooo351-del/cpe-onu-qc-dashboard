@@ -136,7 +136,7 @@
         let oltChartInstance = null, failureChartInstance = null, pieChartInstance = null;
         let currentTestType = 'exchange';
 
-        // Strict whitelist for regions to avoid mixing staff names into regions
+        // Inbound တက်လာမည့် တရားဝင် Regions များ
         const VALID_REGIONS = ["ENUO", "HGAO", "MYFO", "MDY"];
 
         function switchMasterTab(sectionId, btn) {
@@ -223,7 +223,7 @@
             processStaffRows(rows2);
             renderStaffButtons();
 
-            // Fetch dedicated Inbound tab if exists, else parse strict regional entries
+            // Inbound Tab စာရွက်သီးသန့်ရှိပါက ဆွဲမည်၊ မရှိပါက တခြား Row များကို စစ်ထုတ်မည်
             let inboundRows = await fetchGoogleSheetData(STAFF_SHEET_ID, "Inbound");
             if (inboundRows.length === 0) inboundRows = rows1;
             processInboundLiveRows(inboundRows);
@@ -286,7 +286,7 @@
             });
         }
 
-        // Process only pure regional entries for Inbound Dashboard
+        // Strictly filter pure regional rows for Inbound KPI
         function processInboundLiveRows(rows) {
             inboundLiveData = {
                 "Week 1 (1 - 7)": { totalQty: 0, activeRegions: new Set(), cpeTypes: new Set(), cpeTotals: {}, regionalTotals: {}, rawRows: [] },
@@ -307,10 +307,12 @@
 
                 // Filter out Staff Names and keep strictly VALID_REGIONS
                 let possibleRegion = String(r['Regional'] || r['Region'] || r['col_1'] || '').trim().toUpperCase();
-                let region = VALID_REGIONS.find(v => possibleRegion.includes(v)) || "ENUO";
+                let region = VALID_REGIONS.find(v => possibleRegion.includes(v));
+
+                // If row contains staff name instead of region, skip or default
+                if (!region) return;
 
                 let device = String(r['Device Name'] || r['Device'] || r['col_2'] || 'ECJ').trim().toUpperCase();
-                // Avoid non-device strings
                 if (device.toLowerCase().includes("name") || device === "-") device = "ECJ";
 
                 let qty = parseFloat(r['Qty'] || r['Quantity'] || r['Total'] || r['col_4'] || 1) || 1;
@@ -428,7 +430,7 @@
             document.getElementById('staff-table-body').innerHTML = tableRowsHtml;
         }
 
-        // Render Inbound KPI
+        // Render Inbound KPI & Week-by-Week Comparison
         function renderInboundWeek(weekKey, btn) {
             activeInboundWeek = weekKey;
             if (btn) {
