@@ -327,8 +327,7 @@
                         if (!hasValidMac) return; // MAC မရှိလျှင် လုံးဝမထည့်ပါ
                         addedValue = 1;
                     } else {
-                        // ကျန်သော JD များအတွက် Qty ကိုယူမည် (သို့မဟုတ် Qty အလွတ်ဖြစ်ပါက 1 ဟုယူမည်)
-                        addedValue = (qty > 0) ? qty : 1;
+                        addedValue = (qty > 0) ? qty : 0;
                     }
 
                     if (addedValue === 0 && jdLower !== "leave") return;
