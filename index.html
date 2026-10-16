@@ -317,16 +317,18 @@
                     }
 
                     let addedValue = 0;
-                    let jdLower = jd.toLowerCase();
+                    let jdLower = jd.toLowerCase().trim();
 
                     if (jdLower === "leave") {
                         addedValue = 0;
                     } else if (jdLower === "run" || jdLower === "default") {
-                        let hasValidMac = (mac && String(mac).trim() !== "" && String(mac).trim() !== "#N/A") ? 1 : 0;
-                        if (hasValidMac === 0) return;
+                        let cleanMac = mac ? String(mac).trim() : "";
+                        let hasValidMac = (cleanMac !== "" && cleanMac.toUpperCase() !== "#N/A" && cleanMac.toLowerCase() !== "null");
+                        if (!hasValidMac) return; // MAC မရှိလျှင် လုံးဝမထည့်ပါ
                         addedValue = 1;
                     } else {
-                        addedValue = qty;
+                        // ကျန်သော JD များအတွက် Qty ကိုယူမည် (သို့မဟုတ် Qty အလွတ်ဖြစ်ပါက 1 ဟုယူမည်)
+                        addedValue = (qty > 0) ? qty : 1;
                     }
 
                     if (addedValue === 0 && jdLower !== "leave") return;
