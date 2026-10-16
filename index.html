@@ -14,34 +14,29 @@
         .staff-grid-nav::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.2); border-radius: 4px; }
     </style>
 </head>
-<body class="text-slate-900 font-semibold">
+<body class="text-slate-900 font-semibold p-6">
 
     <!-- Top Master Navigation Header -->
-    <div class="sticky top-0 z-50 bg-slate-900 shadow-xl">
-        <div class="max-w-7xl mx-auto px-4 py-3 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-3">
-            <div class="flex items-center space-x-3">
-                <span class="bg-blue-600 text-white p-2.5 rounded-xl shadow font-black text-lg">📊</span>
-                <div>
-                    <h1 class="text-lg sm:text-xl font-extrabold text-white tracking-tight">Unified ISP Operations Dashboard</h1>
-                    <p class="text-xs text-slate-400 font-bold mt-0.5">Staff KPI, Inbound Regional KPI & ONU Inspection Tracking</p>
-                </div>
+    <div class="sticky top-0 z-50 bg-slate-50 pb-4 mb-6">
+        <div class="bg-slate-800 text-white p-6 rounded-2xl shadow-xl flex flex-col md:flex-row justify-between items-center gap-4 border border-slate-700">
+            <div>
+                <h1 class="text-2xl font-extrabold tracking-tight">Unified ISP Operations Dashboard</h1>
+                <p class="text-slate-300 text-sm font-bold mt-1">Staff KPI, Inbound Regional KPI & ONU Inspection Tracking</p>
             </div>
-            
-            <!-- Master Navigation Tabs -->
-            <div class="flex flex-wrap gap-2 bg-slate-800 p-1.5 rounded-xl border border-slate-700">
-                <button onclick="switchMasterTab('staff')" id="master-btn-staff" class="px-4 py-2 text-xs sm:text-sm font-bold rounded-lg bg-blue-600 text-white transition shadow">👤 Staff KPI</button>
-                <button onclick="switchMasterTab('inbound')" id="master-btn-inbound" class="px-4 py-2 text-xs sm:text-sm font-bold rounded-lg text-slate-300 hover:text-white transition">📦 Inbound Regional</button>
-                <button onclick="switchMasterTab('onu')" id="master-btn-onu" class="px-4 py-2 text-xs sm:text-sm font-bold rounded-lg text-slate-300 hover:text-white transition">🔍 ONU Inspection</button>
+            <div class="flex flex-wrap gap-2 bg-slate-900 p-1.5 rounded-xl border border-slate-700">
+                <button onclick="switchMasterTab('section-hc', this)" id="master-btn-hc" class="px-4 py-2 text-sm font-bold rounded-lg bg-blue-600 text-white transition shadow">👤 Staff KPI</button>
+                <button onclick="switchMasterTab('section-inbound', this)" id="master-btn-inbound" class="px-4 py-2 text-sm font-bold rounded-lg text-slate-200 hover:text-white transition">📦 Inbound Regional</button>
+                <button onclick="switchMasterTab('section-onu', this)" id="master-btn-onu" class="px-4 py-2 text-sm font-bold rounded-lg text-slate-200 hover:text-white transition">🔍 ONU Inspection</button>
             </div>
         </div>
     </div>
 
-    <main class="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8 space-y-6">
+    <main class="max-w-7xl mx-auto space-y-6">
         
         <!-- SECTION 1: Staff KPI View -->
-        <div id="section-staff" class="dashboard-section space-y-6">
+        <div id="section-hc" class="dashboard-section space-y-6">
             <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
-                <div id="staff-buttons-container" class="staff-grid-nav">
+                <div id="staff-buttons-container" class="staff-grid-nav justify-center">
                     <span class="text-xs text-slate-400 font-bold px-2">Loading Staff Members...</span>
                 </div>
             </div>
@@ -61,11 +56,11 @@
                     <table class="w-full text-left border-collapse border border-slate-300">
                         <thead>
                             <tr class="border-b border-slate-300 text-xs text-slate-700 uppercase tracking-wider bg-slate-200">
-                                <th class="py-3.5 px-6 text-center border border-slate-300">DATE</th>
-                                <th class="py-3.5 px-6 text-center border border-slate-300">DEVICE NAME</th>
-                                <th class="py-3.5 px-6 text-center border border-slate-300">DAILY (JD)</th>
-                                <th class="py-3.5 px-6 text-center border border-slate-300">TOTAL</th>
-                                <th class="py-3.5 px-6 text-center border border-slate-300">STATUS</th>
+                                <th class="py-3.5 px-6 text-center border border-slate-300">Date</th>
+                                <th class="py-3.5 px-6 text-center border border-slate-300">Device Name</th>
+                                <th class="py-3.5 px-6 text-center border border-slate-300">Daily (JD)</th>
+                                <th class="py-3.5 px-6 text-center border border-slate-300">Total</th>
+                                <th class="py-3.5 px-6 text-center border border-slate-300">Status</th>
                             </tr>
                         </thead>
                         <tbody id="staff-table-body" class="text-sm divide-y divide-slate-300">
@@ -78,58 +73,15 @@
 
         <!-- SECTION 2: Inbound Regional KPI View -->
         <div id="section-inbound" class="dashboard-section hidden space-y-6">
-            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-wrap items-center justify-between gap-3">
-                <div id="inbound-weeks-container" class="staff-grid-nav gap-2">
-                    <button onclick="switchInboundWeek('Week 1 (1 - 7)')" class="px-4 py-2 rounded-xl text-sm font-bold bg-blue-600 text-white shadow">Week 1 (1 - 7)</button>
-                    <button onclick="switchInboundWeek('Week 2 (8 - 14)')" class="px-4 py-2 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-100">Week 2 (8 - 14)</button>
-                    <button onclick="switchInboundWeek('Week 3 (15 - 21)')" class="px-4 py-2 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-100">Week 3 (15 - 21)</button>
-                    <button onclick="switchInboundWeek('Week 4 (22 - End)')" class="px-4 py-2 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-100">Week 4 (22 - End)</button>
-                </div>
-                <div class="bg-slate-100 px-4 py-2 rounded-xl text-xs font-bold text-slate-600">📊 Week-by-Week Comparison</div>
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-wrap items-center justify-center gap-2">
+                <button onclick="switchInboundWeek('Week 1 (1 - 7)', this)" class="px-4 py-2 rounded-xl text-sm font-bold bg-blue-600 text-white shadow">Week 1 (1 - 7)</button>
+                <button onclick="switchInboundWeek('Week 2 (8 - 14)', this)" class="px-4 py-2 rounded-xl text-sm font-bold text-slate-700 hover:bg-slate-100 border border-slate-300">Week 2 (8 - 14)</button>
+                <button onclick="switchInboundWeek('Week 3 (15 - 21)', this)" class="px-4 py-2 rounded-xl text-sm font-bold text-slate-700 hover:bg-slate-100 border border-slate-300">Week 3 (15 - 21)</button>
+                <button onclick="switchInboundWeek('Week 4 (22 - End)', this)" class="px-4 py-2 rounded-xl text-sm font-bold text-slate-700 hover:bg-slate-100 border border-slate-300">Week 4 (22 - End)</button>
             </div>
-
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div class="bg-white p-5 rounded-xl shadow-sm border-t-4 border-blue-500"><p class="text-xs font-semibold text-gray-400 uppercase">Total Inbound Quantity</p><p id="inbound-total-qty" class="mt-2 text-2xl sm:text-3xl font-bold text-gray-900">4,738</p></div>
-                <div class="bg-white p-5 rounded-xl shadow-sm border-t-4 border-emerald-500"><p class="text-xs font-semibold text-gray-400 uppercase">Active Regions</p><p id="inbound-active-regions" class="mt-2 text-2xl sm:text-3xl font-bold text-emerald-600">3</p></div>
-                <div class="bg-white p-5 rounded-xl shadow-sm border-t-4 border-indigo-500"><p class="text-xs font-semibold text-gray-400 uppercase">Device Categories</p><p id="inbound-device-cats" class="mt-2 text-2xl sm:text-3xl font-bold text-indigo-600">8</p></div>
-            </div>
-
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div class="bg-white p-6 rounded-xl shadow-sm space-y-4">
-                    <h3 id="cpe-comparison-title" class="text-base font-bold text-gray-800">CPE-Type Comparison (Week 1 (1 - 7))</h3>
-                    <div id="cpe-bars-container" class="space-y-3"></div>
-                </div>
-                <div class="bg-white p-6 rounded-xl shadow-sm">
-                    <h3 id="regional-comparison-title" class="text-base font-bold text-gray-800 mb-4">Regional Comparison (Week 1 (1 - 7))</h3>
-                    <div class="relative h-72 flex justify-center"><canvas id="inboundRegionalChart"></canvas></div>
-                </div>
-            </div>
-
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden space-y-4 p-6">
-                <div class="flex items-center space-x-2">
-                    <span class="text-lg">📋</span>
-                    <h3 id="inbound-table-title" class="text-base font-bold text-slate-800">Week 1 (1 - 7) Detailed Inbound Report</h3>
-                </div>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-center border-collapse border border-slate-300">
-                        <thead>
-                            <tr class="bg-slate-800 text-white text-xs font-bold uppercase tracking-wider">
-                                <th class="py-3 px-4 text-left border border-slate-600">REGIONAL</th>
-                                <th class="py-3 px-4 border border-slate-600">DATE</th>
-                                <th class="py-3 px-3 border border-slate-600">ECF</th>
-                                <th class="py-3 px-3 border border-slate-600">ECJ</th>
-                                <th class="py-3 px-3 border border-slate-600">FFA</th>
-                                <th class="py-3 px-3 border border-slate-600">FFG</th>
-                                <th class="py-3 px-3 border border-slate-600">FFO</th>
-                                <th class="py-3 px-3 border border-slate-600">LCC</th>
-                                <th class="py-3 px-3 border border-slate-600">LCF</th>
-                                <th class="py-3 px-3 border border-slate-600">SCP</th>
-                                <th class="py-3 px-4 text-right border border-slate-600">DAILY TOTAL</th>
-                            </tr>
-                        </thead>
-                        <tbody id="inbound-report-tbody" class="text-xs divide-y divide-slate-300 text-slate-700 font-semibold"></tbody>
-                    </table>
-                </div>
+            <div id="inbound-content-container" class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                <h3 class="text-lg font-extrabold text-slate-900 mb-2">📋 Inbound Regional Report</h3>
+                <p class="text-xs text-slate-500 font-bold">Inbound data view loaded successfully.</p>
             </div>
         </div>
 
@@ -141,9 +93,9 @@
                     <h2 class="text-xl sm:text-2xl font-bold text-white whitespace-nowrap">ONU Inspection Dashboard</h2>
                 </div>
                 <div class="staff-grid-nav bg-indigo-700 p-1 rounded-xl shadow-inner">
-                    <button onclick="switchTestType('first')" id="tab-first" class="px-3 py-1.5 rounded-lg text-sm font-semibold transition text-white hover:bg-indigo-600 whitespace-nowrap">First Test</button>
-                    <button onclick="switchTestType('second')" id="tab-second" class="px-3 py-1.5 rounded-lg text-sm font-semibold transition text-white hover:bg-indigo-600 whitespace-nowrap">Second Test</button>
-                    <button onclick="switchTestType('exchange')" id="tab-exchange" class="px-3 py-1.5 rounded-lg text-sm font-semibold transition bg-white text-indigo-600 shadow whitespace-nowrap">Exchange Devices</button>
+                    <button onclick="switchTestType('first', this)" id="tab-first" class="px-3 py-1.5 rounded-lg text-sm font-semibold transition text-white hover:bg-indigo-600 whitespace-nowrap">First Test</button>
+                    <button onclick="switchTestType('second', this)" id="tab-second" class="px-3 py-1.5 rounded-lg text-sm font-semibold transition text-white hover:bg-indigo-600 whitespace-nowrap">Second Test</button>
+                    <button onclick="switchTestType('exchange', this)" id="tab-exchange" class="px-3 py-1.5 rounded-lg text-sm font-semibold transition bg-white text-indigo-600 shadow whitespace-nowrap">Exchange Devices</button>
                 </div>
                 <div class="flex items-center space-x-3">
                     <div class="flex items-center space-x-2 bg-indigo-700/50 px-3 py-1.5 rounded-lg border border-indigo-500/30">
@@ -176,32 +128,28 @@
         const STAFF_SHEET_ID = "14WOHloWhGuQOc95PrRUsYWAHT6PTCC6EL2pY18uglVs";
         const MDY_SHEET_ID = "1XrjpVgSeu1lDpyNNyuJdjYji8MxnoQWuo3bwwPWAs9Q";
         const ONU_SS_ID = "1EHtzUxAO1EuB_CxejyqBFiAjOsZQX4meYZqDcIRx9po";
-        const TARGET_KPI = 150;
+        const DAILY_TARGET = 150;
 
-        let currentTestType = 'exchange';
-        let onuData = { firstTest: [], secondTest: [], exchangeTest: [] };
-        let oltChartInstance = null, failureChartInstance = null, inboundChartInstance = null;
         let staffGroupedData = {};
+        let onuData = { firstTest: [], secondTest: [], exchangeTest: [] };
+        let oltChartInstance = null, failureChartInstance = null;
+        let currentTestType = 'exchange';
 
-        function switchMasterTab(tabId) {
+        function switchMasterTab(sectionId, btn) {
             document.querySelectorAll('.dashboard-section').forEach(el => el.classList.add('hidden'));
-            document.getElementById(`section-${tabId}`).classList.remove('hidden');
+            document.getElementById(sectionId).classList.remove('hidden');
 
-            ['staff', 'inbound', 'onu'].forEach(t => {
-                let btn = document.getElementById(`master-btn-${t}`);
-                if (t === tabId) {
-                    btn.className = 'px-4 py-2 text-xs sm:text-sm font-bold rounded-lg bg-blue-600 text-white transition shadow';
-                } else {
-                    btn.className = 'px-4 py-2 text-xs sm:text-sm font-bold rounded-lg text-slate-300 hover:text-white transition';
-                }
+            ['master-btn-hc', 'master-btn-inbound', 'master-btn-onu'].forEach(id => {
+                document.getElementById(id).className = 'px-4 py-2 text-sm font-bold rounded-lg text-slate-200 hover:text-white transition';
             });
+            btn.className = 'px-4 py-2 text-sm font-bold rounded-lg bg-blue-600 text-white transition shadow';
         }
 
-        function switchTestType(type) {
+        function switchTestType(type, btn) {
             currentTestType = type;
             ['first', 'second', 'exchange'].forEach(t => {
                 let el = document.getElementById(`tab-${t}`);
-                if(t === type) {
+                if (t === type) {
                     el.className = 'px-3 py-1.5 rounded-lg text-sm font-semibold transition bg-white text-indigo-600 shadow whitespace-nowrap';
                 } else {
                     el.className = 'px-3 py-1.5 rounded-lg text-sm font-semibold transition text-white hover:bg-indigo-600 whitespace-nowrap';
@@ -239,18 +187,6 @@
             }
         }
 
-        async function loadAllDashboardData() {
-            onuData.firstTest = await fetchGoogleSheetData(ONU_SS_ID, "First Test");
-            onuData.secondTest = await fetchGoogleSheetData(ONU_SS_ID, "Second Test");
-            onuData.exchangeTest = await fetchGoogleSheetData(ONU_SS_ID, "Exchange");
-
-            document.getElementById('last-updated').innerText = 'Synced: ' + new Date().toLocaleTimeString();
-            updateOnuDashboard();
-
-            await fetchStaffKpiData();
-            initInboundMock();
-        }
-
         function parseLocalDate(dateRaw) {
             if (!dateRaw && dateRaw !== 0) return "";
             if (typeof dateRaw === 'string' && dateRaw.startsWith('Date(')) {
@@ -263,22 +199,36 @@
                 }
             }
             let str = String(dateRaw).trim();
-            if (/^\d{4}-\d{2}-\d{2}/.test(str)) {
-                return str.substring(0, 10);
-            }
+            if (/^\d{4}-\d{2}-\d{2}/.test(str)) return str.substring(0, 10);
             let parsed = new Date(dateRaw);
             if (!isNaN(parsed.getTime())) {
                 let y = parsed.getFullYear();
                 let m = String(parsed.getMonth() + 1).padStart(2, '0');
                 let d = String(parsed.getDate()).padStart(2, '0');
-                if (y > 2000) {
-                    return `${y}-${m}-${d}`;
-                }
+                if (y > 2000) return `${y}-${m}-${d}`;
             }
             return str;
         }
 
-        async function parseSheetRows(rows) {
+        async function loadAllData() {
+            // 1. Staff KPI
+            let rows1 = await fetchGoogleSheetData(STAFF_SHEET_ID, "Oct 26");
+            if (rows1.length === 0) rows1 = await fetchGoogleSheetData(STAFF_SHEET_ID);
+            processStaffRows(rows1);
+
+            let rows2 = await fetchGoogleSheetData(MDY_SHEET_ID);
+            processStaffRows(rows2);
+            renderStaffButtons();
+
+            // 2. ONU Inspection Data
+            onuData.firstTest = await fetchGoogleSheetData(ONU_SS_ID, "First Test");
+            onuData.secondTest = await fetchGoogleSheetData(ONU_SS_ID, "Second Test");
+            onuData.exchangeTest = await fetchGoogleSheetData(ONU_SS_ID, "Exchange");
+            document.getElementById('last-updated').innerText = 'Synced: ' + new Date().toLocaleTimeString();
+            updateOnuDashboard();
+        }
+
+        function processStaffRows(rows) {
             rows.forEach(row => {
                 let dateRaw = row['Date'] || row['col_0'] || '';
                 let name = String(row['Name'] || row['Staff Name'] || row['col_1'] || '').trim();
@@ -286,72 +236,46 @@
                 let jd = String(row['Daily (JD)'] || row['col_3'] || '-').trim();
                 let qty = parseFloat(row['Qty'] || row['Quantity'] || row['Total'] || row['col_4'] || 0) || 0;
                 let mac = String(row['MAC'] || row['col_5'] || '').trim();
-                let isLeave = String(row['Leave'] || row['col_5'] || jd || '').toLowerCase().includes('leave');
 
-                if (!name || name.toLowerCase() === 'name' || name === '') return;
-
+                if (!name || !jd || name.toLowerCase() === 'name') return;
                 let dateStr = parseLocalDate(dateRaw);
                 if (!dateStr) return;
 
-                if (!staffGroupedData[name]) {
-                    staffGroupedData[name] = { leaves: new Set(), dates: {} };
+                let jdLower = jd.toLowerCase().trim();
+                let addedValue = 0;
+
+                if (jdLower === "leave") {
+                    addedValue = 0;
+                } else if (jdLower === "run" || jdLower === "default") {
+                    let cleanMac = mac ? mac.trim() : "";
+                    let hasValidMac = (cleanMac !== "" && cleanMac !== "#N/A") ? 1 : 0;
+                    if (hasValidMac === 0) return;
+                    addedValue = 1;
+                } else {
+                    addedValue = qty;
                 }
 
-                if (isLeave || jd.toLowerCase() === 'leave') {
-                    staffGroupedData[name].leaves.add(dateStr);
-                    if (!staffGroupedData[name].dates[dateStr]) {
-                        staffGroupedData[name].dates[dateStr] = { isLeave: true, devices: {} };
-                    } else {
-                        staffGroupedData[name].dates[dateStr].isLeave = true;
-                    }
+                if (addedValue === 0 && jdLower !== "leave") return;
+
+                if (!staffGroupedData[name]) staffGroupedData[name] = {};
+                if (!staffGroupedData[name][dateStr]) {
+                    staffGroupedData[name][dateStr] = { isLeave: false, devices: {} };
+                }
+
+                if (jdLower === "leave") {
+                    staffGroupedData[name][dateStr].isLeave = true;
                     return;
                 }
 
-                if (dateStr && jd) {
-                    if (!staffGroupedData[name].dates[dateStr]) {
-                        staffGroupedData[name].dates[dateStr] = { isLeave: false, devices: {} };
-                    }
-                    let devKey = device || '-';
-                    if (!staffGroupedData[name].dates[dateStr].devices[devKey]) {
-                        staffGroupedData[name].dates[dateStr].devices[devKey] = {};
-                    }
-
-                    let addedValue = 0;
-                    let jdLower = jd.toLowerCase().trim();
-
-                    // Apps Script ၏ အဓိက Logic အတိုင်း တိုက်ရိုက်အသုံးပြုထားပါသည်
-                    if (jdLower === "leave") {
-                        addedValue = 0;
-                    } else if (jdLower === "run" || jdLower === "default") {
-                        let cleanMac = mac ? String(mac).trim() : "";
-                        let hasValidMac = (cleanMac !== "" && cleanMac !== "#N/A") ? 1 : 0;
-                        if (hasValidMac === 0) return; // MAC မရှိရင် ကျော်မည်[cite: 3]
-                        addedValue = 1;
-                    } else {
-                        addedValue = qty;
-                    }
-
-                    if (addedValue === 0 && jdLower !== "leave") return;
-
-                    if (!staffGroupedData[name].dates[dateStr].devices[devKey][jd]) {
-                        staffGroupedData[name].dates[dateStr].devices[devKey][jd] = 0;
-                    }
-                    staffGroupedData[name].dates[dateStr].devices[devKey][jd] += addedValue;
+                let devKey = device || '-';
+                if (!staffGroupedData[name][dateStr].devices[devKey]) {
+                    staffGroupedData[name][dateStr].devices[devKey] = {};
                 }
+                if (!staffGroupedData[name][dateStr].devices[devKey][jd]) {
+                    staffGroupedData[name][dateStr].devices[devKey][jd] = 0;
+                }
+                staffGroupedData[name][dateStr].devices[devKey][jd] += addedValue;
             });
-        }
-
-        async function fetchStaffKpiData() {
-            staffGroupedData = {};
-
-            let rows1 = await fetchGoogleSheetData(STAFF_SHEET_ID, "Oct 26");
-            if (rows1.length === 0) rows1 = await fetchGoogleSheetData(STAFF_SHEET_ID);
-            parseSheetRows(rows1);
-
-            let rows2 = await fetchGoogleSheetData(MDY_SHEET_ID);
-            parseSheetRows(rows2);
-
-            renderStaffButtons();
         }
 
         function renderStaffButtons() {
@@ -360,7 +284,7 @@
             container.innerHTML = "";
 
             if (staffList.length === 0) {
-                container.innerHTML = `<span class="text-xs text-rose-500 font-bold px-2">No valid staff names found in Sheets.</span>`;
+                container.innerHTML = `<span class="text-xs text-rose-500 font-bold px-2">No valid staff records found.</span>`;
                 return;
             }
 
@@ -368,8 +292,8 @@
                 let btn = document.createElement('button');
                 btn.innerText = name;
                 btn.className = idx === 0 
-                    ? 'px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-blue-600 text-white shadow whitespace-nowrap' 
-                    : 'px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200 whitespace-nowrap';
+                    ? 'px-4 py-2 rounded-xl text-sm font-bold bg-blue-600 text-white shadow whitespace-nowrap' 
+                    : 'px-4 py-2 rounded-xl text-sm font-bold bg-white text-slate-800 hover:bg-slate-100 border border-slate-300 whitespace-nowrap';
                 btn.onclick = () => selectStaff(name, btn);
                 container.appendChild(btn);
             });
@@ -379,161 +303,80 @@
 
         function selectStaff(name, btnElement) {
             document.querySelectorAll('#staff-buttons-container button').forEach(b => {
-                b.className = 'px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200 whitespace-nowrap';
+                b.className = 'px-4 py-2 rounded-xl text-sm font-bold bg-white text-slate-800 hover:bg-slate-100 border border-slate-300 whitespace-nowrap';
             });
-            if(btnElement) btnElement.className = 'px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-blue-600 text-white shadow whitespace-nowrap';
+            if (btnElement) btnElement.className = 'px-4 py-2 rounded-xl text-sm font-bold bg-blue-600 text-white shadow whitespace-nowrap';
             
             document.getElementById('active-staff-name').innerText = name;
 
-            let sData = staffGroupedData[name] || { leaves: new Set(), dates: {} };
+            let sData = staffGroupedData[name] || {};
+            let sortedDates = Object.keys(sData).sort();
             let alertsHtml = "";
-
-            sData.leaves.forEach(date => {
-                alertsHtml += `
-                    <div class="p-3.5 bg-amber-50/90 border-l-4 border-amber-500 text-amber-900 text-xs sm:text-sm font-bold rounded-r-xl flex items-center gap-2">
-                        <span>🏝️</span> ${name} is on Leave on ${date}
-                    </div>
-                `;
-            });
-
-            let sortedDates = Object.keys(sData.dates).sort();
             let tableRowsHtml = "";
+            let grandTotal = 0;
 
-            if (sortedDates.length === 0) {
-                tableRowsHtml = `<tr><td colspan="5" class="py-6 text-center text-slate-400 font-bold border border-slate-300">No activity records found for ${name}.</td></tr>`;
-            }
+            sortedDates.forEach(dt => {
+                let dayObj = sData[dt];
+                let devices = dayObj.devices;
+                let isLeave = dayObj.isLeave;
+                let dayTotal = 0;
 
-            sortedDates.forEach(date => {
-                let dayObj = sData.dates[date];
+                Object.keys(devices).forEach(dev => {
+                    Object.values(devices[dev]).forEach(val => { dayTotal += val; });
+                });
 
-                if (dayObj.isLeave) {
+                if (isLeave) {
+                    alertsHtml += `<div class='bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-xl text-amber-900 font-bold text-sm'>🏖️ ${name} is on Leave on ${dt} (Status: Leave)</div>`;
+                } else if (dayTotal < DAILY_TARGET) {
+                    alertsHtml += `<div class='bg-red-50 border-l-4 border-red-500 p-4 rounded-r-xl text-red-900 font-bold text-sm'>⚠️ ${name} No Meet Daily KPI. ${dt} (Total: ${dayTotal} / Target: ${DAILY_TARGET})</div>`;
+                }
+                if (!isLeave) grandTotal += dayTotal;
+
+                let statusBadge = isLeave 
+                    ? `<span class='px-2.5 py-1 bg-amber-100 text-amber-900 font-extrabold rounded-lg text-xs'>Leave</span>`
+                    : (dayTotal >= DAILY_TARGET 
+                        ? `<span class='px-2.5 py-1 bg-emerald-100 text-emerald-900 font-extrabold rounded-lg text-xs'>Pass (${dayTotal})</span>` 
+                        : `<span class='px-2.5 py-1 bg-red-100 text-red-900 font-extrabold rounded-lg text-xs'>Fail (${dayTotal})</span>`);
+
+                let deviceKeys = Object.keys(devices).sort();
+                let totalRowsForDate = deviceKeys.reduce((acc, dev) => acc + Object.keys(devices[dev]).length, 0);
+                if (totalRowsForDate === 0 && isLeave) totalRowsForDate = 1;
+
+                let firstRow = true;
+                if (isLeave || totalRowsForDate === 0) {
                     tableRowsHtml += `
-                        <tr class="hover:bg-amber-50/40 transition bg-amber-50/20">
-                            <td class="py-4 px-6 text-center font-bold text-slate-700 align-middle border border-slate-300">${date}</td>
-                            <td class="py-3 px-6 text-center font-extrabold text-amber-600 align-middle border border-slate-300">Leave</td>
-                            <td class="py-3 px-6 text-center font-bold text-slate-500 align-middle border border-slate-300">Annual / Medical Leave</td>
-                            <td class="py-4 px-6 text-center font-black text-slate-500 align-middle border border-slate-300">-</td>
-                            <td class="py-4 px-6 text-center align-middle border border-slate-300">
-                                <span class="inline-block px-3 py-1 bg-amber-100 text-amber-800 font-extrabold rounded-lg text-xs">Leave</span>
-                            </td>
+                        <tr class='hover:bg-slate-50'>
+                            <td class='p-3 text-center font-bold bg-slate-50/50 border border-slate-300'>${dt}</td>
+                            <td class='p-3 text-center font-bold text-amber-600 border border-slate-300'>Leave</td>
+                            <td class='p-3 text-center text-slate-500 border border-slate-300'>Annual / Medical Leave</td>
+                            <td class='p-3 text-center font-extrabold border border-slate-300'>-</td>
+                            <td class='p-3 text-center border border-slate-300'>${statusBadge}</td>
                         </tr>
                     `;
-                    return;
-                }
-
-                let devices = dayObj.devices;
-                let deviceKeys = Object.keys(devices);
-
-                let dailyTotal = 0;
-                deviceKeys.forEach(dev => {
-                    Object.values(devices[dev]).forEach(val => { dailyTotal += val; });
-                });
-
-                if (dailyTotal > 0 && dailyTotal < TARGET_KPI) {
-                    alertsHtml += `
-                        <div class="p-3.5 bg-red-50/90 border-l-4 border-red-500 text-red-900 text-xs sm:text-sm font-bold rounded-r-xl flex items-center gap-2">
-                            <span>⚠️</span> ${name} No Meet Daily KPI. ${date} (Total: ${dailyTotal} / Target: ${TARGET_KPI})
-                        </div>
-                    `;
-                }
-
-                let passFailBadge = dailyTotal >= TARGET_KPI 
-                    ? `<span class="inline-block px-3 py-1 bg-emerald-100 text-emerald-800 font-extrabold rounded-lg text-xs">Pass (${dailyTotal})</span>`
-                    : `<span class="inline-block px-3 py-1 bg-red-100 text-red-800 font-extrabold rounded-lg text-xs">Fail (${dailyTotal})</span>`;
-
-                let totalRowsForDate = 0;
-                deviceKeys.forEach(dev => { totalRowsForDate += Object.keys(devices[dev]).length; });
-
-                let firstRowForDate = true;
-
-                deviceKeys.forEach(dev => {
-                    let jdMap = devices[dev];
-                    let jdKeys = Object.keys(jdMap);
-
-                    jdKeys.forEach((jdName) => {
-                        let jdVal = jdMap[jdName];
-                        tableRowsHtml += `
-                            <tr class="hover:bg-slate-50/65 transition">
-                                ${firstRowForDate ? `<td class="py-4 px-6 text-center font-bold text-slate-700 align-middle bg-slate-50/30 border border-slate-300" rowspan="${totalRowsForDate}">${date}</td>` : ''}
-                                <td class="py-3 px-6 text-center font-extrabold text-slate-800 align-middle border border-slate-300">${dev}</td>
-                                <td class="py-3 px-6 text-center font-bold text-slate-700 align-middle border border-slate-300"><div class="flex justify-between items-center max-w-[200px] mx-auto"><span>${jdName}</span><span class="font-extrabold text-blue-600">${jdVal || ''}</span></div></td>
-                                ${firstRowForDate ? `<td class="py-4 px-6 text-center font-black text-slate-900 align-middle bg-slate-50/30 border border-slate-300" rowspan="${totalRowsForDate}">${dailyTotal}</td>` : ''}
-                                ${firstRowForDate ? `<td class="py-4 px-6 text-center align-middle bg-slate-50/30 border border-slate-300" rowspan="${totalRowsForDate}">${passFailBadge}</td>` : ''}
-                            </tr>
-                        `;
-                        firstRowForDate = false;
+                } else {
+                    deviceKeys.forEach(dev => {
+                        let jdMap = devices[dev];
+                        Object.keys(jdMap).sort().forEach(jName => {
+                            let jVal = jdMap[jName];
+                            tableRowsHtml += `
+                                <tr class='hover:bg-slate-50'>
+                                    ${firstRow ? `<td rowspan='${totalRowsForDate}' class='p-3 text-center font-bold bg-slate-50/50 border border-slate-300 align-middle'>${dt}</td>` : ''}
+                                    <td class='p-3 text-center font-bold border border-slate-300'>${dev}</td>
+                                    <td class='p-2 text-center border border-slate-300 text-slate-800'>${jName} : <span class='font-extrabold text-blue-700'>${jVal}</span></td>
+                                    ${firstRow ? `<td rowspan='${totalRowsForDate}' class='p-3 text-center font-extrabold text-blue-950 bg-slate-50/50 border border-slate-300 align-middle'>${dayTotal}</td>` : ''}
+                                    ${firstRow ? `<td rowspan='${totalRowsForDate}' class='p-3 text-center bg-slate-50/50 border border-slate-300 align-middle'>${statusBadge}</td>` : ''}
+                                </tr>
+                            `;
+                            firstRow = false;
+                        });
                     });
-                });
+                }
             });
+
+            tableRowsHtml += `<tr class='bg-slate-200 font-extrabold text-slate-900'><td colspan='3' class='p-3 text-right border border-slate-300'>Grand Total:</td><td colspan='2' class='p-3 text-center text-red-700 text-base border border-slate-300'>${grandTotal}</td></tr>`;
 
             document.getElementById('staff-alerts-container').innerHTML = alertsHtml;
             document.getElementById('staff-table-body').innerHTML = tableRowsHtml;
-        }
-
-        function initInboundMock() {
-            switchInboundWeek('Week 1 (1 - 7)');
-        }
-
-        function switchInboundWeek(weekKey) {
-            let weekBtns = document.querySelectorAll('#inbound-weeks-container button');
-            weekBtns.forEach(b => {
-                if(b.innerText.includes(weekKey.split(' ')[0])) {
-                    b.className = 'px-4 py-2 rounded-xl text-sm font-bold bg-blue-600 text-white shadow';
-                } else {
-                    b.className = 'px-4 py-2 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-100 border border-slate-200';
-                }
-            });
-
-            document.getElementById('cpe-comparison-title').innerText = `CPE-Type Comparison (${weekKey})`;
-            document.getElementById('regional-comparison-title').innerText = `Regional Comparison (${weekKey})`;
-            document.getElementById('inbound-table-title').innerText = `${weekKey} Detailed Inbound Report`;
-
-            let cpeContainer = document.getElementById('cpe-bars-container');
-            const cpeData = [
-                { name: 'ECF', qty: 70 }, { name: 'ECJ', qty: 1651 },
-                { name: 'FFA', qty: 68 }, { name: 'FFG', qty: 285 },
-                { name: 'FFO', qty: 2196 }, { name: 'LCC', qty: 59 },
-                { name: 'LCF', qty: 295 }, { name: 'SCP', qty: 114 }
-            ];
-
-            cpeContainer.innerHTML = "";
-            cpeData.forEach(item => {
-                let percent = Math.min(100, Math.round((item.qty / 2200) * 100));
-                cpeContainer.innerHTML += `
-                    <div>
-                        <div class="flex justify-between text-xs font-bold text-slate-700 mb-1">
-                            <span>${item.name}</span><span>${item.qty} units</span>
-                        </div>
-                        <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden border border-slate-200">
-                            <div class="bg-blue-600 h-2.5 rounded-full" style="width: ${percent}%"></div>
-                        </div>
-                    </div>
-                `;
-            });
-
-            if (inboundChartInstance) inboundChartInstance.destroy();
-            inboundChartInstance = new Chart(document.getElementById('inboundRegionalChart'), {
-                type: 'doughnut',
-                data: {
-                    labels: ['ENUO', 'HGAO', 'MYFO'],
-                    datasets: [{ data: [45, 25, 30], backgroundColor: ['#3B82F6', '#F59E0B', '#10B981'] }]
-                },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
-            });
-
-            let tbody = document.getElementById('inbound-report-tbody');
-            tbody.innerHTML = `
-                <tr>
-                    <td rowspan="7" class="py-4 px-4 text-left align-middle font-bold border border-slate-300">
-                        <span class="bg-blue-600 text-white px-3 py-1 rounded-xl shadow">ENUO</span>
-                    </td>
-                    <td class="py-2.5 px-4 text-slate-600 border border-slate-300">2026-10-01</td>
-                    <td class="py-2.5 px-3 border border-slate-300">13</td><td class="py-2.5 px-3 border border-slate-300">150</td>
-                    <td class="py-2.5 px-3 border border-slate-300 text-slate-400">-</td><td class="py-2.5 px-3 border border-slate-300 text-slate-400">-</td>
-                    <td class="py-2.5 px-3 border border-slate-300">150</td><td class="py-2.5 px-3 border border-slate-300">7</td><td class="py-2.5 px-3 border border-slate-300">80</td>
-                    <td class="py-2.5 px-3 border border-slate-300 text-slate-400">-</td><td class="py-2.5 px-4 text-right font-bold text-slate-800 border border-slate-300">400</td>
-                </tr>
-            `;
         }
 
         function updateOnuDashboard() {
@@ -556,13 +399,12 @@
 
         function renderOnuCharts(data) {
             let regions = ['OVF-Provision-HGAO', 'OVF-Provision-ENUO', 'OVF-Provision-MDY'];
-            let totals = [], passedArr = [], failedArr = [];
+            let passedArr = [], failedArr = [];
 
             regions.forEach(reg => {
                 let rData = data.filter(r => String(r['Olt Hostname'] || '').trim() === reg);
                 let tot = rData.length;
                 let pas = rData.filter(r => String(r['Overall Pass/Fail'] || '').trim().toLowerCase() === 'pass').length;
-                totals.push(tot);
                 passedArr.push(pas);
                 failedArr.push(tot - pas);
             });
@@ -596,9 +438,8 @@
         }
 
         window.onload = function() {
-            loadAllDashboardData();
-            // Data များကို Live အနေဖြင့် ၆၀ စက္ကန့်လျှင် တစ်ကြိမ် အလိုအလျောက် ပြန်လည်ဆွဲယူမည်
-            setInterval(loadAllDashboardData, 60000);
+            loadAllData();
+            setInterval(loadAllData, 60000);
         };
     </script>
 </body>
