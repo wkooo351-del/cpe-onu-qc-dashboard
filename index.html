@@ -521,15 +521,15 @@
                             <p class='text-xs text-slate-500 font-bold'>Period Performance Breakdown across Regions and CPE Types.</p>
                         </div>
 
-                        <!-- 2 Columns Grid: ဘယ်ဘက်တွင် Overall Regional Comparison (+ အောက်ဘက်အနီရောင်ကွက်လပ်နေရာတွင် Chart ထည့်သွင်းထားသည်)၊ ညာဘက်တွင် CPE-Type Comparison -->
+                        <!-- 2 Columns Grid -->
                         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-                            <!-- ဘယ်ဘက်ကဒ်ပြား (အပေါ်တွင် Regional Comparison တန်းများ၊ အောက်ဘက် အနီရောင်ပြထားသောနေရာတွင် Chart) -->
-                            <div class="p-5 rounded-xl border border-slate-200 bg-slate-50/50 space-y-6">
+                            <!-- ဘယ်ဘက်ကဒ်ပြား (အပေါ်တွင် Regional Comparison တန်းများ၊ အောက်ဘက်တွင် အကွာအဝေး (mt-6) ပေးထားသော Chart) -->
+                            <div class="p-5 rounded-xl border border-slate-200 bg-slate-50/50 space-y-4">
                                 <div>
-                                    <h4 class="text-xs font-black uppercase text-slate-900 tracking-wider mb-4">OVERALL REGIONAL COMPARISON</h4>
+                                    <h4 class="text-xs font-black uppercase text-slate-900 tracking-wider mb-3">OVERALL REGIONAL COMPARISON</h4>
                                     <div class="space-y-2">${overallRegBarsHtml}</div>
                                 </div>
-                                <div class="pt-4 border-t border-slate-200 space-y-2">
+                                <div class="pt-6 mt-6 border-t border-slate-200 space-y-3">
                                     <h4 class="text-xs font-black uppercase text-slate-900 tracking-wider">📊 REGIONAL WEEKLY CHART</h4>
                                     <div class="relative h-64"><canvas id="regionalMultiBarChart"></canvas></div>
                                 </div>
