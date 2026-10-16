@@ -285,8 +285,6 @@
                 let device = String(row['Device Name'] || row['col_2'] || '-').trim();
                 let jd = String(row['Daily (JD)'] || row['col_3'] || '-').trim();
                 let qty = parseFloat(row['Qty'] || row['Quantity'] || row['Total'] || row['col_4'] || 0) || 0;
-                
-                // MAC ကော်လံ (Column F) ကို သီးသန့်စစ်ဆေးရန်
                 let mac = String(row['MAC'] || row['col_5'] || '').trim();
                 let isLeave = String(row['Leave'] || row['col_5'] || jd || '').toLowerCase().includes('leave');
 
@@ -299,7 +297,7 @@
                     staffGroupedData[name] = { leaves: new Set(), dates: {} };
                 }
 
-                if (isLeave) {
+                if (isLeave || jd.toLowerCase() === 'leave') {
                     staffGroupedData[name].leaves.add(dateStr);
                     if (!staffGroupedData[name].dates[dateStr]) {
                         staffGroupedData[name].dates[dateStr] = { isLeave: true, devices: {} };
@@ -321,15 +319,17 @@
                     let addedValue = 0;
                     let jdLower = jd.toLowerCase();
 
-                    if (jdLower === "run" || jdLower === "default") {
-                        // MAC ကော်လံမှာ တကယ်တမ်း MAC address ဖြည့်ထားမှသာ 1 ဟုရေတွက်မည် (အလွတ် သို့မဟုတ် #N/A ဖြစ်နေရင် 0 သာယူမည်)
-                        let cleanMac = mac.trim();
-                        let hasValidMac = (cleanMac !== "" && cleanMac.toUpperCase() !== "#N/A" && cleanMac.toLowerCase() !== "null");
-                        addedValue = hasValidMac ? 1 : 0;
+                    if (jdLower === "leave") {
+                        addedValue = 0;
+                    } else if (jdLower === "run" || jdLower === "default") {
+                        let hasValidMac = (mac && String(mac).trim() !== "" && String(mac).trim() !== "#N/A") ? 1 : 0;
+                        if (hasValidMac === 0) return;
+                        addedValue = 1;
                     } else {
-                        // ကျန်တဲ့ JD တွေ (ဥပမာ- Cleaning) အတွက် Qty ကော်လံထဲက အရေအတွက်ကို ယူမည်
                         addedValue = qty;
                     }
+
+                    if (addedValue === 0 && jdLower !== "leave") return;
 
                     if (!staffGroupedData[name].dates[dateStr].devices[devKey][jd]) {
                         staffGroupedData[name].dates[dateStr].devices[devKey][jd] = 0;
