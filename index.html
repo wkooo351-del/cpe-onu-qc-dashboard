@@ -596,6 +596,8 @@
 
         window.onload = function() {
             loadAllDashboardData();
+            // Data များကို Live အနေဖြင့် ဆက်တိုက် update ဖြစ်စေရန် (ဥပမာ - ၁ မိနစ်လျှင်တစ်ကြိမ် ပြန်လည်ဆွဲယူမည်)
+            setInterval(loadAllDashboardData, 60000);
         };
     </script>
 </body>
