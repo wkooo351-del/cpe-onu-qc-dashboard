@@ -476,7 +476,6 @@
                     `;
                 });
 
-                // Overall Regional Comparison (ဘယ်ဘက်ကွက်လပ်တွင် အပြည့်အစုံ ပြသရန်)
                 let maxReg = Math.max(...Object.values(allRegionalTotals), 100);
                 let overallRegBarsHtml = "";
                 let regColors = { "ENUO": "#2563eb", "HGAO": "#f59e0b", "MYFO": "#10b981" };
@@ -522,22 +521,25 @@
                             <p class='text-xs text-slate-500 font-bold'>Period Performance Breakdown across Regions and CPE Types.</p>
                         </div>
 
-                        <!-- နေရာလပ်မရှိစေရန် ဘေးချင်းကပ် ဖွဲ့စည်းထားသော ဇယားကွက် (ဘယ်ဘက်တွင် Regional Comparison၊ ညာဘက်တွင် CPE-Type Comparison) -->
-                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                            <div class="p-5 rounded-xl border border-slate-200 bg-slate-50/50 space-y-4">
-                                <h4 class="text-xs font-black uppercase text-slate-900 tracking-wider">OVERALL REGIONAL COMPARISON</h4>
-                                <div class="py-2">${overallRegBarsHtml}</div>
+                        <!-- 2 Columns Grid: ဘယ်ဘက်တွင် Overall Regional Comparison (+ အောက်ဘက်အနီရောင်ကွက်လပ်နေရာတွင် Chart ထည့်သွင်းထားသည်)၊ ညာဘက်တွင် CPE-Type Comparison -->
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+                            <!-- ဘယ်ဘက်ကဒ်ပြား (အပေါ်တွင် Regional Comparison တန်းများ၊ အောက်ဘက် အနီရောင်ပြထားသောနေရာတွင် Chart) -->
+                            <div class="p-5 rounded-xl border border-slate-200 bg-slate-50/50 space-y-6">
+                                <div>
+                                    <h4 class="text-xs font-black uppercase text-slate-900 tracking-wider mb-4">OVERALL REGIONAL COMPARISON</h4>
+                                    <div class="space-y-2">${overallRegBarsHtml}</div>
+                                </div>
+                                <div class="pt-4 border-t border-slate-200 space-y-2">
+                                    <h4 class="text-xs font-black uppercase text-slate-900 tracking-wider">📊 REGIONAL WEEKLY CHART</h4>
+                                    <div class="relative h-64"><canvas id="regionalMultiBarChart"></canvas></div>
+                                </div>
                             </div>
+
+                            <!-- ညာဘက်ကဒ်ပြား -->
                             <div class="p-5 rounded-xl border border-slate-200 bg-slate-50/50 space-y-4">
                                 <h4 class="text-xs font-black uppercase text-slate-900 tracking-wider">OVERALL CPE-TYPE COMPARISON</h4>
                                 <div>${overallCpeBarsHtml}</div>
                             </div>
-                        </div>
-
-                        <!-- Regional Weekly Multi-Bar Chart -->
-                        <div class="p-5 rounded-xl border border-slate-200 bg-slate-50/50 space-y-4">
-                            <h4 class="text-xs font-black uppercase text-slate-900 tracking-wider">📊 REGIONAL WEEK-BY-WEEK COMPARISON CHART</h4>
-                            <div class="relative h-72"><canvas id="regionalMultiBarChart"></canvas></div>
                         </div>
 
                         <div class="space-y-3 pt-4">
@@ -576,7 +578,7 @@
                         multiBarChartInstance = new Chart(ctxBar, {
                             type: 'bar',
                             data: {
-                                labels: ['Week 1 (1 - 7)', 'Week 2 (8 - 14)', 'Week 3 (15 - 21)', 'Week 4 (22 - End)'],
+                                labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
                                 datasets: [
                                     { label: 'ENUO', data: regWeeksData["ENUO"], backgroundColor: '#2563eb', borderRadius: 4 },
                                     { label: 'HGAO', data: regWeeksData["HGAO"], backgroundColor: '#f59e0b', borderRadius: 4 },
@@ -589,7 +591,7 @@
                                 plugins: { 
                                     legend: { 
                                         position: 'bottom',
-                                        labels: { font: { weight: 'bold', size: 12 }, color: '#0f172a' }
+                                        labels: { font: { weight: 'bold', size: 11 }, color: '#0f172a' }
                                     } 
                                 },
                                 scales: {
