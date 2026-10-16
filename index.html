@@ -319,15 +319,16 @@
                     let addedValue = 0;
                     let jdLower = jd.toLowerCase().trim();
 
+                    // Apps Script ၏ အဓိက Logic အတိုင်း တိုက်ရိုက်အသုံးပြုထားပါသည်
                     if (jdLower === "leave") {
                         addedValue = 0;
                     } else if (jdLower === "run" || jdLower === "default") {
                         let cleanMac = mac ? String(mac).trim() : "";
-                        let hasValidMac = (cleanMac !== "" && cleanMac.toUpperCase() !== "#N/A" && cleanMac.toLowerCase() !== "null");
-                        if (!hasValidMac) return; // MAC မရှိလျှင် (အလွတ်ဖြစ်နေလျှင်) ဤ row ကို လုံးဝမရေတွက်ပါ
+                        let hasValidMac = (cleanMac !== "" && cleanMac !== "#N/A") ? 1 : 0;
+                        if (hasValidMac === 0) return; // MAC မရှိရင် ကျော်မည်[cite: 3]
                         addedValue = 1;
                     } else {
-                        addedValue = (qty > 0) ? qty : 0;
+                        addedValue = qty;
                     }
 
                     if (addedValue === 0 && jdLower !== "leave") return;
@@ -596,7 +597,7 @@
 
         window.onload = function() {
             loadAllDashboardData();
-            // Data ကို Live အနေဖြင့် ၆၀ စက္ကန့်လျှင် တစ်ကြိမ် အလိုအလျောက် ပြန်လည်ဆွဲယူမည်
+            // Data များကို Live အနေဖြင့် ၆၀ စက္ကန့်လျှင် တစ်ကြိမ် အလိုအလျောက် ပြန်လည်ဆွဲယူမည်
             setInterval(loadAllDashboardData, 60000);
         };
     </script>
