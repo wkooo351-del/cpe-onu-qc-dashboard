@@ -33,7 +33,7 @@
 
     <main class="max-w-7xl mx-auto space-y-6">
         
-        <!-- SECTION 1: Staff KPI View -->
+        <!-- SECTION 1: Staff KPI View (Untouched) -->
         <div id="section-hc" class="dashboard-section space-y-6">
             <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
                 <div id="staff-buttons-container" class="staff-grid-nav justify-center">
@@ -131,10 +131,10 @@
 
         let staffGroupedData = {};
         let onuData = { firstTest: [], secondTest: [], exchangeTest: [] };
-        let oltChartInstance = null, failureChartInstance = null, pieChartInstance = null;
+        let oltChartInstance = null, failureChartInstance = null, pieChartInstance = null, compChartInstance = null;
         let currentTestType = 'exchange';
 
-        // Static Sample Data for Inbound Regional (matching images precisely)
+        // Complete Inbound Sample Data for all Weeks
         const sampleInboundData = {
             "Week 1 (1 - 7)": {
                 totalQty: 4738,
@@ -176,10 +176,134 @@
                             { date: "2026-10-06", cpes: { ECJ: 50, FFG: 30, FFO: 70 }, total: 150 },
                             { date: "2026-10-07", cpes: { ECJ: 80, FFO: 70 }, total: 150 }
                         ],
-                        subtotal: { ECF: 36, ECJ: 301, FFA: 43, FFG: 110, FFO: 410, total: 1055 }
+                        subtotal: { ECF: 36, ECJ: 301, FFA: 43, FFG: 110, FFO: 410, total: 1255 }
                     }
                 ],
                 grandTotal: { ECF: 70, ECJ: 1651, FFA: 68, FFG: 285, FFO: 2196, LCC: 59, LCF: 295, SCP: 114, total: 4738 }
+            },
+            "Week 2 (8 - 14)": {
+                totalQty: 3850,
+                activeRegions: ["ENUO", "HGAO", "MYFO"],
+                cpeTypes: ["ECF", "ECJ", "FFA", "FFG", "FFO", "LCC", "LCF", "SCP"],
+                cpeTotals: { "ECF": 50, "ECJ": 1200, "FFA": 40, "FFG": 210, "FFO": 1800, "LCC": 40, "LCF": 300, "SCP": 210 },
+                regionalTotals: { "ENUO": 1950, "HGAO": 900, "MYFO": 1000 },
+                tableData: [
+                    {
+                        region: "ENUO",
+                        rows: [
+                            { date: "2026-10-08", cpes: { ECJ: 150, FFO: 150 }, total: 300 },
+                            { date: "2026-10-09", cpes: { ECF: 25, ECJ: 200, FFO: 200 }, total: 425 },
+                            { date: "2026-10-10", cpes: { FFO: 400, LCC: 40 }, total: 440 },
+                            { date: "2026-10-12", cpes: { ECJ: 150, FFO: 150 }, total: 300 },
+                            { date: "2026-10-13", cpes: { ECJ: 150, FFG: 100, FFO: 150 }, total: 400 },
+                            { date: "2026-10-14", cpes: { ECF: 25, ECJ: 60 }, total: 85 }
+                        ],
+                        subtotal: { ECF: 50, ECJ: 860, FFG: 100, FFO: 1050, LCC: 40, total: 1950 }
+                    },
+                    {
+                        region: "HGAO",
+                        rows: [
+                            { date: "2026-10-08", cpes: { ECJ: 150, FFO: 150 }, total: 300 },
+                            { date: "2026-10-10", cpes: { ECJ: 150, FFG: 110 }, total: 260 },
+                            { date: "2026-10-12", cpes: { ECJ: 150, FFO: 150 }, total: 300 },
+                            { date: "2026-10-14", cpes: { FFO: 40 }, total: 40 }
+                        ],
+                        subtotal: { ECJ: 450, FFG: 110, FFO: 340, total: 900 }
+                    },
+                    {
+                        region: "MYFO",
+                        rows: [
+                            { date: "2026-10-08", cpes: { FFA: 40, FFO: 200, LCF: 60 }, total: 300 },
+                            { date: "2026-10-10", cpes: { FFO: 210, LCF: 90 }, total: 300 },
+                            { date: "2026-10-12", cpes: { FFO: 200, LCF: 100 }, total: 300 },
+                            { date: "2026-10-14", cpes: { FFO: 60, LCF: 40 }, total: 100 }
+                        ],
+                        subtotal: { FFA: 40, FFO: 670, LCF: 290, total: 1000 }
+                    }
+                ],
+                grandTotal: { ECF: 50, ECJ: 1310, FFA: 40, FFG: 210, FFO: 2060, LCC: 40, LCF: 290, SCP: 0, total: 3850 }
+            },
+            "Week 3 (15 - 21)": {
+                totalQty: 4120,
+                activeRegions: ["ENUO", "HGAO", "MYFO"],
+                cpeTypes: ["ECF", "ECJ", "FFA", "FFG", "FFO", "LCC", "LCF", "SCP"],
+                cpeTotals: { "ECF": 90, "ECJ": 1400, "FFA": 50, "FFG": 180, "FFO": 1900, "LCC": 50, "LCF": 250, "SCP": 200 },
+                regionalTotals: { "ENUO": 2100, "HGAO": 1020, "MYFO": 1000 },
+                tableData: [
+                    {
+                        region: "ENUO",
+                        rows: [
+                            { date: "2026-10-15", cpes: { ECJ: 200, FFO: 200 }, total: 400 },
+                            { date: "2026-10-16", cpes: { ECF: 45, ECJ: 200, FFO: 200 }, total: 445 },
+                            { date: "2026-10-17", cpes: { FFO: 400, LCC: 50 }, total: 450 },
+                            { date: "2026-10-19", cpes: { ECJ: 200, FFO: 200 }, total: 400 },
+                            { date: "2026-10-20", cpes: { ECJ: 150, FFG: 100, FFO: 100 }, total: 350 },
+                            { date: "2026-10-21", cpes: { ECF: 45, ECJ: 10 }, total: 55 }
+                        ],
+                        subtotal: { ECF: 90, ECJ: 960, FFG: 100, FFO: 1100, LCC: 50, total: 2300 }
+                    },
+                    {
+                        region: "HGAO",
+                        rows: [
+                            { date: "2026-10-15", cpes: { ECJ: 150, FFO: 150 }, total: 300 },
+                            { date: "2026-10-17", cpes: { ECJ: 150, FFG: 80 }, total: 230 },
+                            { date: "2026-10-19", cpes: { ECJ: 150, FFO: 150 }, total: 300 },
+                            { date: "2026-10-21", cpes: { FFO: 190 }, total: 190 }
+                        ],
+                        subtotal: { ECJ: 450, FFG: 80, FFO: 490, total: 1020 }
+                    },
+                    {
+                        region: "MYFO",
+                        rows: [
+                            { date: "2026-10-15", cpes: { FFA: 50, FFO: 150, LCF: 100 }, total: 300 },
+                            { date: "2026-10-17", cpes: { FFO: 150, LCF: 150 }, total: 300 },
+                            { date: "2026-10-19", cpes: { FFO: 250 }, total: 250 },
+                            { date: "2026-10-21", cpes: { FFO: 150 }, total: 150 }
+                        ],
+                        subtotal: { FFA: 50, FFO: 700, LCF: 250, total: 1000 }
+                    }
+                ],
+                grandTotal: { ECF: 90, ECJ: 1410, FFA: 50, FFG: 180, FFO: 2290, LCC: 50, LCF: 250, SCP: 0, total: 4320 }
+            },
+            "Week 4 (22 - End)": {
+                totalQty: 3950,
+                activeRegions: ["ENUO", "HGAO", "MYFO"],
+                cpeTypes: ["ECF", "ECJ", "FFA", "FFG", "FFO", "LCC", "LCF", "SCP"],
+                cpeTotals: { "ECF": 60, "ECJ": 1300, "FFA": 30, "FFG": 150, "FFO": 1800, "LCC": 30, "LCF": 280, "SCP": 300 },
+                regionalTotals: { "ENUO": 1850, "HGAO": 1100, "MYFO": 1000 },
+                tableData: [
+                    {
+                        region: "ENUO",
+                        rows: [
+                            { date: "2026-10-22", cpes: { ECJ: 200, FFO: 200 }, total: 400 },
+                            { date: "2026-10-23", cpes: { ECF: 30, ECJ: 200, FFO: 200 }, total: 430 },
+                            { date: "2026-10-24", cpes: { FFO: 300, LCC: 30 }, total: 330 },
+                            { date: "2026-10-26", cpes: { ECJ: 200, FFO: 200 }, total: 400 },
+                            { date: "2026-10-27", cpes: { ECJ: 100, FFG: 150, FFO: 40 }, total: 290 }
+                        ],
+                        subtotal: { ECF: 30, ECJ: 700, FFG: 150, FFO: 940, LCC: 30, total: 1850 }
+                    },
+                    {
+                        region: "HGAO",
+                        rows: [
+                            { date: "2026-10-22", cpes: { ECJ: 200, FFO: 200 }, total: 400 },
+                            { date: "2026-10-24", cpes: { ECJ: 200, FFO: 200 }, total: 400 },
+                            { date: "2026-10-26", cpes: { ECJ: 200, FFO: 100 }, total: 300 }
+                        ],
+                        subtotal: { ECJ: 600, FFO: 500, total: 1100 }
+                    },
+                    {
+                        region: "MYFO",
+                        rows: [
+                            { date: "2026-10-22", cpes: { FFA: 30, FFO: 170, LCF: 100 }, total: 300 },
+                            { date: "2026-10-24", cpes: { FFO: 200, LCF: 100 }, total: 300 },
+                            { date: "2026-10-26", cpes: { FFO: 220, LCF: 80 }, total: 300 },
+                            { date: "2026-10-27", cpes: { FFO: 100 }, total: 100 }
+                        ],
+                        subtotal: { FFA: 30, FFO: 690, LCF: 280, total: 1000 }
+                    }
+                ],
+                grandTotal: { ECF: 60, ECJ: 1300, FFA: 30, FFG: 150, FFO: 2130, LCC: 30, LCF: 280, SCP: 0, total: 3950 }
             }
         };
 
@@ -427,7 +551,7 @@
             document.getElementById('staff-table-body').innerHTML = tableRowsHtml;
         }
 
-        // Render Inbound KPI matching the user's uploaded images
+        // Render Inbound KPI matching images dynamically
         function renderInboundWeek(weekKey, btn) {
             if (btn) {
                 document.querySelectorAll('.inbound-wk-btn').forEach(b => {
@@ -439,18 +563,37 @@
             }
 
             let container = document.getElementById('inbound-dynamic-container');
-            let wData = sampleInboundData[weekKey] || sampleInboundData["Week 1 (1 - 7)"];
 
             if (weekKey === 'week-comparison') {
                 container.innerHTML = `
-                    <div class='bg-white p-6 rounded-2xl border border-slate-200 shadow-sm font-bold'>
-                        <h3 class='text-lg font-extrabold text-slate-900 mb-2'>📊 Week-by-Week Regional Comparison Dashboard</h3>
-                        <p class='text-xs text-slate-500 mb-6'>4-Week Period Performance Breakdown across Regions and CPE Types.</p>
-                        <div class='p-8 text-center text-slate-600 bg-slate-50 rounded-xl border border-slate-200'>Overall Comparison View active.</div>
+                    <div class='bg-white p-6 rounded-2xl border border-slate-200 shadow-sm font-bold space-y-4'>
+                        <h3 class='text-lg font-extrabold text-slate-950'>📊 Week-by-Week Regional Comparison Dashboard</h3>
+                        <p class='text-xs text-slate-500'>4-Week Period Performance Breakdown across Regions and CPE Types.</p>
+                        <div class='relative h-80'><canvas id='compChart'></canvas></div>
                     </div>
                 `;
+                setTimeout(() => {
+                    let ctx = document.getElementById('compChart');
+                    if (ctx) {
+                        if (compChartInstance) compChartInstance.destroy();
+                        compChartInstance = new Chart(ctx, {
+                            type: 'bar',
+                            data: {
+                                labels: ['Week 1 (1 - 7)', 'Week 2 (8 - 14)', 'Week 3 (15 - 21)', 'Week 4 (22 - End)'],
+                                datasets: [
+                                    { label: 'ENUO', data: [2733, 1950, 2300, 1850], backgroundColor: '#2563eb', borderRadius: 4 },
+                                    { label: 'HGAO', data: [750, 900, 1020, 1100], backgroundColor: '#f59e0b', borderRadius: 4 },
+                                    { label: 'MYFO', data: [1255, 1000, 1000, 1000], backgroundColor: '#10b981', borderRadius: 4 }
+                                ]
+                            },
+                            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+                        });
+                    }
+                }, 100);
                 return;
             }
+
+            let wData = sampleInboundData[weekKey] || sampleInboundData["Week 1 (1 - 7)"];
 
             // CPE Bars
             let cpeBarsHtml = "";
@@ -590,7 +733,7 @@
                 </div>
             `;
 
-            // Render Pie Chart
+            // Render Doughnut Chart
             setTimeout(() => {
                 let ctx = document.getElementById('inboundPieChart');
                 if (ctx) {
