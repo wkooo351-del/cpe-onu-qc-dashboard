@@ -124,11 +124,9 @@
     </main>
 
     <script>
-        // သီးခြား Google Sheet ID သုံးခု ခွဲခြားထားခြင်း
         const STAFF_SHEET_ID = "14WOHloWhGuQOc95PrRUsYWAHT6PTCC6EL2pY18uglVs";
-        const INBOUND_SHEET_ID = "1PK1Bz7gRg8x3L8IOr7Xx8ntMADaznWWhYyEjchzuM6M"; // Daily Inbound KPI 2026 Sheet
+        const INBOUND_SHEET_ID = "1PK1Bz7gRg8x3L8IOr7Xx8ntMADaznWWhYyEjchzuM6M";
         const ONU_SS_ID = "1EHtzUxAO1EuB_CxejyqBFiAjOsZQX4meYZqDcIRx9po";
-        
         const MDY_SHEET_ID = "1XrjpVgSeu1lDpyNNyuJdjYji8MxnoQWuo3bwwPWAs9Q";
         const DAILY_TARGET = 150;
 
@@ -136,10 +134,11 @@
         let inboundLiveData = {};
         let activeInboundWeek = 'Week 1 (1 - 7)';
         let onuData = { firstTest: [], secondTest: [], exchangeTest: [] };
-        let oltChartInstance = null, failureChartInstance = null, pieChartInstance = null;
+        let oltChartInstance = null, failureChartInstance = null, pieChartInstance = null, multiBarChartInstance = null;
         let currentTestType = 'exchange';
 
-        const VALID_REGIONS = ["ENUO", "HGAO", "MYFO", "MDY"];
+        // 3 Regions သာ သတ်မှတ်ခြင်း (MDY ဖြုတ်ထားသည်)
+        const VALID_REGIONS = ["ENUO", "HGAO", "MYFO"];
 
         function switchMasterTab(sectionId, btn) {
             document.querySelectorAll('.dashboard-section').forEach(el => el.classList.add('hidden'));
@@ -217,7 +216,6 @@
         }
 
         async function loadAllData() {
-            // 1. Staff KPI Sheet မှ ဒေတာ ရယူခြင်း
             let rows1 = await fetchGoogleSheetData(STAFF_SHEET_ID, "Oct 26");
             if (rows1.length === 0) rows1 = await fetchGoogleSheetData(STAFF_SHEET_ID);
             processStaffRows(rows1);
@@ -226,13 +224,11 @@
             processStaffRows(rows2);
             renderStaffButtons();
 
-            // 2. Daily Inbound KPI 2026 Sheet မှ သီးသန့် Live Data ရယူခြင်း
             let inboundRows = await fetchGoogleSheetData(INBOUND_SHEET_ID, "Oct'26");
             if (inboundRows.length === 0) inboundRows = await fetchGoogleSheetData(INBOUND_SHEET_ID);
             processInboundLiveRows(inboundRows);
             renderInboundWeek(activeInboundWeek);
 
-            // 3. ONU Inspection Sheet မှ ဒေတာ ရယူခြင်း
             onuData.firstTest = await fetchGoogleSheetData(ONU_SS_ID, "First Test");
             onuData.secondTest = await fetchGoogleSheetData(ONU_SS_ID, "Second Test");
             onuData.exchangeTest = await fetchGoogleSheetData(ONU_SS_ID, "Exchange");
@@ -445,9 +441,9 @@
 
             if (weekKey === 'week-comparison') {
                 let allCpeTotals = {};
-                let allRegionalTotals = { "ENUO": 0, "HGAO": 0, "MYFO": 0, "MDY": 0 };
+                let allRegionalTotals = { "ENUO": 0, "HGAO": 0, "MYFO": 0 };
                 let weekKeys = ["Week 1 (1 - 7)", "Week 2 (8 - 14)", "Week 3 (15 - 21)", "Week 4 (22 - End)"];
-                let regWeeksData = { "ENUO": [0,0,0,0], "HGAO": [0,0,0,0], "MYFO": [0,0,0,0], "MDY": [0,0,0,0] };
+                let regWeeksData = { "ENUO": [0,0,0,0], "HGAO": [0,0,0,0], "MYFO": [0,0,0,0] };
 
                 weekKeys.forEach((wk, wkIdx) => {
                     let wData = inboundLiveData[wk];
@@ -481,9 +477,10 @@
                     `;
                 });
 
+                // Overall Regional Comparison (MDY ဖြုတ်ထားပြီး ၃ ခုသာ)
                 let overallRegBarsHtml = "";
                 let maxReg = Math.max(...Object.values(allRegionalTotals), 100);
-                let regColors = { "ENUO": "#2563eb", "HGAO": "#f59e0b", "MYFO": "#10b981", "MDY": "#8b5cf6" };
+                let regColors = { "ENUO": "#2563eb", "HGAO": "#f59e0b", "MYFO": "#10b981" };
                 VALID_REGIONS.forEach(reg => {
                     let qty = allRegionalTotals[reg] || 0;
                     let pct = Math.min(100, Math.round((qty / maxReg) * 100));
@@ -508,7 +505,7 @@
 
                 VALID_REGIONS.forEach(reg => {
                     let wkVals = regWeeksData[reg];
-                    let badgeColor = reg === "ENUO" ? "bg-blue-600" : (reg === "HGAO" ? "bg-amber-500" : (reg === "MYFO" ? "bg-emerald-600" : "bg-purple-600"));
+                    let badgeColor = reg === "ENUO" ? "bg-blue-600" : (reg === "HGAO" ? "bg-amber-500" : "bg-emerald-600");
                     tableHtml += `<tr class="hover:bg-slate-50 border-b border-slate-200">`;
                     tableHtml += `<td class="p-3 text-center border border-slate-200"><span class="px-3 py-1.5 rounded-lg text-xs font-black text-white ${badgeColor}">${reg}</span></td>`;
                     
@@ -535,6 +532,12 @@
                                 <h4 class="text-xs font-black uppercase text-slate-700 tracking-wider">OVERALL REGIONAL COMPARISON</h4>
                                 <div class="py-4">${overallRegBarsHtml}</div>
                             </div>
+                        </div>
+
+                        <!-- Regional Weekly Multi-Bar Chart (တပါတ်ချင်းစီ နှိုင်းယှဉ်ပြရန်) -->
+                        <div class="p-5 rounded-xl border border-slate-200 bg-slate-50/50 space-y-4">
+                            <h4 class="text-xs font-black uppercase text-slate-700 tracking-wider">📊 REGIONAL WEEK-BY-WEEK COMPARISON CHART</h4>
+                            <div class="relative h-72"><canvas id="regionalMultiBarChart"></canvas></div>
                         </div>
 
                         <div class="space-y-3 pt-4">
@@ -565,6 +568,26 @@
                         </div>
                     </div>
                 `;
+
+                // Render Regional Multi-Bar Chart
+                setTimeout(() => {
+                    let ctxBar = document.getElementById('regionalMultiBarChart');
+                    if (ctxBar) {
+                        if (multiBarChartInstance) multiBarChartInstance.destroy();
+                        multiBarChartInstance = new Chart(ctxBar, {
+                            type: 'bar',
+                            data: {
+                                labels: ['Week 1 (1 - 7)', 'Week 2 (8 - 14)', 'Week 3 (15 - 21)', 'Week 4 (22 - End)'],
+                                datasets: [
+                                    { label: 'ENUO', data: regWeeksData["ENUO"], backgroundColor: '#2563eb', borderRadius: 4 },
+                                    { label: 'HGAO', data: regWeeksData["HGAO"], backgroundColor: '#f59e0b', borderRadius: 4 },
+                                    { label: 'MYFO', data: regWeeksData["MYFO"], backgroundColor: '#10b981', borderRadius: 4 }
+                                ]
+                            },
+                            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+                        });
+                    }
+                }, 100);
                 return;
             }
 
@@ -600,7 +623,7 @@
             });
 
             let regBarsHtml = "";
-            let regColors = { "ENUO": "#2563eb", "HGAO": "#f59e0b", "MYFO": "#10b981", "MDY": "#8b5cf6" };
+            let regColors = { "ENUO": "#2563eb", "HGAO": "#f59e0b", "MYFO": "#10b981" };
             regionsArr.forEach(reg => {
                 let qty = wData.regionalTotals[reg] || 0;
                 let pct = wData.totalQty > 0 ? Math.round((qty / wData.totalQty) * 100) : 0;
@@ -632,7 +655,7 @@
                 });
 
                 let sortedDates = Object.keys(dateMap).sort();
-                let badgeColor = regName === "ENUO" ? "bg-blue-600" : (regName === "HGAO" ? "bg-amber-500" : (regName === "MYFO" ? "bg-emerald-600" : "bg-purple-600"));
+                let badgeColor = regName === "ENUO" ? "bg-blue-600" : (regName === "HGAO" ? "bg-amber-500" : "bg-emerald-600");
                 let regSubtotal = {};
 
                 sortedDates.forEach((dt, idx) => {
@@ -739,7 +762,7 @@
                             labels: regLabels,
                             datasets: [{
                                 data: regValues,
-                                backgroundColor: ['#2563eb', '#f59e0b', '#10b981', '#8b5cf6']
+                                backgroundColor: ['#2563eb', '#f59e0b', '#10b981']
                             }]
                         },
                         options: {
