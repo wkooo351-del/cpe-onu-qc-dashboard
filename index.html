@@ -476,8 +476,9 @@
                     `;
                 });
 
-                let overallRegBarsHtml = "";
+                // Overall Regional Comparison (ဘယ်ဘက်ကွက်လပ်တွင် အပြည့်အစုံ ပြသရန်)
                 let maxReg = Math.max(...Object.values(allRegionalTotals), 100);
+                let overallRegBarsHtml = "";
                 let regColors = { "ENUO": "#2563eb", "HGAO": "#f59e0b", "MYFO": "#10b981" };
                 VALID_REGIONS.forEach(reg => {
                     let qty = allRegionalTotals[reg] || 0;
@@ -491,7 +492,7 @@
                                 </span>
                                 <span>${qty.toLocaleString()} units</span>
                             </div>
-                            <div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
+                            <div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden border border-slate-200">
                                 <div class="h-2.5 rounded-full" style="width: ${pct}%; background-color: ${hex}"></div>
                             </div>
                         </div>
@@ -521,15 +522,15 @@
                             <p class='text-xs text-slate-500 font-bold'>Period Performance Breakdown across Regions and CPE Types.</p>
                         </div>
 
-                        <!-- နေရာလပ်မရှိစေရန် ဘေးချင်းကပ် ဖွဲ့စည်းထားသော ဇယားကွက် -->
+                        <!-- နေရာလပ်မရှိစေရန် ဘေးချင်းကပ် ဖွဲ့စည်းထားသော ဇယားကွက် (ဘယ်ဘက်တွင် Regional Comparison၊ ညာဘက်တွင် CPE-Type Comparison) -->
                         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <div class="p-5 rounded-xl border border-slate-200 bg-slate-50/50 space-y-4">
+                                <h4 class="text-xs font-black uppercase text-slate-900 tracking-wider">OVERALL REGIONAL COMPARISON</h4>
+                                <div class="py-2">${overallRegBarsHtml}</div>
+                            </div>
                             <div class="p-5 rounded-xl border border-slate-200 bg-slate-50/50 space-y-4">
                                 <h4 class="text-xs font-black uppercase text-slate-900 tracking-wider">OVERALL CPE-TYPE COMPARISON</h4>
                                 <div>${overallCpeBarsHtml}</div>
-                            </div>
-                            <div class="p-5 rounded-xl border border-slate-200 bg-slate-50/50 space-y-4">
-                                <h4 class="text-xs font-black uppercase text-slate-900 tracking-wider">OVERALL REGIONAL COMPARISON</h4>
-                                <div class="py-4">${overallRegBarsHtml}</div>
                             </div>
                         </div>
 
