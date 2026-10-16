@@ -86,6 +86,8 @@
 
         <!-- SECTION 3: ONU Inspection View -->
         <div id="section-onu" class="dashboard-section hidden space-y-6">
+            
+            <!-- ONU Master Navigation & Test Type Tabs -->
             <div class="bg-indigo-600 shadow-md rounded-2xl p-4 flex flex-col md:flex-row justify-between items-center gap-3">
                 <div class="flex items-center space-x-3">
                     <span class="bg-white p-2 rounded-lg shadow text-indigo-600 font-bold">📊</span>
@@ -105,6 +107,14 @@
                         <span id="last-updated" class="text-xs text-indigo-200">Connected</span>
                     </div>
                 </div>
+            </div>
+
+            <!-- Newly Added Regional Filter Tabs for ONU Inspection -->
+            <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap gap-2 justify-center">
+                <button onclick="switchOnuRegion('All Region', this)" class="onu-region-btn px-4 py-2 text-sm font-bold rounded-xl bg-indigo-600 text-white shadow transition">All Region</button>
+                <button onclick="switchOnuRegion('OVF-Provision-HGAO', this)" class="onu-region-btn px-4 py-2 text-sm font-bold rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300 transition">OVF-Provision-HGAO</button>
+                <button onclick="switchOnuRegion('OVF-Provision-ENUO', this)" class="onu-region-btn px-4 py-2 text-sm font-bold rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300 transition">OVF-Provision-ENUO</button>
+                <button onclick="switchOnuRegion('OVF-Provision-MDY', this)" class="onu-region-btn px-4 py-2 text-sm font-bold rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300 transition">OVF-Provision-MDY</button>
             </div>
 
             <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
@@ -136,6 +146,7 @@
         let onuData = { firstTest: [], secondTest: [], exchangeTest: [] };
         let oltChartInstance = null, failureChartInstance = null, pieChartInstance = null, multiBarChartInstance = null;
         let currentTestType = 'exchange';
+        let currentOnuRegion = 'All Region';
 
         const VALID_REGIONS = ["ENUO", "HGAO", "MYFO"];
 
@@ -159,6 +170,15 @@
                     el.className = 'px-3 py-1.5 rounded-lg text-sm font-semibold transition text-white hover:bg-indigo-600 whitespace-nowrap';
                 }
             });
+            updateOnuDashboard();
+        }
+
+        function switchOnuRegion(regionName, btn) {
+            currentOnuRegion = regionName;
+            document.querySelectorAll('.onu-region-btn').forEach(b => {
+                b.className = 'onu-region-btn px-4 py-2 text-sm font-bold rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300 transition';
+            });
+            btn.className = 'onu-region-btn px-4 py-2 text-sm font-bold rounded-xl bg-indigo-600 text-white shadow transition';
             updateOnuDashboard();
         }
 
@@ -521,21 +541,18 @@
                             <p class='text-xs text-slate-500 font-bold'>Period Performance Breakdown across Regions and CPE Types.</p>
                         </div>
 
-                        <!-- 2 Columns Grid -->
                         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-                            <!-- ဘယ်ဘက်ကဒ်ပြား (အပေါ်တွင် Regional Comparison တန်းများ၊ အောက်ဘက်တွင် အကွာအဝေး (mt-6) ပေးထားသော Chart) -->
                             <div class="p-5 rounded-xl border border-slate-200 bg-slate-50/50 space-y-4">
                                 <div>
                                     <h4 class="text-xs font-black uppercase text-slate-900 tracking-wider mb-3">OVERALL REGIONAL COMPARISON</h4>
                                     <div class="space-y-2">${overallRegBarsHtml}</div>
                                 </div>
-                                <div class="pt-8 mt-28 border-t border-slate-200 space-y-3">
+                                <div class="pt-8 mt-16 border-t border-slate-200 space-y-3">
                                     <h4 class="text-xs font-black uppercase text-slate-900 tracking-wider">📊 REGIONAL WEEKLY CHART</h4>
-                                    <div class="relative h-84"><canvas id="regionalMultiBarChart"></canvas></div>
+                                    <div class="relative h-80"><canvas id="regionalMultiBarChart"></canvas></div>
                                 </div>
                             </div>
 
-                            <!-- ညာဘက်ကဒ်ပြား -->
                             <div class="p-5 rounded-xl border border-slate-200 bg-slate-50/50 space-y-4">
                                 <h4 class="text-xs font-black uppercase text-slate-900 tracking-wider">OVERALL CPE-TYPE COMPARISON</h4>
                                 <div>${overallCpeBarsHtml}</div>
@@ -795,9 +812,15 @@
         }
 
         function updateOnuDashboard() {
-            let data = onuData.exchangeTest;
-            if (currentTestType === 'first') data = onuData.firstTest;
-            if (currentTestType === 'second') data = onuData.secondTest;
+            let rawData = onuData.exchangeTest;
+            if (currentTestType === 'first') rawData = onuData.firstTest;
+            if (currentTestType === 'second') rawData = onuData.secondTest;
+
+            // Apply Regional Filter if selected
+            let data = rawData;
+            if (currentOnuRegion !== 'All Region') {
+                data = rawData.filter(r => String(r['Olt Hostname'] || '').trim() === currentOnuRegion);
+            }
 
             let total = data.length;
             let passed = data.filter(r => String(r['Overall Pass/Fail'] || '').trim().toLowerCase() === 'pass').length;
