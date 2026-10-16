@@ -16,7 +16,7 @@
 </head>
 <body class="text-slate-900 font-bold p-6">
 
-    <!-- Master Navigation Header -->
+    <!-- Master Navigation Header (Sticky Freeze) -->
     <div class="sticky top-0 z-50 bg-slate-50 pb-4 mb-6">
         <div class="bg-slate-800 text-white p-6 rounded-2xl shadow-xl flex flex-col md:flex-row justify-between items-center gap-4 border border-slate-700">
             <div>
@@ -87,34 +87,40 @@
         <!-- SECTION 3: ONU Inspection View -->
         <div id="section-onu" class="dashboard-section hidden space-y-6">
             
-            <!-- ONU Master Navigation & Test Type Tabs -->
-            <div class="bg-indigo-600 shadow-md rounded-2xl p-4 flex flex-col md:flex-row justify-between items-center gap-3">
-                <div class="flex items-center space-x-3">
-                    <span class="bg-white p-2 rounded-lg shadow text-indigo-600 font-bold">📊</span>
-                    <h2 class="text-xl sm:text-2xl font-bold text-white whitespace-nowrap">ONU Inspection Dashboard</h2>
-                </div>
-                <div class="staff-grid-nav bg-indigo-700 p-1 rounded-xl shadow-inner">
-                    <button onclick="switchTestType('first', this)" id="tab-first" class="px-3 py-1.5 rounded-lg text-sm font-semibold transition text-white hover:bg-indigo-600 whitespace-nowrap">First Test</button>
-                    <button onclick="switchTestType('second', this)" id="tab-second" class="px-3 py-1.5 rounded-lg text-sm font-semibold transition text-white hover:bg-indigo-600 whitespace-nowrap">Second Test</button>
-                    <button onclick="switchTestType('exchange', this)" id="tab-exchange" class="px-3 py-1.5 rounded-lg text-sm font-semibold transition bg-white text-indigo-600 shadow whitespace-nowrap">Exchange Devices</button>
-                </div>
-                <div class="flex items-center space-x-3">
-                    <div class="flex items-center space-x-2 bg-indigo-700/50 px-3 py-1.5 rounded-lg border border-indigo-500/30">
-                        <span class="relative flex h-2.5 w-2.5">
-                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                            <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
-                        </span>
-                        <span id="last-updated" class="text-xs text-indigo-200">Connected</span>
+            <!-- Sticky Container for ONU Inspection Header & Tabs -->
+            <div class="sticky top-[96px] z-40 space-y-3 pb-2 bg-slate-50">
+                <!-- ONU Master Navigation & Test Type / Period Tabs -->
+                <div class="bg-indigo-600 shadow-md rounded-2xl p-4 flex flex-col md:flex-row justify-between items-center gap-3">
+                    <div class="flex items-center space-x-3">
+                        <span class="bg-white p-2 rounded-lg shadow text-indigo-600 font-bold">📊</span>
+                        <h2 class="text-xl sm:text-2xl font-bold text-white whitespace-nowrap">ONU Inspection Dashboard</h2>
+                    </div>
+                    <!-- Added DAILY and Monthly Tabs here -->
+                    <div class="staff-grid-nav bg-indigo-700 p-1 rounded-xl shadow-inner">
+                        <button onclick="switchTestType('first', this)" id="tab-first" class="px-3 py-1.5 rounded-lg text-sm font-semibold transition text-white hover:bg-indigo-600 whitespace-nowrap">First Test</button>
+                        <button onclick="switchTestType('second', this)" id="tab-second" class="px-3 py-1.5 rounded-lg text-sm font-semibold transition text-white hover:bg-indigo-600 whitespace-nowrap">Second Test</button>
+                        <button onclick="switchTestType('exchange', this)" id="tab-exchange" class="px-3 py-1.5 rounded-lg text-sm font-semibold transition bg-white text-indigo-600 shadow whitespace-nowrap">Exchange Devices</button>
+                        <button onclick="switchTestType('daily', this)" id="tab-daily" class="px-3 py-1.5 rounded-lg text-sm font-semibold transition text-white hover:bg-indigo-600 whitespace-nowrap">DAILY</button>
+                        <button onclick="switchTestType('monthly', this)" id="tab-monthly" class="px-3 py-1.5 rounded-lg text-sm font-semibold transition text-white hover:bg-indigo-600 whitespace-nowrap">Monthly</button>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <div class="flex items-center space-x-2 bg-indigo-700/50 px-3 py-1.5 rounded-lg border border-indigo-500/30">
+                            <span class="relative flex h-2.5 w-2.5">
+                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                            </span>
+                            <span id="last-updated" class="text-xs text-indigo-200">Connected</span>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Newly Added Regional Filter Tabs for ONU Inspection -->
-            <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap gap-2 justify-center">
-                <button onclick="switchOnuRegion('All Region', this)" class="onu-region-btn px-4 py-2 text-sm font-bold rounded-xl bg-indigo-600 text-white shadow transition">All Region</button>
-                <button onclick="switchOnuRegion('OVF-Provision-HGAO', this)" class="onu-region-btn px-4 py-2 text-sm font-bold rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300 transition">OVF-Provision-HGAO</button>
-                <button onclick="switchOnuRegion('OVF-Provision-ENUO', this)" class="onu-region-btn px-4 py-2 text-sm font-bold rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300 transition">OVF-Provision-ENUO</button>
-                <button onclick="switchOnuRegion('OVF-Provision-MDY', this)" class="onu-region-btn px-4 py-2 text-sm font-bold rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300 transition">OVF-Provision-MDY</button>
+                <!-- Sticky Regional Filter Tabs -->
+                <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-md flex flex-wrap gap-2 justify-center">
+                    <button onclick="switchOnuRegion('All Region', this)" class="onu-region-btn px-4 py-2 text-sm font-bold rounded-xl bg-indigo-600 text-white shadow transition">All Region</button>
+                    <button onclick="switchOnuRegion('OVF-Provision-HGAO', this)" class="onu-region-btn px-4 py-2 text-sm font-bold rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300 transition">OVF-Provision-HGAO</button>
+                    <button onclick="switchOnuRegion('OVF-Provision-ENUO', this)" class="onu-region-btn px-4 py-2 text-sm font-bold rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300 transition">OVF-Provision-ENUO</button>
+                    <button onclick="switchOnuRegion('OVF-Provision-MDY', this)" class="onu-region-btn px-4 py-2 text-sm font-bold rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300 transition">OVF-Provision-MDY</button>
+                </div>
             </div>
 
             <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
@@ -162,12 +168,14 @@
 
         function switchTestType(type, btn) {
             currentTestType = type;
-            ['first', 'second', 'exchange'].forEach(t => {
+            ['first', 'second', 'exchange', 'daily', 'monthly'].forEach(t => {
                 let el = document.getElementById(`tab-${t}`);
-                if (t === type) {
-                    el.className = 'px-3 py-1.5 rounded-lg text-sm font-semibold transition bg-white text-indigo-600 shadow whitespace-nowrap';
-                } else {
-                    el.className = 'px-3 py-1.5 rounded-lg text-sm font-semibold transition text-white hover:bg-indigo-600 whitespace-nowrap';
+                if (el) {
+                    if (t === type) {
+                        el.className = 'px-3 py-1.5 rounded-lg text-sm font-semibold transition bg-white text-indigo-600 shadow whitespace-nowrap';
+                    } else {
+                        el.className = 'px-3 py-1.5 rounded-lg text-sm font-semibold transition text-white hover:bg-indigo-600 whitespace-nowrap';
+                    }
                 }
             });
             updateOnuDashboard();
