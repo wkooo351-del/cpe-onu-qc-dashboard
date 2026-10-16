@@ -127,7 +127,6 @@
         const STAFF_SHEET_ID = "14WOHloWhGuQOc95PrRUsYWAHT6PTCC6EL2pY18uglVs";
         const MDY_SHEET_ID = "1XrjpVgSeu1lDpyNNyuJdjYji8MxnoQWuo3bwwPWAs9Q";
         const ONU_SS_ID = "1EHtzUxAO1EuB_CxejyqBFiAjOsZQX4meYZqDcIRx9po";
-        const INBOUND_SHEET_ID = "14WOHloWhGuQOc95PrRUsYWAHT6PTCC6EL2pY18uglVs"; 
         const DAILY_TARGET = 150;
 
         let staffGroupedData = {};
@@ -135,6 +134,10 @@
         let activeInboundWeek = 'Week 1 (1 - 7)';
         let onuData = { firstTest: [], secondTest: [], exchangeTest: [] };
         let oltChartInstance = null, failureChartInstance = null, pieChartInstance = null;
+        let currentTestType = 'exchange';
+
+        // Strict whitelist for regions to avoid mixing staff names into regions
+        const VALID_REGIONS = ["ENUO", "HGAO", "MYFO", "MDY"];
 
         function switchMasterTab(sectionId, btn) {
             document.querySelectorAll('.dashboard-section').forEach(el => el.classList.add('hidden'));
@@ -220,7 +223,8 @@
             processStaffRows(rows2);
             renderStaffButtons();
 
-            let inboundRows = await fetchGoogleSheetData(INBOUND_SHEET_ID, "Inbound");
+            // Fetch dedicated Inbound tab if exists, else parse strict regional entries
+            let inboundRows = await fetchGoogleSheetData(STAFF_SHEET_ID, "Inbound");
             if (inboundRows.length === 0) inboundRows = rows1;
             processInboundLiveRows(inboundRows);
             renderInboundWeek(activeInboundWeek);
@@ -282,6 +286,7 @@
             });
         }
 
+        // Process only pure regional entries for Inbound Dashboard
         function processInboundLiveRows(rows) {
             inboundLiveData = {
                 "Week 1 (1 - 7)": { totalQty: 0, activeRegions: new Set(), cpeTypes: new Set(), cpeTotals: {}, regionalTotals: {}, rawRows: [] },
@@ -300,8 +305,14 @@
                 else if (dayNum >= 15 && dayNum <= 21) weekKey = "Week 3 (15 - 21)";
                 else if (dayNum >= 22) weekKey = "Week 4 (22 - End)";
 
-                let region = String(r['Regional'] || r['Region'] || r['col_1'] || 'ENUO').trim();
+                // Filter out Staff Names and keep strictly VALID_REGIONS
+                let possibleRegion = String(r['Regional'] || r['Region'] || r['col_1'] || '').trim().toUpperCase();
+                let region = VALID_REGIONS.find(v => possibleRegion.includes(v)) || "ENUO";
+
                 let device = String(r['Device Name'] || r['Device'] || r['col_2'] || 'ECJ').trim().toUpperCase();
+                // Avoid non-device strings
+                if (device.toLowerCase().includes("name") || device === "-") device = "ECJ";
+
                 let qty = parseFloat(r['Qty'] || r['Quantity'] || r['Total'] || r['col_4'] || 1) || 1;
 
                 let wkObj = inboundLiveData[weekKey];
@@ -417,7 +428,7 @@
             document.getElementById('staff-table-body').innerHTML = tableRowsHtml;
         }
 
-        // Render Inbound KPI & Week-by-Week Comparison matching user image precisely
+        // Render Inbound KPI
         function renderInboundWeek(weekKey, btn) {
             activeInboundWeek = weekKey;
             if (btn) {
@@ -432,7 +443,6 @@
             let container = document.getElementById('inbound-dynamic-container');
 
             if (weekKey === 'week-comparison') {
-                // Compute Overall CPE Totals across all weeks
                 let allCpeTotals = {};
                 let allRegionalTotals = { "ENUO": 0, "HGAO": 0, "MYFO": 0, "MDY": 0 };
                 let weekKeys = ["Week 1 (1 - 7)", "Week 2 (8 - 14)", "Week 3 (15 - 21)", "Week 4 (22 - End)"];
@@ -445,9 +455,10 @@
                             allCpeTotals[cpe] = (allCpeTotals[cpe] || 0) + wData.cpeTotals[cpe];
                         });
                         Object.keys(wData.regionalTotals).forEach(reg => {
-                            allRegionalTotals[reg] = (allRegionalTotals[reg] || 0) + wData.regionalTotals[reg];
-                            if (!regWeeksData[reg]) regWeeksData[reg] = [0,0,0,0];
-                            regWeeksData[reg][wkIdx] = wData.regionalTotals[reg];
+                            if (VALID_REGIONS.includes(reg)) {
+                                allRegionalTotals[reg] = (allRegionalTotals[reg] || 0) + wData.regionalTotals[reg];
+                                regWeeksData[reg][wkIdx] = wData.regionalTotals[reg];
+                            }
                         });
                     }
                 });
@@ -469,12 +480,11 @@
                     `;
                 });
 
-                // Overall Regional Progress Bars
                 let overallRegBarsHtml = "";
                 let maxReg = Math.max(...Object.values(allRegionalTotals), 100);
                 let regColors = { "ENUO": "#2563eb", "HGAO": "#f59e0b", "MYFO": "#10b981", "MDY": "#8b5cf6" };
-                Object.keys(allRegionalTotals).forEach(reg => {
-                    let qty = allRegionalTotals[reg];
+                VALID_REGIONS.forEach(reg => {
+                    let qty = allRegionalTotals[reg] || 0;
                     let pct = Math.min(100, Math.round((qty / maxReg) * 100));
                     let hex = regColors[reg] || "#64748b";
                     overallRegBarsHtml += `
@@ -492,16 +502,12 @@
                     `;
                 });
 
-                // 4-Week Regional Inbound Comparison Table Rows
                 let tableHtml = "";
                 let grandTotalsByWeek = [0, 0, 0, 0];
 
-                Object.keys(regWeeksData).forEach(reg => {
+                VALID_REGIONS.forEach(reg => {
                     let wkVals = regWeeksData[reg];
-                    let regTot = wkVals.reduce((a,b)=>a+b, 0);
-                    if (regTot === 0) return; // skip empty regions
-
-                    let badgeColor = reg === "ENUO" ? "bg-blue-600" : (reg === "HGAO" ? "bg-amber-500" : "bg-emerald-600");
+                    let badgeColor = reg === "ENUO" ? "bg-blue-600" : (reg === "HGAO" ? "bg-amber-500" : (reg === "MYFO" ? "bg-emerald-600" : "bg-purple-600"));
                     tableHtml += `<tr class="hover:bg-slate-50 border-b border-slate-200">`;
                     tableHtml += `<td class="p-3 text-center border border-slate-200"><span class="px-3 py-1.5 rounded-lg text-xs font-black text-white ${badgeColor}">${reg}</span></td>`;
                     
@@ -519,7 +525,6 @@
                             <p class='text-xs text-slate-500'>Period Performance Breakdown across Regions and CPE Types.</p>
                         </div>
 
-                        <!-- Comparison Charts Grid matching user image -->
                         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                             <div class="p-5 rounded-xl border border-slate-200 bg-slate-50/50 space-y-4">
                                 <h4 class="text-xs font-black uppercase text-slate-700 tracking-wider">OVERALL CPE-TYPE COMPARISON</h4>
@@ -531,7 +536,6 @@
                             </div>
                         </div>
 
-                        <!-- 4-Week Regional Inbound Comparison Table matching user image -->
                         <div class="space-y-3 pt-4">
                             <h3 class="text-sm font-extrabold uppercase text-slate-900">4-Week Regional Inbound Comparison Table</h3>
                             <div class="overflow-x-auto rounded-xl border border-slate-300">
@@ -575,7 +579,7 @@
             }
 
             let cpeTypesArr = Array.from(wData.cpeTypes).sort();
-            let regionsArr = Array.from(wData.activeRegions).sort();
+            let regionsArr = Array.from(wData.activeRegions).filter(r => VALID_REGIONS.includes(r)).sort();
 
             let cpeBarsHtml = "";
             let maxCpe = Math.max(...Object.values(wData.cpeTotals), 100);
@@ -596,8 +600,8 @@
 
             let regBarsHtml = "";
             let regColors = { "ENUO": "#2563eb", "HGAO": "#f59e0b", "MYFO": "#10b981", "MDY": "#8b5cf6" };
-            Object.keys(wData.regionalTotals).forEach(reg => {
-                let qty = wData.regionalTotals[reg];
+            regionsArr.forEach(reg => {
+                let qty = wData.regionalTotals[reg] || 0;
                 let pct = wData.totalQty > 0 ? Math.round((qty / wData.totalQty) * 100) : 0;
                 let hex = regColors[reg] || "#64748b";
                 regBarsHtml += `
@@ -627,7 +631,7 @@
                 });
 
                 let sortedDates = Object.keys(dateMap).sort();
-                let badgeColor = regName === "ENUO" ? "bg-blue-600" : (regName === "HGAO" ? "bg-amber-500" : "bg-emerald-600");
+                let badgeColor = regName === "ENUO" ? "bg-blue-600" : (regName === "HGAO" ? "bg-amber-500" : (regName === "MYFO" ? "bg-emerald-600" : "bg-purple-600"));
                 let regSubtotal = {};
 
                 sortedDates.forEach((dt, idx) => {
@@ -676,11 +680,11 @@
                     </div>
                     <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
                         <p class="text-xs uppercase text-slate-500">Active Regions</p>
-                        <h3 class="text-3xl font-extrabold text-slate-900 mt-2">${wData.activeRegions.size}</h3>
+                        <h3 class="text-3xl font-extrabold text-slate-900 mt-2">${regionsArr.length}</h3>
                     </div>
                     <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
                         <p class="text-xs uppercase text-slate-500">Device Categories</p>
-                        <h3 class="text-3xl font-extrabold text-slate-900 mt-2">${wData.cpeTypes.size}</h3>
+                        <h3 class="text-3xl font-extrabold text-slate-900 mt-2">${cpeTypesArr.length}</h3>
                     </div>
                 </div>
 
@@ -702,7 +706,7 @@
                 </div>
 
                 <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm font-bold space-y-4">
-                    <h3 class="text-base font-extrabold text-slate-900">📋 ${weekKey} Detailed Inbound Report (Live Auto)</h3>
+                    <h3 class="text-base font-extrabold text-slate-900">📋 ${weekKey} Detailed Inbound Report</h3>
                     <div class="overflow-x-auto rounded-xl border border-slate-300">
                         <table class="w-full text-left border-collapse border border-slate-300 text-sm">
                             <thead class="bg-slate-800 text-white uppercase text-xs font-extrabold">
@@ -726,8 +730,8 @@
                 let ctx = document.getElementById('inboundPieChart');
                 if (ctx) {
                     if (pieChartInstance) pieChartInstance.destroy();
-                    let regLabels = Object.keys(wData.regionalTotals);
-                    let regValues = Object.values(wData.regionalTotals);
+                    let regLabels = regionsArr;
+                    let regValues = regionsArr.map(r => wData.regionalTotals[r] || 0);
                     pieChartInstance = new Chart(ctx, {
                         type: 'doughnut',
                         data: {
