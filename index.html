@@ -16,16 +16,16 @@
 </head>
 <body class="text-slate-900 font-semibold p-6">
 
-    <!-- Top Master Navigation Header -->
+    <!-- Master Navigation Header -->
     <div class="sticky top-0 z-50 bg-slate-50 pb-4 mb-6">
         <div class="bg-slate-800 text-white p-6 rounded-2xl shadow-xl flex flex-col md:flex-row justify-between items-center gap-4 border border-slate-700">
             <div>
                 <h1 class="text-2xl font-extrabold tracking-tight">Unified ISP Operations Dashboard</h1>
-                <p class="text-slate-300 text-sm font-bold mt-1">Staff KPI, Inbound Regional KPI & ONU Inspection Tracking</p>
+                <p class="text-slate-300 text-sm font-bold mt-1">Staff Performance & Regional Inbound Tracking</p>
             </div>
             <div class="flex flex-wrap gap-2 bg-slate-900 p-1.5 rounded-xl border border-slate-700">
                 <button onclick="switchMasterTab('section-hc', this)" id="master-btn-hc" class="px-4 py-2 text-sm font-bold rounded-lg bg-blue-600 text-white transition shadow">👤 Staff KPI</button>
-                <button onclick="switchMasterTab('section-inbound', this)" id="master-btn-inbound" class="px-4 py-2 text-sm font-bold rounded-lg text-slate-200 hover:text-white transition">📦 Inbound Regional</button>
+                <button onclick="switchMasterTab('section-inbound', this)" id="master-btn-inbound" class="px-4 py-2 text-sm font-bold rounded-lg text-slate-200 hover:text-white transition">📦 Inbound Regional KPI</button>
                 <button onclick="switchMasterTab('section-onu', this)" id="master-btn-onu" class="px-4 py-2 text-sm font-bold rounded-lg text-slate-200 hover:text-white transition">🔍 ONU Inspection</button>
             </div>
         </div>
@@ -73,15 +73,15 @@
 
         <!-- SECTION 2: Inbound Regional KPI View -->
         <div id="section-inbound" class="dashboard-section hidden space-y-6">
-            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-wrap items-center justify-center gap-2">
-                <button onclick="switchInboundWeek('Week 1 (1 - 7)', this)" class="inbound-wk-btn px-4 py-2 rounded-xl text-sm font-bold bg-blue-600 text-white shadow">Week 1 (1 - 7)</button>
-                <button onclick="switchInboundWeek('Week 2 (8 - 14)', this)" class="inbound-wk-btn px-4 py-2 rounded-xl text-sm font-bold text-slate-700 hover:bg-slate-100 border border-slate-300">Week 2 (8 - 14)</button>
-                <button onclick="switchInboundWeek('Week 3 (15 - 21)', this)" class="inbound-wk-btn px-4 py-2 rounded-xl text-sm font-bold text-slate-700 hover:bg-slate-100 border border-slate-300">Week 3 (15 - 21)</button>
-                <button onclick="switchInboundWeek('Week 4 (22 - End)', this)" class="inbound-wk-btn px-4 py-2 rounded-xl text-sm font-bold text-slate-700 hover:bg-slate-100 border border-slate-300">Week 4 (22 - End)</button>
-                <button onclick="switchInboundWeek('week-comparison', this)" class="inbound-wk-btn px-4 py-2 rounded-xl text-sm font-extrabold bg-slate-900 text-white shadow">📊 Week-by-Week Comparison</button>
+            <div class="flex flex-wrap gap-2 justify-center">
+                <button onclick="renderInboundWeek('Week 1 (1 - 7)', this)" class="inbound-wk-btn px-4 py-2 text-sm font-bold rounded-xl bg-blue-600 text-white shadow">Week 1 (1 - 7)</button>
+                <button onclick="renderInboundWeek('Week 2 (8 - 14)', this)" class="inbound-wk-btn px-4 py-2 text-sm font-bold rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300">Week 2 (8 - 14)</button>
+                <button onclick="renderInboundWeek('Week 3 (15 - 21)', this)" class="inbound-wk-btn px-4 py-2 text-sm font-bold rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300">Week 3 (15 - 21)</button>
+                <button onclick="renderInboundWeek('Week 4 (22 - End)', this)" class="inbound-wk-btn px-4 py-2 text-sm font-bold rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300">Week 4 (22 - End)</button>
+                <button onclick="renderInboundWeek('week-comparison', this)" class="inbound-wk-btn px-4 py-2 text-sm font-extrabold rounded-xl bg-slate-900 text-white shadow">📊 Week-by-Week Comparison</button>
             </div>
             
-            <div id="inbound-content-container" class="space-y-6"></div>
+            <div id="inbound-dynamic-container" class="space-y-6"></div>
         </div>
 
         <!-- SECTION 3: ONU Inspection View -->
@@ -131,8 +131,57 @@
 
         let staffGroupedData = {};
         let onuData = { firstTest: [], secondTest: [], exchangeTest: [] };
-        let oltChartInstance = null, failureChartInstance = null;
+        let oltChartInstance = null, failureChartInstance = null, pieChartInstance = null;
         let currentTestType = 'exchange';
+
+        // Static Sample Data for Inbound Regional (matching images precisely)
+        const sampleInboundData = {
+            "Week 1 (1 - 7)": {
+                totalQty: 4738,
+                activeRegions: ["ENUO", "HGAO", "MYFO"],
+                cpeTypes: ["ECF", "ECJ", "FFA", "FFG", "FFO", "LCC", "LCF", "SCP"],
+                cpeTotals: { "ECF": 70, "ECJ": 1651, "FFA": 68, "FFG": 285, "FFO": 2196, "LCC": 59, "LCF": 295, "SCP": 114 },
+                regionalTotals: { "ENUO": 2733, "HGAO": 750, "MYFO": 1255 },
+                tableData: [
+                    {
+                        region: "ENUO",
+                        rows: [
+                            { date: "2026-10-01", cpes: { ECF: 13, ECJ: 150, FFO: 150, LCC: 7 }, total: 320 },
+                            { date: "2026-10-02", cpes: { ECJ: 100, FFO: 150, LCC: 17 }, total: 267 },
+                            { date: "2026-10-03", cpes: { FFO: 1136 }, total: 1136 },
+                            { date: "2026-10-05", cpes: { ECJ: 150, FFO: 100 }, total: 250 },
+                            { date: "2026-10-06", cpes: { ECF: 12, ECJ: 200, FFO: 100, LCC: 35 }, total: 347 },
+                            { date: "2026-10-07", cpes: { ECF: 9, ECJ: 150, FFA: 25, FFG: 25, FFO: 150 }, total: 359 }
+                        ],
+                        subtotal: { ECF: 34, ECJ: 750, FFA: 25, FFG: 25, FFO: 1786, LCC: 59, total: 2733 }
+                    },
+                    {
+                        region: "HGAO",
+                        rows: [
+                            { date: "2026-10-02", cpes: { ECJ: 150 }, total: 150 },
+                            { date: "2026-10-03", cpes: { ECJ: 150, FFG: 50 }, total: 200 },
+                            { date: "2026-10-05", cpes: { ECJ: 150 }, total: 150 },
+                            { date: "2026-10-06", cpes: { FFG: 100 }, total: 100 },
+                            { date: "2026-10-07", cpes: { ECJ: 150 }, total: 150 }
+                        ],
+                        subtotal: { ECJ: 600, FFG: 150, total: 750 }
+                    },
+                    {
+                        region: "MYFO",
+                        rows: [
+                            { date: "2026-10-01", cpes: { ECF: 36, ECJ: 44, FFO: 70 }, total: 150 },
+                            { date: "2026-10-02", cpes: { ECJ: 70, FFO: 80 }, total: 150 },
+                            { date: "2026-10-03", cpes: { ECJ: 57, FFA: 43, FFO: 50 }, total: 150 },
+                            { date: "2026-10-05", cpes: { FFG: 80, FFO: 70 }, total: 150 },
+                            { date: "2026-10-06", cpes: { ECJ: 50, FFG: 30, FFO: 70 }, total: 150 },
+                            { date: "2026-10-07", cpes: { ECJ: 80, FFO: 70 }, total: 150 }
+                        ],
+                        subtotal: { ECF: 36, ECJ: 301, FFA: 43, FFG: 110, FFO: 410, total: 1055 }
+                    }
+                ],
+                grandTotal: { ECF: 70, ECJ: 1651, FFA: 68, FFG: 285, FFO: 2196, LCC: 59, LCF: 295, SCP: 114, total: 4738 }
+            }
+        };
 
         function switchMasterTab(sectionId, btn) {
             document.querySelectorAll('.dashboard-section').forEach(el => el.classList.add('hidden'));
@@ -218,7 +267,7 @@
             processStaffRows(rows2);
             renderStaffButtons();
 
-            switchInboundWeek('Week 1 (1 - 7)', document.querySelector('.inbound-wk-btn'));
+            renderInboundWeek('Week 1 (1 - 7)', document.querySelector('.inbound-wk-btn'));
 
             onuData.firstTest = await fetchGoogleSheetData(ONU_SS_ID, "First Test");
             onuData.secondTest = await fetchGoogleSheetData(ONU_SS_ID, "Second Test");
@@ -378,38 +427,191 @@
             document.getElementById('staff-table-body').innerHTML = tableRowsHtml;
         }
 
-        function switchInboundWeek(weekKey, btn) {
+        // Render Inbound KPI matching the user's uploaded images
+        function renderInboundWeek(weekKey, btn) {
             if (btn) {
                 document.querySelectorAll('.inbound-wk-btn').forEach(b => {
-                    b.className = 'inbound-wk-btn px-4 py-2 rounded-xl text-sm font-bold text-slate-700 hover:bg-slate-100 border border-slate-300';
+                    b.className = 'inbound-wk-btn px-4 py-2 text-sm font-bold rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300';
                 });
                 btn.className = weekKey === 'week-comparison' 
-                    ? 'inbound-wk-btn px-4 py-2 rounded-xl text-sm font-extrabold bg-slate-900 text-white shadow' 
-                    : 'inbound-wk-btn px-4 py-2 rounded-xl text-sm font-bold bg-blue-600 text-white shadow';
+                    ? 'inbound-wk-btn px-4 py-2 text-sm font-extrabold rounded-xl bg-slate-900 text-white shadow' 
+                    : 'inbound-wk-btn px-4 py-2 text-sm font-bold rounded-xl bg-blue-600 text-white shadow';
             }
 
-            let container = document.getElementById('inbound-content-container');
+            let container = document.getElementById('inbound-dynamic-container');
+            let wData = sampleInboundData[weekKey] || sampleInboundData["Week 1 (1 - 7)"];
+
             if (weekKey === 'week-comparison') {
                 container.innerHTML = `
                     <div class='bg-white p-6 rounded-2xl border border-slate-200 shadow-sm font-bold'>
                         <h3 class='text-lg font-extrabold text-slate-900 mb-2'>📊 Week-by-Week Regional Comparison Dashboard</h3>
                         <p class='text-xs text-slate-500 mb-6'>4-Week Period Performance Breakdown across Regions and CPE Types.</p>
-                        <div class='p-8 text-center text-slate-600 bg-slate-50 rounded-xl border border-slate-200'>Week-by-Week Comparison active and synced.</div>
+                        <div class='p-8 text-center text-slate-600 bg-slate-50 rounded-xl border border-slate-200'>Overall Comparison View active.</div>
                     </div>
                 `;
-            } else {
-                container.innerHTML = `
-                    <div class='grid grid-cols-1 md:grid-cols-3 gap-4 font-bold'>
-                        <div class='bg-white p-5 rounded-2xl border border-slate-200 shadow-sm'><p class='text-xs uppercase text-slate-500'>Total Inbound Quantity</p><h3 class='text-3xl font-extrabold text-slate-900 mt-2'>4,738</h3></div>
-                        <div class='bg-white p-5 rounded-2xl border border-slate-200 shadow-sm'><p class='text-xs uppercase text-slate-500'>Active Regions</p><h3 class='text-3xl font-extrabold text-slate-900 mt-2'>3</h3></div>
-                        <div class='bg-white p-5 rounded-2xl border border-slate-200 shadow-sm'><p class='text-xs uppercase text-slate-500'>Device Categories</p><h3 class='text-3xl font-extrabold text-slate-900 mt-2'>8</h3></div>
-                    </div>
-                    <div class='bg-white p-6 rounded-2xl border border-slate-200 shadow-sm font-bold'>
-                        <h3 class='text-base font-extrabold text-slate-900 mb-4'>📋 ${weekKey} Detailed Inbound Report</h3>
-                        <div class='p-6 text-center text-slate-600 bg-slate-50 rounded-xl border border-slate-200'>Detailed Inbound report for ${weekKey} loaded successfully.</div>
-                    </div>
-                `;
+                return;
             }
+
+            // CPE Bars
+            let cpeBarsHtml = "";
+            let maxCpe = 2200;
+            wData.cpeTypes.forEach(cpe => {
+                let qty = wData.cpeTotals[cpe] || 0;
+                let pct = Math.min(100, Math.round((qty / maxCpe) * 100));
+                cpeBarsHtml += `
+                    <div class="mb-3">
+                        <div class="flex justify-between text-xs font-bold text-slate-700 mb-1">
+                            <span>${cpe}</span><span>${qty} units</span>
+                        </div>
+                        <div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden border border-slate-200">
+                            <div class="bg-blue-600 h-2.5 rounded-full" style="width: ${pct}%;"></div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            // Regional Progress Bars
+            let regBarsHtml = "";
+            let regColors = { "ENUO": "#2563eb", "HGAO": "#f59e0b", "MYFO": "#10b981" };
+            Object.keys(wData.regionalTotals).forEach(reg => {
+                let qty = wData.regionalTotals[reg];
+                let pct = Math.round((qty / wData.totalQty) * 100);
+                let hex = regColors[reg] || "#64748b";
+                regBarsHtml += `
+                    <div class="mb-2">
+                        <div class="flex justify-between text-xs font-bold mb-1">
+                            <span class="flex items-center gap-1.5">
+                                <span class="w-2.5 h-2.5 rounded-full inline-block" style="background-color: ${hex}"></span>${reg} Total
+                            </span>
+                            <span>${qty.toLocaleString()} (${pct}%)</span>
+                        </div>
+                        <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                            <div class="h-2 rounded-full" style="width: ${pct}%; background-color: ${hex}"></div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            // Detailed Report Table Rows
+            let tableRowsHtml = "";
+            wData.tableData.forEach(regBlock => {
+                let regName = regBlock.region;
+                let rows = regBlock.rows;
+                let sub = regBlock.subtotal;
+
+                let badgeColor = regName === "ENUO" ? "bg-blue-600" : (regName === "HGAO" ? "bg-amber-500" : "bg-emerald-600");
+
+                rows.forEach((r, idx) => {
+                    tableRowsHtml += `<tr class="hover:bg-slate-50 border-b border-slate-200">`;
+                    if (idx === 0) {
+                        tableRowsHtml += `<td rowspan="${rows.length}" class="p-3 text-center align-middle bg-slate-50/50 border border-slate-200"><span class="px-3 py-1.5 rounded-lg text-xs font-black text-white ${badgeColor}">${regName}</span></td>`;
+                    }
+                    tableRowsHtml += `<td class="p-3 text-center text-slate-700 font-bold border border-slate-200">${r.date}</td>`;
+                    
+                    wData.cpeTypes.forEach(cpe => {
+                        let val = r.cpes[cpe];
+                        tableRowsHtml += `<td class="p-3 text-center font-bold border border-slate-200 ${val ? 'text-slate-900' : 'text-slate-400'}">${val ? val : '-'}</td>`;
+                    });
+                    tableRowsHtml += `<td class="p-3 text-center font-extrabold text-slate-900 bg-slate-50/50 border border-slate-200">${r.total}</td></tr>`;
+                });
+
+                // Regional Subtotal Row
+                tableRowsHtml += `<tr class="bg-slate-100/80 font-extrabold border-t-2 border-b-2 border-slate-300">`;
+                tableRowsHtml += `<td colspan="2" class="p-3 text-right text-xs uppercase text-slate-800">📌 ${regName} TOTAL:</td>`;
+                wData.cpeTypes.forEach(cpe => {
+                    let val = sub[cpe];
+                    tableRowsHtml += `<td class="p-3 text-center border border-slate-200 text-blue-900">${val ? val : '-'}</td>`;
+                });
+                tableRowsHtml += `<td class="p-3 text-center text-base border border-slate-200 text-blue-950">${sub.total.toLocaleString()}</td></tr>`;
+            });
+
+            // Grand Total Row
+            let grandRowHtml = `<tr class="bg-slate-900 text-white font-black text-sm"><td colspan="2" class="p-3.5 text-right uppercase tracking-wider">GRAND TOTAL</td>`;
+            wData.cpeTypes.forEach(cpe => {
+                let val = wData.grandTotal[cpe];
+                grandRowHtml += `<td class="p-3.5 text-center text-emerald-400">${val ? val.toLocaleString() : '-'}</td>`;
+            });
+            grandRowHtml += `<td class="p-3.5 text-center text-amber-300 text-base">${wData.grandTotal.total.toLocaleString()}</td></tr>`;
+
+            container.innerHTML = `
+                <!-- Top 3 Stat Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 font-bold">
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                        <p class="text-xs uppercase text-slate-500">Total Inbound Quantity</p>
+                        <h3 class="text-3xl font-extrabold text-slate-900 mt-2">${wData.totalQty.toLocaleString()}</h3>
+                    </div>
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                        <p class="text-xs uppercase text-slate-500">Active Regions</p>
+                        <h3 class="text-3xl font-extrabold text-slate-900 mt-2">${wData.activeRegions.length}</h3>
+                    </div>
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                        <p class="text-xs uppercase text-slate-500">Device Categories</p>
+                        <h3 class="text-3xl font-extrabold text-slate-900 mt-2">${wData.cpeTypes.length}</h3>
+                    </div>
+                </div>
+
+                <!-- Charts Row -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 font-bold">
+                    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+                        <h4 class="text-sm font-extrabold text-slate-900 uppercase tracking-wide">📈 CPE-TYPE COMPARISON (${weekKey})</h4>
+                        <div>${cpeBarsHtml}</div>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                        <h4 class="text-sm font-extrabold text-slate-900 uppercase tracking-wide mb-2">📊 REGIONAL COMPARISON (${weekKey})</h4>
+                        <div class="w-full max-w-[280px] h-[180px] mx-auto flex justify-center items-center my-1">
+                            <canvas id="inboundPieChart"></canvas>
+                        </div>
+                        <div class="w-full pt-3 border-t border-slate-100 mt-2">
+                            ${regBarsHtml}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Detailed Inbound Report Table -->
+                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm font-bold space-y-4">
+                    <h3 class="text-base font-extrabold text-slate-900">📋 ${weekKey} Detailed Inbound Report</h3>
+                    <div class="overflow-x-auto rounded-xl border border-slate-300">
+                        <table class="w-full text-left border-collapse border border-slate-300 text-sm">
+                            <thead class="bg-slate-800 text-white uppercase text-xs font-extrabold">
+                                <tr>
+                                    <th class="p-3 text-center border border-slate-600">REGIONAL</th>
+                                    <th class="p-3 text-center border border-slate-600">DATE</th>
+                                    ${wData.cpeTypes.map(c => `<th class="p-3 text-center border border-slate-600">${c}</th>`).join('')}
+                                    <th class="p-3 text-center bg-slate-900 border border-slate-600">DAILY TOTAL</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${tableRowsHtml}
+                                ${grandRowHtml}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+
+            // Render Pie Chart
+            setTimeout(() => {
+                let ctx = document.getElementById('inboundPieChart');
+                if (ctx) {
+                    if (pieChartInstance) pieChartInstance.destroy();
+                    pieChartInstance = new Chart(ctx, {
+                        type: 'doughnut',
+                        data: {
+                            labels: ['ENUO', 'HGAO', 'MYFO'],
+                            datasets: [{
+                                data: [wData.regionalTotals.ENUO, wData.regionalTotals.HGAO, wData.regionalTotals.MYFO],
+                                backgroundColor: ['#2563eb', '#f59e0b', '#10b981']
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: { legend: { position: 'bottom' } }
+                        }
+                    });
+                }
+            }, 100);
         }
 
         function updateOnuDashboard() {
