@@ -81,9 +81,7 @@
                 <button onclick="switchInboundWeek('week-comparison', this)" class="inbound-wk-btn px-4 py-2 rounded-xl text-sm font-extrabold bg-slate-900 text-white shadow">📊 Week-by-Week Comparison</button>
             </div>
             
-            <div id="inbound-content-container" class="space-y-6">
-                <!-- Dynamic Inbound Content -->
-            </div>
+            <div id="inbound-content-container" class="space-y-6"></div>
         </div>
 
         <!-- SECTION 3: ONU Inspection View -->
@@ -135,7 +133,6 @@
         let onuData = { firstTest: [], secondTest: [], exchangeTest: [] };
         let oltChartInstance = null, failureChartInstance = null;
         let currentTestType = 'exchange';
-        let currentInboundView = 'Week 1 (1 - 7)';
 
         function switchMasterTab(sectionId, btn) {
             document.querySelectorAll('.dashboard-section').forEach(el => el.classList.add('hidden'));
@@ -213,7 +210,6 @@
         }
 
         async function loadAllData() {
-            // 1. Staff KPI
             let rows1 = await fetchGoogleSheetData(STAFF_SHEET_ID, "Oct 26");
             if (rows1.length === 0) rows1 = await fetchGoogleSheetData(STAFF_SHEET_ID);
             processStaffRows(rows1);
@@ -222,10 +218,8 @@
             processStaffRows(rows2);
             renderStaffButtons();
 
-            // 2. Inbound Regional KPI Init
             switchInboundWeek('Week 1 (1 - 7)', document.querySelector('.inbound-wk-btn'));
 
-            // 3. ONU Inspection Data
             onuData.firstTest = await fetchGoogleSheetData(ONU_SS_ID, "First Test");
             onuData.secondTest = await fetchGoogleSheetData(ONU_SS_ID, "Second Test");
             onuData.exchangeTest = await fetchGoogleSheetData(ONU_SS_ID, "Exchange");
@@ -254,7 +248,7 @@
                 } else if (jdLower === "run" || jdLower === "default") {
                     let cleanMac = mac ? mac.trim() : "";
                     let hasValidMac = (cleanMac !== "" && cleanMac !== "#N/A") ? 1 : 0;
-                    if (hasValidMac === 0) return;[cite: 7]
+                    if (hasValidMac === 0) return;
                     addedValue = 1;
                 } else {
                     addedValue = qty;
