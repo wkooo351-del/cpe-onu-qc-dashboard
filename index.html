@@ -137,7 +137,10 @@
                 <div class="bg-white p-6 rounded-xl shadow-sm"><h3 class="text-base font-bold text-gray-800 mb-4">Failure Reasons Breakdown</h3><div class="relative h-72 flex justify-center"><canvas id="failureChart"></canvas></div></div>
             </div>
 
-            <!-- Dynamic Regional & Device Inspection Report Container -->
+            <!-- Dynamic Device Tested & Devices Failure Breakdown Container -->
+            <div id="onu-device-breakdown-container" class="space-y-6"></div>
+
+            <!-- Dynamic Regional & Period Inspection Report Container -->
             <div id="onu-dynamic-container" class="space-y-6"></div>
 
         </div>
@@ -155,7 +158,7 @@
         let inboundLiveData = {};
         let activeInboundWeek = 'Week 1 (1 - 7)';
         let onuData = { firstTest: [], secondTest: [], exchangeTest: [] };
-        let oltChartInstance = null, failureChartInstance = null, pieChartInstance = null, multiBarChartInstance = null;
+        let oltChartInstance = null, failureChartInstance = null, deviceFailureChartInstance = null, pieChartInstance = null, multiBarChartInstance = null;
         let currentTestType = 'first';
         let currentOnuRegion = 'All Region';
 
@@ -239,7 +242,6 @@
             }
             if (/^\d{4}-\d{2}-\d{2}/.test(str)) return str.substring(0, 10);
             
-            // Handle MM/DD/YYYY format from Sheets (e.g. 10/17/2026 13:56)
             if (str.includes('/')) {
                 let parts = str.split(' ')[0].split('/');
                 if (parts.length === 3) {
@@ -841,7 +843,7 @@
             }, 100);
         }
 
-        // Robust Strict Pass Matcher (Check C-Column or Overall Pass/ Fail Column)
+        // Helper to check strictly if status is PASS
         function isStrictPass(row) {
             let keys = Object.keys(row);
             for (let k of keys) {
@@ -851,6 +853,18 @@
                 }
             }
             return false;
+        }
+
+        // Helper to get Device Name (e.g., FFO, FFG, FFA, etc.)
+        function getDeviceName(row) {
+            let keys = Object.keys(row);
+            for (let k of keys) {
+                if (k.toLowerCase().includes('device') || k.toLowerCase().includes('cpe')) {
+                    let val = String(row[k] || '').trim();
+                    if (val && !val.toLowerCase().includes('name') && val !== '-') return val;
+                }
+            }
+            return row['Devices Name'] || row['Device Name'] || row['CPE Type'] || 'UNKNOWN_DEV';
         }
 
         // Flexible Region Extractor (e.g. OVF-Provision-HGAO, OVF-Provision-ENUO)
@@ -906,7 +920,161 @@
             document.getElementById('kpi-fail-rate').innerText = failRate.toFixed(2) + '%';
 
             renderOnuCharts(data);
+            renderDeviceBreakdownTablesAndCharts(data);
             renderOnuRegionalBreakdown(filteredByPeriod);
+        }
+
+        // --- NEW: Render Total Tested by Devices & Device-wise Failure Reasons Table & Chart ---
+        function renderDeviceBreakdownTablesAndCharts(data) {
+            let container = document.getElementById('onu-device-breakdown-container');
+            if (!container) return;
+
+            let deviceStats = {};
+
+            data.forEach(r => {
+                let devName = getDeviceName(r);
+                if (!deviceStats[devName]) {
+                    deviceStats[devName] = {
+                        total: 0,
+                        pass: 0,
+                        fail: 0,
+                        rxFail: 0,
+                        biasFail: 0,
+                        tempFail: 0,
+                        unknownFail: 0
+                    };
+                }
+
+                let isPass = isStrictPass(r);
+                deviceStats[devName].total += 1;
+
+                if (isPass) {
+                    deviceStats[devName].pass += 1;
+                } else {
+                    deviceStats[devName].fail += 1;
+
+                    let rxIsFail = false, biasIsFail = false, tempIsFail = false;
+
+                    let rxKey = Object.keys(r).find(key => key.toLowerCase().includes('rx pass'));
+                    if (rxKey && String(r[rxKey] || '').trim().toLowerCase().includes('fail')) rxIsFail = true;
+
+                    let biasKey = Object.keys(r).find(key => key.toLowerCase().includes('bias pass'));
+                    if (biasKey && String(r[biasKey] || '').trim().toLowerCase().includes('fail')) biasIsFail = true;
+
+                    let tempKey = Object.keys(r).find(key => key.toLowerCase().includes('temp pass'));
+                    if (tempKey && String(r[tempKey] || '').trim().toLowerCase().includes('fail')) tempIsFail = true;
+
+                    if (rxIsFail) deviceStats[devName].rxFail += 1;
+                    if (biasIsFail) deviceStats[devName].biasFail += 1;
+                    if (tempIsFail) deviceStats[devName].tempFail += 1;
+
+                    if (!rxIsFail && !biasIsFail && !tempIsFail) {
+                        deviceStats[devName].unknownFail += 1;
+                    }
+                }
+            });
+
+            let sortedDevices = Object.keys(deviceStats).sort();
+
+            let deviceRowsHtml = "";
+            let devLabels = [];
+            let devRxData = [], devBiasData = [], devTempData = [], devUnknownData = [];
+
+            sortedDevices.forEach(dev => {
+                let st = deviceStats[dev];
+                let pRate = st.total > 0 ? ((st.pass / st.total) * 100).toFixed(1) : "0.0";
+                let fRate = st.total > 0 ? ((st.fail / st.total) * 100).toFixed(1) : "0.0";
+
+                devLabels.push(dev);
+                devRxData.push(st.rxFail);
+                devBiasData.push(st.biasFail);
+                devTempData.push(st.tempFail);
+                devUnknownData.push(st.unknownFail);
+
+                deviceRowsHtml += `
+                    <tr class="hover:bg-slate-50 text-center border-b border-slate-200">
+                        <td class="p-3 border border-slate-300 font-extrabold text-blue-900">${dev}</td>
+                        <td class="p-3 border border-slate-300 font-bold text-slate-900">${st.total.toLocaleString()}</td>
+                        <td class="p-3 border border-slate-300 font-black text-emerald-600">${st.pass.toLocaleString()} (${pRate}%)</td>
+                        <td class="p-3 border border-slate-300 font-black text-rose-600">${st.fail.toLocaleString()} (${fRate}%)</td>
+                        <td class="p-3 border border-slate-300 text-blue-700 font-bold">${st.rxFail}</td>
+                        <td class="p-3 border border-slate-300 text-purple-700 font-bold">${st.biasFail}</td>
+                        <td class="p-3 border border-slate-300 text-emerald-700 font-bold">${st.tempFail}</td>
+                        <td class="p-3 border border-slate-300 text-amber-700 font-bold">${st.unknownFail}</td>
+                    </tr>
+                `;
+            });
+
+            container.innerHTML = `
+                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-6 font-bold">
+                    <div>
+                        <h3 class='text-lg font-black text-slate-950'>📱 Device-wise Inspection & Failure Reasons Breakdown (${currentTestType.toUpperCase()})</h3>
+                        <p class='text-xs text-slate-500 font-bold'>စမ်းသပ်ခဲ့သော Device အလိုက် Pass/Fail အရေအတွက်များနှင့် Fail ဖြစ်ရသည့် အကြောင်းအရင်းများ။</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+                        <!-- Table -->
+                        <div class="overflow-x-auto rounded-xl border border-slate-300">
+                            <table class="w-full text-left border-collapse border border-slate-300 text-xs">
+                                <thead class="bg-slate-800 text-white uppercase font-black text-center">
+                                    <tr>
+                                        <th class="p-3 border border-slate-600">Device Name</th>
+                                        <th class="p-3 border border-slate-600">Total Tested</th>
+                                        <th class="p-3 border border-slate-600">Passed</th>
+                                        <th class="p-3 border border-slate-600">Failed</th>
+                                        <th class="p-3 border border-slate-600">Rx Fail</th>
+                                        <th class="p-3 border border-slate-600">Bias Fail</th>
+                                        <th class="p-3 border border-slate-600">Temp Fail</th>
+                                        <th class="p-3 border border-slate-600">Unknown Fail</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${deviceRowsHtml || '<tr><td colspan="8" class="p-4 text-center text-slate-400">No Device Data Available</td></tr>'}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Chart -->
+                        <div class="p-5 rounded-xl border border-slate-200 bg-slate-50/50 space-y-3">
+                            <h4 class="text-xs font-black uppercase text-slate-900 tracking-wider">📊 DEVICE FAILURE REASONS CHART</h4>
+                            <div class="relative h-72"><canvas id="deviceFailureChart"></canvas></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            setTimeout(() => {
+                let ctxDev = document.getElementById('deviceFailureChart');
+                if (ctxDev) {
+                    if (deviceFailureChartInstance) deviceFailureChartInstance.destroy();
+                    deviceFailureChartInstance = new Chart(ctxDev, {
+                        type: 'bar',
+                        data: {
+                            labels: devLabels,
+                            datasets: [
+                                { label: 'Rx Fail', data: devRxData, backgroundColor: '#3B82F6', borderRadius: 4 },
+                                { label: 'Bias Fail', data: devBiasData, backgroundColor: '#8B5CF6', borderRadius: 4 },
+                                { label: 'Temp Fail', data: devTempData, backgroundColor: '#10B981', borderRadius: 4 },
+                                { label: 'Unknown Fail', data: devUnknownData, backgroundColor: '#F59E0B', borderRadius: 4 }
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    position: 'bottom',
+                                    labels: { font: { weight: 'bold', size: 10 }, color: '#0f172a' }
+                                }
+                            },
+                            scales: {
+                                x: { ticks: { font: { weight: 'bold' }, color: '#0f172a' } },
+                                y: { ticks: { font: { weight: 'bold' }, color: '#0f172a' } }
+                            }
+                        }
+                    });
+                }
+            }, 100);
         }
 
         function renderOnuRegionalBreakdown(rawData) {
