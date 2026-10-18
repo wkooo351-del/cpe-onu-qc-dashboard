@@ -33,7 +33,7 @@
 
     <main class="max-w-7xl mx-auto space-y-6">
         
-        <!-- SECTION 1: Staff KPI View (Untouched) -->
+        <!-- SECTION 1: Staff KPI View -->
         <div id="section-hc" class="dashboard-section space-y-6">
             <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
                 <div id="staff-buttons-container" class="staff-grid-nav justify-center">
@@ -71,7 +71,7 @@
             </div>
         </div>
 
-        <!-- SECTION 2: Inbound Regional KPI View (Untouched) -->
+        <!-- SECTION 2: Inbound Regional KPI View -->
         <div id="section-inbound" class="dashboard-section hidden space-y-6">
             <div class="flex flex-wrap gap-2 justify-center">
                 <button onclick="renderInboundWeek('Week 1 (1 - 7)', this)" class="inbound-wk-btn px-4 py-2 text-sm font-bold rounded-xl bg-blue-600 text-white shadow">Week 1 (1 - 7)</button>
@@ -1017,7 +1017,7 @@
                 devGaspData.push(st.gaspFail);
                 devUnknownData.push(st.unknownFail);
 
-                let totalFailPercent = st.total > 0 ? ((st.fail / st.total) * 100).toFixed(1) : "0.0";
+                let totalFailFormatted = `${st.fail.toLocaleString()} (${st.total > 0 ? ((st.fail / st.total) * 100).toFixed(1) : "0.0"}%)`;
 
                 deviceRowsHtml += `
                     <tr class="hover:bg-slate-50 text-center border-b border-slate-300 font-bold text-slate-900">
@@ -1030,12 +1030,12 @@
                         <td class="p-2.5 border border-slate-300">${st.gaspFail}</td>
                         <td class="p-2.5 border border-slate-300">${st.unknownFail}</td>
                         <td class="p-2.5 border border-slate-300">${st.total.toLocaleString()}</td>
-                        <td class="p-2.5 border border-slate-300">${st.fail.toLocaleString()} (${totalFailPercent}%)</td>
+                        <td class="p-2.5 border border-slate-300">${totalFailFormatted}</td>
                     </tr>
                 `;
             });
 
-            let overallFailPercentAll = totalTestedCount > 0 ? ((totalFailCountAll / totalTestedCount) * 100).toFixed(1) : "0.0";
+            let overallFailFormatted = `${totalFailCountAll.toLocaleString()} (${totalTestedCount > 0 ? ((totalFailCountAll / totalTestedCount) * 100).toFixed(1) : "0.0"}%)`;
             deviceRowsHtml += `
                 <tr class="bg-slate-100 font-black text-slate-900 text-center border-t-2 border-slate-400">
                     <td class="p-3 border border-slate-300 text-left pl-4">Total</td>
@@ -1047,7 +1047,7 @@
                     <td class="p-3 border border-slate-300">${totalSumGasp}</td>
                     <td class="p-3 border border-slate-300">${totalSumUnknown}</td>
                     <td class="p-3 border border-slate-300">${totalTestedCount.toLocaleString()}</td>
-                    <td class="p-3 border border-slate-300">${totalFailCountAll.toLocaleString()} (${overallFailPercentAll}%)</td>
+                    <td class="p-3 border border-slate-300">${overallFailFormatted}</td>
                 </tr>
             `;
 
@@ -1055,7 +1055,6 @@
                 <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-6 font-bold">
                     <div>
                         <h3 class='text-lg font-black text-slate-950'>Devices & 7 Parameters Failure Breakdown (${currentTestType.toUpperCase()})</h3>
-                        <p class='text-xs text-slate-500 font-bold'>Detailed breakdown matching exact format.</p>
                     </div>
 
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
