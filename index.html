@@ -87,7 +87,7 @@
         <!-- SECTION 3: ONU Inspection View -->
         <div id="section-onu" class="dashboard-section hidden space-y-6">
             
-            <!-- Header & Tabs -->
+            <!-- Sticky Filter Header Section -->
             <div class="sticky top-[96px] z-40 space-y-3 pb-2 bg-slate-50">
                 <div class="bg-indigo-600 shadow-md rounded-2xl p-4 flex flex-col md:flex-row justify-between items-center gap-3">
                     <div class="flex items-center space-x-3">
@@ -113,16 +113,32 @@
                     </div>
                 </div>
 
-                <!-- Sticky Regional Filter Tabs -->
-                <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-md flex flex-wrap gap-2 justify-center">
-                    <button onclick="switchOnuRegion('All Region', this)" class="onu-region-btn px-4 py-2 text-sm font-bold rounded-xl bg-indigo-600 text-white shadow transition">All Region</button>
-                    <button onclick="switchOnuRegion('HGAO', this)" class="onu-region-btn px-4 py-2 text-sm font-bold rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300 transition">HGAO</button>
-                    <button onclick="switchOnuRegion('ENUO', this)" class="onu-region-btn px-4 py-2 text-sm font-bold rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300 transition">ENUO</button>
-                    <button onclick="switchOnuRegion('MDY', this)" class="onu-region-btn px-4 py-2 text-sm font-bold rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300 transition">MDY</button>
+                <!-- Sticky Filters Container (Region & Parameter Filters) -->
+                <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-md space-y-2">
+                    <!-- Regional Filter Tabs -->
+                    <div class="flex flex-wrap gap-2 justify-center items-center">
+                        <span class="text-xs text-slate-400 uppercase font-black mr-2">Region Filter:</span>
+                        <button onclick="switchOnuRegion('All Region', this)" class="onu-region-btn px-3 py-1.5 text-xs font-bold rounded-xl bg-indigo-600 text-white shadow transition">All Region</button>
+                        <button onclick="switchOnuRegion('HGAO', this)" class="onu-region-btn px-3 py-1.5 text-xs font-bold rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300 transition">HGAO</button>
+                        <button onclick="switchOnuRegion('ENUO', this)" class="onu-region-btn px-3 py-1.5 text-xs font-bold rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300 transition">ENUO</button>
+                        <button onclick="switchOnuRegion('MDY', this)" class="onu-region-btn px-3 py-1.5 text-xs font-bold rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300 transition">MDY</button>
+                    </div>
+
+                    <!-- Parameter Filters Section -->
+                    <div class="flex flex-wrap gap-2 justify-center items-center border-t border-slate-100 pt-2">
+                        <span class="text-xs text-slate-400 uppercase font-black mr-2">Parameter Filter:</span>
+                        <button onclick="switchOnuParam('all', this)" class="onu-param-btn px-3 py-1.5 text-xs font-bold rounded-xl bg-slate-800 text-white shadow transition">All Parameters</button>
+                        <button onclick="switchOnuParam('rx', this)" class="onu-param-btn px-3 py-1.5 text-xs font-bold rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300 transition">Rx Power Fail</button>
+                        <button onclick="switchOnuParam('tx', this)" class="onu-param-btn px-3 py-1.5 text-xs font-bold rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300 transition">Tx Power Fail</button>
+                        <button onclick="switchOnuParam('bias', this)" class="onu-param-btn px-3 py-1.5 text-xs font-bold rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300 transition">Bias Fail</button>
+                        <button onclick="switchOnuParam('temp', this)" class="onu-param-btn px-3 py-1.5 text-xs font-bold rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300 transition">Temp Fail</button>
+                        <button onclick="switchOnuParam('voltage', this)" class="onu-param-btn px-3 py-1.5 text-xs font-bold rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300 transition">Voltage Fail</button>
+                        <button onclick="switchOnuParam('gasp', this)" class="onu-param-btn px-3 py-1.5 text-xs font-bold rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300 transition">Gasp Fail</button>
+                    </div>
                 </div>
             </div>
 
-            <!-- Top 4 KPI Cards Matching Reference Image -->
+            <!-- Top 4 KPI Cards -->
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 <div class="bg-white p-5 rounded-xl shadow-sm border-t-4 border-slate-400">
                     <p class="text-xs font-bold text-slate-500 uppercase">TOTAL TESTED</p>
@@ -142,7 +158,7 @@
                 </div>
             </div>
 
-            <!-- 2 Main Charts Matching Image 1 -->
+            <!-- 2 Main Charts -->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
                     <h3 id="chart-comparison-title" class="text-base font-bold text-slate-800 mb-4">First Test - Pass vs Fail & Total Comparison</h3>
@@ -154,7 +170,7 @@
                 </div>
             </div>
 
-            <!-- 2 Summary Tables Side-by-Side Matching Image 2 -->
+            <!-- 2 Summary Tables Side-by-Side -->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <!-- Inspection Parameters Failure Summary Table -->
                 <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
@@ -217,6 +233,7 @@
         let oltChartInstance = null, failureChartInstance = null, pieChartInstance = null, multiBarChartInstance = null;
         let currentTestType = 'first';
         let currentOnuRegion = 'All Region';
+        let currentOnuParam = 'all';
 
         const VALID_REGIONS = ["ENUO", "HGAO", "MYFO"];
 
@@ -248,9 +265,18 @@
         function switchOnuRegion(regionName, btn) {
             currentOnuRegion = regionName;
             document.querySelectorAll('.onu-region-btn').forEach(b => {
-                b.className = 'onu-region-btn px-4 py-2 text-sm font-bold rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300 transition';
+                b.className = 'onu-region-btn px-3 py-1.5 text-xs font-bold rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300 transition';
             });
-            btn.className = 'onu-region-btn px-4 py-2 text-sm font-bold rounded-xl bg-indigo-600 text-white shadow transition';
+            btn.className = 'onu-region-btn px-3 py-1.5 text-xs font-bold rounded-xl bg-indigo-600 text-white shadow transition';
+            updateOnuDashboard();
+        }
+
+        function switchOnuParam(paramKeyword, btn) {
+            currentOnuParam = paramKeyword;
+            document.querySelectorAll('.onu-param-btn').forEach(b => {
+                b.className = 'onu-param-btn px-3 py-1.5 text-xs font-bold rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300 transition';
+            });
+            btn.className = 'onu-param-btn px-3 py-1.5 text-xs font-bold rounded-xl bg-slate-800 text-white shadow transition';
             updateOnuDashboard();
         }
 
@@ -999,8 +1025,15 @@
             }
 
             let data = filteredByPeriod;
+
+            // Apply Regional Filter
             if (currentOnuRegion !== 'All Region') {
-                data = filteredByPeriod.filter(r => getRowRegion(r) === currentOnuRegion);
+                data = data.filter(r => getRowRegion(r) === currentOnuRegion);
+            }
+
+            // Apply Parameter Filter
+            if (currentOnuParam !== 'all') {
+                data = data.filter(r => checkParamFail(r, currentOnuParam));
             }
 
             let total = data.length;
