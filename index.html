@@ -131,13 +131,13 @@
                 <div class="bg-white p-5 rounded-xl shadow-sm border-t-4 border-amber-500 col-span-2 sm:col-span-1"><p class="text-xs font-semibold text-gray-400 uppercase">Fail Rate %</p><p id="kpi-fail-rate" class="mt-2 text-2xl sm:text-3xl font-bold text-amber-600">0.00%</p></div>
             </div>
 
-            <!-- Charts -->
+            <!-- Main Charts -->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div class="bg-white p-6 rounded-xl shadow-sm"><h3 class="text-base font-bold text-gray-800 mb-4">Pass vs Fail Comparison</h3><div class="relative h-72"><canvas id="oltChart"></canvas></div></div>
-                <div class="bg-white p-6 rounded-xl shadow-sm"><h3 class="text-base font-bold text-gray-800 mb-4">Failure Reasons Breakdown</h3><div class="relative h-72 flex justify-center"><canvas id="failureChart"></canvas></div></div>
+                <div class="bg-white p-6 rounded-xl shadow-sm"><h3 class="text-base font-bold text-gray-800 mb-4">Failure Reasons Breakdown (7 Parameters)</h3><div class="relative h-72 flex justify-center"><canvas id="failureChart"></canvas></div></div>
             </div>
 
-            <!-- Dynamic Device Tested & Devices Failure Breakdown Container -->
+            <!-- Dynamic Device Tested & 7 Parameters Breakdown Container -->
             <div id="onu-device-breakdown-container" class="space-y-6"></div>
 
             <!-- Dynamic Regional & Period Inspection Report Container -->
@@ -924,7 +924,7 @@
             renderOnuRegionalBreakdown(filteredByPeriod);
         }
 
-        // --- NEW: Render Total Tested by Devices & Device-wise Failure Reasons Table & Chart ---
+        // --- ENHANCED: 7 Parameters Breakdown (Rx, Tx, Bias, Temp, Voltage, Dying Gasp, Unknown) ---
         function renderDeviceBreakdownTablesAndCharts(data) {
             let container = document.getElementById('onu-device-breakdown-container');
             if (!container) return;
@@ -935,13 +935,8 @@
                 let devName = getDeviceName(r);
                 if (!deviceStats[devName]) {
                     deviceStats[devName] = {
-                        total: 0,
-                        pass: 0,
-                        fail: 0,
-                        rxFail: 0,
-                        biasFail: 0,
-                        tempFail: 0,
-                        unknownFail: 0
+                        total: 0, pass: 0, fail: 0,
+                        rxFail: 0, txFail: 0, biasFail: 0, tempFail: 0, voltFail: 0, gaspFail: 0, unknownFail: 0
                     };
                 }
 
@@ -953,22 +948,35 @@
                 } else {
                     deviceStats[devName].fail += 1;
 
-                    let rxIsFail = false, biasIsFail = false, tempIsFail = false;
-
-                    let rxKey = Object.keys(r).find(key => key.toLowerCase().includes('rx pass'));
+                    let rxIsFail = false, txIsFail = false, biasIsFail = false, tempIsFail = false, voltIsFail = false, gaspIsFail = false;
+                    let keys = Object.keys(r);
+                    
+                    let rxKey = keys.find(k => k.toLowerCase().includes('rx'));
                     if (rxKey && String(r[rxKey] || '').trim().toLowerCase().includes('fail')) rxIsFail = true;
 
-                    let biasKey = Object.keys(r).find(key => key.toLowerCase().includes('bias pass'));
+                    let txKey = keys.find(k => k.toLowerCase().includes('tx'));
+                    if (txKey && String(r[txKey] || '').trim().toLowerCase().includes('fail')) txIsFail = true;
+
+                    let biasKey = keys.find(k => k.toLowerCase().includes('bias'));
                     if (biasKey && String(r[biasKey] || '').trim().toLowerCase().includes('fail')) biasIsFail = true;
 
-                    let tempKey = Object.keys(r).find(key => key.toLowerCase().includes('temp pass'));
+                    let tempKey = keys.find(k => k.toLowerCase().includes('temp'));
                     if (tempKey && String(r[tempKey] || '').trim().toLowerCase().includes('fail')) tempIsFail = true;
 
+                    let voltKey = keys.find(k => k.toLowerCase().includes('volt'));
+                    if (voltKey && String(r[voltKey] || '').trim().toLowerCase().includes('fail')) voltIsFail = true;
+
+                    let gaspKey = keys.find(k => k.toLowerCase().includes('dying') || k.toLowerCase().includes('gasp'));
+                    if (gaspKey && String(r[gaspKey] || '').trim().toLowerCase().includes('fail')) gaspIsFail = true;
+
                     if (rxIsFail) deviceStats[devName].rxFail += 1;
+                    if (txIsFail) deviceStats[devName].txFail += 1;
                     if (biasIsFail) deviceStats[devName].biasFail += 1;
                     if (tempIsFail) deviceStats[devName].tempFail += 1;
+                    if (voltIsFail) deviceStats[devName].voltFail += 1;
+                    if (gaspIsFail) deviceStats[devName].gaspFail += 1;
 
-                    if (!rxIsFail && !biasIsFail && !tempIsFail) {
+                    if (!rxIsFail && !txIsFail && !biasIsFail && !tempIsFail && !voltIsFail && !gaspIsFail) {
                         deviceStats[devName].unknownFail += 1;
                     }
                 }
@@ -978,7 +986,7 @@
 
             let deviceRowsHtml = "";
             let devLabels = [];
-            let devRxData = [], devBiasData = [], devTempData = [], devUnknownData = [];
+            let devRxData = [], devTxData = [], devBiasData = [], devTempData = [], devVoltData = [], devGaspData = [], devUnknownData = [];
 
             sortedDevices.forEach(dev => {
                 let st = deviceStats[dev];
@@ -987,20 +995,26 @@
 
                 devLabels.push(dev);
                 devRxData.push(st.rxFail);
+                devTxData.push(st.txFail);
                 devBiasData.push(st.biasFail);
                 devTempData.push(st.tempFail);
+                devVoltData.push(st.voltFail);
+                devGaspData.push(st.gaspFail);
                 devUnknownData.push(st.unknownFail);
 
                 deviceRowsHtml += `
                     <tr class="hover:bg-slate-50 text-center border-b border-slate-200">
-                        <td class="p-3 border border-slate-300 font-extrabold text-blue-900">${dev}</td>
-                        <td class="p-3 border border-slate-300 font-bold text-slate-900">${st.total.toLocaleString()}</td>
-                        <td class="p-3 border border-slate-300 font-black text-emerald-600">${st.pass.toLocaleString()} (${pRate}%)</td>
-                        <td class="p-3 border border-slate-300 font-black text-rose-600">${st.fail.toLocaleString()} (${fRate}%)</td>
-                        <td class="p-3 border border-slate-300 text-blue-700 font-bold">${st.rxFail}</td>
-                        <td class="p-3 border border-slate-300 text-purple-700 font-bold">${st.biasFail}</td>
-                        <td class="p-3 border border-slate-300 text-emerald-700 font-bold">${st.tempFail}</td>
-                        <td class="p-3 border border-slate-300 text-amber-700 font-bold">${st.unknownFail}</td>
+                        <td class="p-2 border border-slate-300 font-extrabold text-blue-900">${dev}</td>
+                        <td class="p-2 border border-slate-300 font-bold text-slate-900">${st.total.toLocaleString()}</td>
+                        <td class="p-2 border border-slate-300 font-black text-emerald-600">${st.pass.toLocaleString()} (${pRate}%)</td>
+                        <td class="p-2 border border-slate-300 font-black text-rose-600">${st.fail.toLocaleString()} (${fRate}%)</td>
+                        <td class="p-2 border border-slate-300 text-blue-700 font-bold bg-blue-50/30">${st.rxFail}</td>
+                        <td class="p-2 border border-slate-300 text-cyan-700 font-bold bg-cyan-50/30">${st.txFail}</td>
+                        <td class="p-2 border border-slate-300 text-purple-700 font-bold bg-purple-50/30">${st.biasFail}</td>
+                        <td class="p-2 border border-slate-300 text-emerald-700 font-bold bg-emerald-50/30">${st.tempFail}</td>
+                        <td class="p-2 border border-slate-300 text-pink-700 font-bold bg-pink-50/30">${st.voltFail}</td>
+                        <td class="p-2 border border-slate-300 text-indigo-700 font-bold bg-indigo-50/30">${st.gaspFail}</td>
+                        <td class="p-2 border border-slate-300 text-amber-700 font-bold bg-amber-50/30">${st.unknownFail}</td>
                     </tr>
                 `;
             });
@@ -1008,8 +1022,8 @@
             container.innerHTML = `
                 <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-6 font-bold">
                     <div>
-                        <h3 class='text-lg font-black text-slate-950'>📱 Device-wise Inspection & Failure Reasons Breakdown (${currentTestType.toUpperCase()})</h3>
-                        <p class='text-xs text-slate-500 font-bold'>စမ်းသပ်ခဲ့သော Device အလိုက် Pass/Fail အရေအတွက်များနှင့် Fail ဖြစ်ရသည့် အကြောင်းအရင်းများ။</p>
+                        <h3 class='text-lg font-black text-slate-950'>📱 Devices & 7 Parameters Failure Breakdown (${currentTestType.toUpperCase()})</h3>
+                        <p class='text-xs text-slate-500 font-bold'>Device တစ်ခုချင်းစီအလိုက် Rx, Tx, Bias, Temp, Voltage, Dying Gasp နှင့် Unknown Parameter (၇) ချက်ဖြင့် အသေးစိတ်ခွဲခြားပြသထားခြင်း။</p>
                     </div>
 
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
@@ -1018,25 +1032,28 @@
                             <table class="w-full text-left border-collapse border border-slate-300 text-xs">
                                 <thead class="bg-slate-800 text-white uppercase font-black text-center">
                                     <tr>
-                                        <th class="p-3 border border-slate-600">Device Name</th>
-                                        <th class="p-3 border border-slate-600">Total Tested</th>
-                                        <th class="p-3 border border-slate-600">Passed</th>
-                                        <th class="p-3 border border-slate-600">Failed</th>
-                                        <th class="p-3 border border-slate-600">Rx Fail</th>
-                                        <th class="p-3 border border-slate-600">Bias Fail</th>
-                                        <th class="p-3 border border-slate-600">Temp Fail</th>
-                                        <th class="p-3 border border-slate-600">Unknown Fail</th>
+                                        <th class="p-2 border border-slate-600">Device</th>
+                                        <th class="p-2 border border-slate-600">Total</th>
+                                        <th class="p-2 border border-slate-600">Pass</th>
+                                        <th class="p-2 border border-slate-600">Fail</th>
+                                        <th class="p-2 border border-slate-600 bg-blue-900">Rx</th>
+                                        <th class="p-2 border border-slate-600 bg-cyan-900">Tx</th>
+                                        <th class="p-2 border border-slate-600 bg-purple-900">Bias</th>
+                                        <th class="p-2 border border-slate-600 bg-emerald-900">Temp</th>
+                                        <th class="p-2 border border-slate-600 bg-pink-900">Volt</th>
+                                        <th class="p-2 border border-slate-600 bg-indigo-900">Gasp</th>
+                                        <th class="p-2 border border-slate-600 bg-amber-900">Unknown</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    ${deviceRowsHtml || '<tr><td colspan="8" class="p-4 text-center text-slate-400">No Device Data Available</td></tr>'}
+                                    ${deviceRowsHtml || '<tr><td colspan="11" class="p-4 text-center text-slate-400">No Device Data Available</td></tr>'}
                                 </tbody>
                             </table>
                         </div>
 
-                        <!-- Chart -->
+                        <!-- Stacked Bar Chart -->
                         <div class="p-5 rounded-xl border border-slate-200 bg-slate-50/50 space-y-3">
-                            <h4 class="text-xs font-black uppercase text-slate-900 tracking-wider">📊 DEVICE FAILURE REASONS CHART</h4>
+                            <h4 class="text-xs font-black uppercase text-slate-900 tracking-wider">📊 7-PARAMETER FAILURE BREAKDOWN CHART</h4>
                             <div class="relative h-72"><canvas id="deviceFailureChart"></canvas></div>
                         </div>
                     </div>
@@ -1052,9 +1069,12 @@
                         data: {
                             labels: devLabels,
                             datasets: [
-                                { label: 'Rx Fail', data: devRxData, backgroundColor: '#3B82F6', borderRadius: 4 },
-                                { label: 'Bias Fail', data: devBiasData, backgroundColor: '#8B5CF6', borderRadius: 4 },
-                                { label: 'Temp Fail', data: devTempData, backgroundColor: '#10B981', borderRadius: 4 },
+                                { label: 'Rx Power Fail', data: devRxData, backgroundColor: '#2563EB', borderRadius: 4 },
+                                { label: 'Tx Power Fail', data: devTxData, backgroundColor: '#06B6D4', borderRadius: 4 },
+                                { label: 'Bias Current Fail', data: devBiasData, backgroundColor: '#8B5CF6', borderRadius: 4 },
+                                { label: 'Temperature Fail', data: devTempData, backgroundColor: '#10B981', borderRadius: 4 },
+                                { label: 'Voltage Fail', data: devVoltData, backgroundColor: '#EC4899', borderRadius: 4 },
+                                { label: 'Dying Gasp Fail', data: devGaspData, backgroundColor: '#6366F1', borderRadius: 4 },
                                 { label: 'Unknown Fail', data: devUnknownData, backgroundColor: '#F59E0B', borderRadius: 4 }
                             ]
                         },
@@ -1064,12 +1084,12 @@
                             plugins: {
                                 legend: {
                                     position: 'bottom',
-                                    labels: { font: { weight: 'bold', size: 10 }, color: '#0f172a' }
+                                    labels: { font: { weight: 'bold', size: 9 }, color: '#0f172a' }
                                 }
                             },
                             scales: {
-                                x: { ticks: { font: { weight: 'bold' }, color: '#0f172a' } },
-                                y: { ticks: { font: { weight: 'bold' }, color: '#0f172a' } }
+                                x: { stacked: true, ticks: { font: { weight: 'bold' }, color: '#0f172a' } },
+                                y: { stacked: true, ticks: { font: { weight: 'bold' }, color: '#0f172a' } }
                             }
                         }
                     });
@@ -1197,8 +1217,8 @@
 
                 <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-6 font-bold">
                     <div>
-                        <h3 class='text-lg font-black text-slate-950'>📍 Regional Inspection & Failure Reasons Breakdown</h3>
-                        <p class='text-xs text-slate-500 font-bold'>Region အလိုက် စမ်းသပ်ခဲ့သော Pass/Fail အရေအတွက်များနှင့် Fail ရသည့် အကြောင်းအရင်းများ။</p>
+                        <h3 class='text-lg font-black text-slate-950'>📍 Regional Inspection & 7-Parameter Failure Breakdown</h3>
+                        <p class='text-xs text-slate-500 font-bold'>Region အလိုက် စမ်းသပ်ခဲ့သော Pass/Fail အရေအတွက်များနှင့် 7-Parameter Fail အကြောင်းအရင်းများ။</p>
                     </div>
             `;
 
@@ -1211,23 +1231,16 @@
                 let passRate = regTotal > 0 ? ((passed / regTotal) * 100).toFixed(1) : "0.0";
                 let failRate = regTotal > 0 ? ((failed / regTotal) * 100).toFixed(1) : "0.0";
 
-                let rxFail = regRows.filter(r => {
-                    let k = Object.keys(r).find(key => key.toLowerCase().includes('rx pass'));
-                    return k && String(r[k] || '').trim().toLowerCase().includes('fail');
-                }).length;
-
-                let biasFail = regRows.filter(r => {
-                    let k = Object.keys(r).find(key => key.toLowerCase().includes('bias pass'));
-                    return k && String(r[k] || '').trim().toLowerCase().includes('fail');
-                }).length;
-
-                let tempFail = regRows.filter(r => {
-                    let k = Object.keys(r).find(key => key.toLowerCase().includes('temp pass'));
-                    return k && String(r[k] || '').trim().toLowerCase().includes('fail');
-                }).length;
-
-                let unknownCount = regRows.filter(r => !isStrictPass(r) && regTotal > 0).length - (rxFail + biasFail + tempFail);
-                if (unknownCount < 0) unknownCount = regTotal - passed;
+                let rxFail = regRows.filter(r => { let k = Object.keys(r).find(key => key.toLowerCase().includes('rx')); return k && String(r[k] || '').trim().toLowerCase().includes('fail'); }).length;
+                let txFail = regRows.filter(r => { let k = Object.keys(r).find(key => key.toLowerCase().includes('tx')); return k && String(r[k] || '').trim().toLowerCase().includes('fail'); }).length;
+                let biasFail = regRows.filter(r => { let k = Object.keys(r).find(key => key.toLowerCase().includes('bias')); return k && String(r[k] || '').trim().toLowerCase().includes('fail'); }).length;
+                let tempFail = regRows.filter(r => { let k = Object.keys(r).find(key => key.toLowerCase().includes('temp')); return k && String(r[k] || '').trim().toLowerCase().includes('fail'); }).length;
+                let voltFail = regRows.filter(r => { let k = Object.keys(r).find(key => key.toLowerCase().includes('volt')); return k && String(r[k] || '').trim().toLowerCase().includes('fail'); }).length;
+                let gaspFail = regRows.filter(r => { let k = Object.keys(r).find(key => key.toLowerCase().includes('dying') || key.toLowerCase().includes('gasp')); return k && String(r[k] || '').trim().toLowerCase().includes('fail'); }).length;
+                
+                let knownFails = rxFail + txFail + biasFail + tempFail + voltFail + gaspFail;
+                let unknownCount = failed - knownFails;
+                if (unknownCount < 0) unknownCount = 0;
 
                 let badgeColor = regShort === 'HGAO' ? 'bg-amber-500' : (regShort === 'ENUO' ? 'bg-blue-600' : 'bg-emerald-600');
 
@@ -1242,22 +1255,34 @@
                             </div>
                         </div>
 
-                        <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 text-xs">
-                            <div class="bg-white p-3 rounded-lg border border-slate-200 flex justify-between items-center">
-                                <span class="text-slate-500">Rx Power Fail:</span>
-                                <span class="px-2 py-1 bg-blue-50 text-blue-700 rounded font-black">${rxFail} units</span>
+                        <div class="grid grid-cols-2 sm:grid-cols-7 gap-2 text-xs">
+                            <div class="bg-white p-2.5 rounded-lg border border-slate-200 flex justify-between items-center">
+                                <span class="text-slate-500">Rx:</span>
+                                <span class="px-2 py-0.5 bg-blue-50 text-blue-700 rounded font-black">${rxFail}</span>
                             </div>
-                            <div class="bg-white p-3 rounded-lg border border-slate-200 flex justify-between items-center">
-                                <span class="text-slate-500">Bias Current Fail:</span>
-                                <span class="px-2 py-1 bg-purple-50 text-purple-700 rounded font-black">${biasFail} units</span>
+                            <div class="bg-white p-2.5 rounded-lg border border-slate-200 flex justify-between items-center">
+                                <span class="text-slate-500">Tx:</span>
+                                <span class="px-2 py-0.5 bg-cyan-50 text-cyan-700 rounded font-black">${txFail}</span>
                             </div>
-                            <div class="bg-white p-3 rounded-lg border border-slate-200 flex justify-between items-center">
-                                <span class="text-slate-500">Temperature Fail:</span>
-                                <span class="px-2 py-1 bg-emerald-50 text-emerald-700 rounded font-black">${tempFail} units</span>
+                            <div class="bg-white p-2.5 rounded-lg border border-slate-200 flex justify-between items-center">
+                                <span class="text-slate-500">Bias:</span>
+                                <span class="px-2 py-0.5 bg-purple-50 text-purple-700 rounded font-black">${biasFail}</span>
                             </div>
-                            <div class="bg-white p-3 rounded-lg border border-slate-200 flex justify-between items-center">
-                                <span class="text-slate-500">Unknown / Other Fail:</span>
-                                <span class="px-2 py-1 bg-amber-50 text-amber-700 rounded font-black">${unknownCount < 0 ? 0 : unknownCount} units</span>
+                            <div class="bg-white p-2.5 rounded-lg border border-slate-200 flex justify-between items-center">
+                                <span class="text-slate-500">Temp:</span>
+                                <span class="px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded font-black">${tempFail}</span>
+                            </div>
+                            <div class="bg-white p-2.5 rounded-lg border border-slate-200 flex justify-between items-center">
+                                <span class="text-slate-500">Volt:</span>
+                                <span class="px-2 py-0.5 bg-pink-50 text-pink-700 rounded font-black">${voltFail}</span>
+                            </div>
+                            <div class="bg-white p-2.5 rounded-lg border border-slate-200 flex justify-between items-center">
+                                <span class="text-slate-500">Gasp:</span>
+                                <span class="px-2 py-0.5 bg-indigo-50 text-indigo-700 rounded font-black">${gaspFail}</span>
+                            </div>
+                            <div class="bg-white p-2.5 rounded-lg border border-slate-200 flex justify-between items-center">
+                                <span class="text-slate-500">Unknown:</span>
+                                <span class="px-2 py-0.5 bg-amber-50 text-amber-700 rounded font-black">${unknownCount}</span>
                             </div>
                         </div>
                     </div>
@@ -1301,36 +1326,29 @@
                 }
             });
 
-            let rxFail = data.filter(r => {
-                let k = Object.keys(r).find(key => key.toLowerCase().includes('rx pass'));
-                return k && String(r[k] || '').trim().toLowerCase().includes('fail');
-            }).length;
-
-            let biasFail = data.filter(r => {
-                let k = Object.keys(r).find(key => key.toLowerCase().includes('bias pass'));
-                return k && String(r[k] || '').trim().toLowerCase().includes('fail');
-            }).length;
-
-            let tempFail = data.filter(r => {
-                let k = Object.keys(r).find(key => key.toLowerCase().includes('temp pass'));
-                return k && String(r[k] || '').trim().toLowerCase().includes('fail');
-            }).length;
+            let rxFail = data.filter(r => { let k = Object.keys(r).find(key => key.toLowerCase().includes('rx')); return k && String(r[k] || '').trim().toLowerCase().includes('fail'); }).length;
+            let txFail = data.filter(r => { let k = Object.keys(r).find(key => key.toLowerCase().includes('tx')); return k && String(r[k] || '').trim().toLowerCase().includes('fail'); }).length;
+            let biasFail = data.filter(r => { let k = Object.keys(r).find(key => key.toLowerCase().includes('bias')); return k && String(r[k] || '').trim().toLowerCase().includes('fail'); }).length;
+            let tempFail = data.filter(r => { let k = Object.keys(r).find(key => key.toLowerCase().includes('temp')); return k && String(r[k] || '').trim().toLowerCase().includes('fail'); }).length;
+            let voltFail = data.filter(r => { let k = Object.keys(r).find(key => key.toLowerCase().includes('volt')); return k && String(r[k] || '').trim().toLowerCase().includes('fail'); }).length;
+            let gaspFail = data.filter(r => { let k = Object.keys(r).find(key => key.toLowerCase().includes('dying') || key.toLowerCase().includes('gasp')); return k && String(r[k] || '').trim().toLowerCase().includes('fail'); }).length;
 
             let totalPassed = data.filter(r => isStrictPass(r)).length;
-            let unknownFail = data.length - totalPassed - (rxFail + biasFail + tempFail);
+            let totalFailed = data.length - totalPassed;
+            let unknownFail = totalFailed - (rxFail + txFail + biasFail + tempFail + voltFail + gaspFail);
             if (unknownFail < 0) unknownFail = 0;
 
             if (failureChartInstance) failureChartInstance.destroy();
             failureChartInstance = new Chart(document.getElementById('failureChart'), {
                 type: 'doughnut',
                 data: {
-                    labels: ['Rx Power', 'Bias Current', 'Temperature', 'Unknown (Fail)'],
-                    datasets: [{ data: [rxFail, biasFail, tempFail, unknownFail], backgroundColor: ['#3B82F6', '#8B5CF6', '#10B981', '#F59E0B'] }]
+                    labels: ['Rx Power', 'Tx Power', 'Bias Current', 'Temperature', 'Voltage', 'Dying Gasp', 'Unknown'],
+                    datasets: [{ data: [rxFail, txFail, biasFail, tempFail, voltFail, gaspFail, unknownFail], backgroundColor: ['#2563EB', '#06B6D4', '#8B5CF6', '#10B981', '#EC4899', '#6366F1', '#F59E0B'] }]
                 },
                 options: { 
                     responsive: true, 
                     maintainAspectRatio: false, 
-                    plugins: { legend: { position: 'bottom', labels: { font: { weight: 'bold' }, color: '#0f172a' } } } 
+                    plugins: { legend: { position: 'bottom', labels: { font: { weight: 'bold' }, size: 9, color: '#0f172a' } } } 
                 }
             });
         }
