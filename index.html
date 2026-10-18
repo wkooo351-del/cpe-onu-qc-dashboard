@@ -879,6 +879,17 @@
             return "UNKNOWN";
         }
 
+        // Check Specific Parameter Failure Status in Row
+        function isParamFail(row, paramRegex) {
+            let keys = Object.keys(row);
+            let targetKey = keys.find(k => paramRegex.test(k.toLowerCase()));
+            if (targetKey) {
+                let val = String(row[targetKey] || '').trim().toLowerCase();
+                return val.includes('fail') || val === 'f' || val === 'no' || val === '0';
+            }
+            return false;
+        }
+
         function updateOnuDashboard() {
             let rawData = [];
             if (currentTestType === 'first' || currentTestType === 'daily' || currentTestType === 'monthly') {
@@ -924,12 +935,20 @@
             renderOnuRegionalBreakdown(filteredByPeriod);
         }
 
-        // --- ENHANCED: 7 Parameters Breakdown (Rx, Tx, Bias, Temp, Voltage, Dying Gasp, Unknown) ---
+        // --- ENHANCED RegEx Matching for 7 Failure Parameters ---
         function renderDeviceBreakdownTablesAndCharts(data) {
             let container = document.getElementById('onu-device-breakdown-container');
             if (!container) return;
 
             let deviceStats = {};
+
+            // Regex for matching Header Columns
+            const rxRegex = /rx/i;
+            const txRegex = /tx/i;
+            const biasRegex = /bias/i;
+            const tempRegex = /temp/i;
+            const voltRegex = /volt/i;
+            const gaspRegex = /gasp|dying/i;
 
             data.forEach(r => {
                 let devName = getDeviceName(r);
@@ -948,26 +967,12 @@
                 } else {
                     deviceStats[devName].fail += 1;
 
-                    let rxIsFail = false, txIsFail = false, biasIsFail = false, tempIsFail = false, voltIsFail = false, gaspIsFail = false;
-                    let keys = Object.keys(r);
-                    
-                    let rxKey = keys.find(k => k.toLowerCase().includes('rx'));
-                    if (rxKey && String(r[rxKey] || '').trim().toLowerCase().includes('fail')) rxIsFail = true;
-
-                    let txKey = keys.find(k => k.toLowerCase().includes('tx'));
-                    if (txKey && String(r[txKey] || '').trim().toLowerCase().includes('fail')) txIsFail = true;
-
-                    let biasKey = keys.find(k => k.toLowerCase().includes('bias'));
-                    if (biasKey && String(r[biasKey] || '').trim().toLowerCase().includes('fail')) biasIsFail = true;
-
-                    let tempKey = keys.find(k => k.toLowerCase().includes('temp'));
-                    if (tempKey && String(r[tempKey] || '').trim().toLowerCase().includes('fail')) tempIsFail = true;
-
-                    let voltKey = keys.find(k => k.toLowerCase().includes('volt'));
-                    if (voltKey && String(r[voltKey] || '').trim().toLowerCase().includes('fail')) voltIsFail = true;
-
-                    let gaspKey = keys.find(k => k.toLowerCase().includes('dying') || k.toLowerCase().includes('gasp'));
-                    if (gaspKey && String(r[gaspKey] || '').trim().toLowerCase().includes('fail')) gaspIsFail = true;
+                    let rxIsFail = isParamFail(r, rxRegex);
+                    let txIsFail = isParamFail(r, txRegex);
+                    let biasIsFail = isParamFail(r, biasRegex);
+                    let tempIsFail = isParamFail(r, tempRegex);
+                    let voltIsFail = isParamFail(r, voltRegex);
+                    let gaspIsFail = isParamFail(r, gaspRegex);
 
                     if (rxIsFail) deviceStats[devName].rxFail += 1;
                     if (txIsFail) deviceStats[devName].txFail += 1;
@@ -1222,6 +1227,8 @@
                     </div>
             `;
 
+            const rxRegex = /rx/i, txRegex = /tx/i, biasRegex = /bias/i, tempRegex = /temp/i, voltRegex = /volt/i, gaspRegex = /gasp|dying/i;
+
             targetRegions.forEach(regShort => {
                 let regRows = rawData.filter(r => getRowRegion(r) === regShort);
 
@@ -1231,12 +1238,12 @@
                 let passRate = regTotal > 0 ? ((passed / regTotal) * 100).toFixed(1) : "0.0";
                 let failRate = regTotal > 0 ? ((failed / regTotal) * 100).toFixed(1) : "0.0";
 
-                let rxFail = regRows.filter(r => { let k = Object.keys(r).find(key => key.toLowerCase().includes('rx')); return k && String(r[k] || '').trim().toLowerCase().includes('fail'); }).length;
-                let txFail = regRows.filter(r => { let k = Object.keys(r).find(key => key.toLowerCase().includes('tx')); return k && String(r[k] || '').trim().toLowerCase().includes('fail'); }).length;
-                let biasFail = regRows.filter(r => { let k = Object.keys(r).find(key => key.toLowerCase().includes('bias')); return k && String(r[k] || '').trim().toLowerCase().includes('fail'); }).length;
-                let tempFail = regRows.filter(r => { let k = Object.keys(r).find(key => key.toLowerCase().includes('temp')); return k && String(r[k] || '').trim().toLowerCase().includes('fail'); }).length;
-                let voltFail = regRows.filter(r => { let k = Object.keys(r).find(key => key.toLowerCase().includes('volt')); return k && String(r[k] || '').trim().toLowerCase().includes('fail'); }).length;
-                let gaspFail = regRows.filter(r => { let k = Object.keys(r).find(key => key.toLowerCase().includes('dying') || key.toLowerCase().includes('gasp')); return k && String(r[k] || '').trim().toLowerCase().includes('fail'); }).length;
+                let rxFail = regRows.filter(r => isParamFail(r, rxRegex)).length;
+                let txFail = regRows.filter(r => isParamFail(r, txRegex)).length;
+                let biasFail = regRows.filter(r => isParamFail(r, biasRegex)).length;
+                let tempFail = regRows.filter(r => isParamFail(r, tempRegex)).length;
+                let voltFail = regRows.filter(r => isParamFail(r, voltRegex)).length;
+                let gaspFail = regRows.filter(r => isParamFail(r, gaspRegex)).length;
                 
                 let knownFails = rxFail + txFail + biasFail + tempFail + voltFail + gaspFail;
                 let unknownCount = failed - knownFails;
@@ -1326,12 +1333,14 @@
                 }
             });
 
-            let rxFail = data.filter(r => { let k = Object.keys(r).find(key => key.toLowerCase().includes('rx')); return k && String(r[k] || '').trim().toLowerCase().includes('fail'); }).length;
-            let txFail = data.filter(r => { let k = Object.keys(r).find(key => key.toLowerCase().includes('tx')); return k && String(r[k] || '').trim().toLowerCase().includes('fail'); }).length;
-            let biasFail = data.filter(r => { let k = Object.keys(r).find(key => key.toLowerCase().includes('bias')); return k && String(r[k] || '').trim().toLowerCase().includes('fail'); }).length;
-            let tempFail = data.filter(r => { let k = Object.keys(r).find(key => key.toLowerCase().includes('temp')); return k && String(r[k] || '').trim().toLowerCase().includes('fail'); }).length;
-            let voltFail = data.filter(r => { let k = Object.keys(r).find(key => key.toLowerCase().includes('volt')); return k && String(r[k] || '').trim().toLowerCase().includes('fail'); }).length;
-            let gaspFail = data.filter(r => { let k = Object.keys(r).find(key => key.toLowerCase().includes('dying') || key.toLowerCase().includes('gasp')); return k && String(r[k] || '').trim().toLowerCase().includes('fail'); }).length;
+            const rxRegex = /rx/i, txRegex = /tx/i, biasRegex = /bias/i, tempRegex = /temp/i, voltRegex = /volt/i, gaspRegex = /gasp|dying/i;
+
+            let rxFail = data.filter(r => isParamFail(r, rxRegex)).length;
+            let txFail = data.filter(r => isParamFail(r, txRegex)).length;
+            let biasFail = data.filter(r => isParamFail(r, biasRegex)).length;
+            let tempFail = data.filter(r => isParamFail(r, tempRegex)).length;
+            let voltFail = data.filter(r => isParamFail(r, voltRegex)).length;
+            let gaspFail = data.filter(r => isParamFail(r, gaspRegex)).length;
 
             let totalPassed = data.filter(r => isStrictPass(r)).length;
             let totalFailed = data.length - totalPassed;
