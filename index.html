@@ -912,7 +912,7 @@
 
         function isStrictPass(row) {
             let rawArr = row['_rawArray'] || [];
-            let overallVal = String(rawArr[2] || '').trim().toLowerCase(); // Column C (Overall Pass/Fail)
+            let overallVal = String(rawArr[2] || '').trim().toLowerCase(); // Column C
             if (overallVal === 'fail' || overallVal.includes('fail')) return false;
             if (overallVal === 'pass' || overallVal.includes('pass')) return true;
 
@@ -925,14 +925,20 @@
 
         function getDeviceName(row) {
             let rawArr = row['_rawArray'] || [];
-            let serial = String(rawArr[1] || '').trim().toUpperCase(); // Column B (ONU Serial)
+            // Column S (Index 18) သို့မဟုတ် Header နာမည် 'Device Name' / 'Device' တို့မှ တိုက်ရိုက်ဖတ်မည်
+            let devName = String(rawArr[18] || row['Device Name'] || row['Device'] || '').trim().toUpperCase();
+            if (devName && !devName.toLowerCase().includes('name') && devName !== '-') {
+                return devName;
+            }
+            // Fallback အနေဖြင့် Column B ၏ ရှေ့ဆုံးစာလုံးများကို ယူမည်
+            let serial = String(rawArr[1] || '').trim().toUpperCase();
             if (serial.startsWith('FFO')) return 'FFO';
             if (serial.startsWith('FFG')) return 'FFG';
             if (serial.startsWith('SCP')) return 'SCP';
             if (serial.startsWith('FFA')) return 'FFA';
             if (serial.startsWith('BFFA')) return 'BFFA';
             if (serial.length >= 3) return serial.substring(0, 3);
-            return 'UNKNOWN';
+            return 'FFA';
         }
 
         function getRowRegion(r) {
@@ -1064,7 +1070,6 @@
             });
         }
 
-        // MATRIX TABLE: ROWS = DEVICE NAMES, COLUMNS = PARAMETERS WITH UNKNOWN & BOLD
         function renderSummaryTables(data) {
             let deviceStats = {};
             let defaultModels = ['FFO', 'FFG', 'SCP', 'FFA', 'BFFA'];
@@ -1080,11 +1085,11 @@
                         deviceStats[dev] = { rx: 0, tx: 0, temp: 0, bias: 0, volt: 0, unknown: 0, totalFail: 0 };
                     }
 
-                    let isRx = checkParamFailIndex(r, 4);   // Col E
-                    let isTx = checkParamFailIndex(r, 6);   // Col G
-                    let isVolt = checkParamFailIndex(r, 8); // Col I
-                    let isBias = checkParamFailIndex(r, 10);// Col K
-                    let isTemp = checkParamFailIndex(r, 12);// Col M
+                    let isRx = checkParamFailIndex(r, 4);
+                    let isTx = checkParamFailIndex(r, 6);
+                    let isVolt = checkParamFailIndex(r, 8);
+                    let isBias = checkParamFailIndex(r, 10);
+                    let isTemp = checkParamFailIndex(r, 12);
 
                     let matched = false;
                     if (isRx) { deviceStats[dev].rx++; matched = true; }
@@ -1375,7 +1380,7 @@
                                 <span class="text-slate-500">TEMP:</span>
                                 <span class="px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded font-black">${tempFail}</span>
                             </div>
-                            <div class="bg-white p-2.5 rounded-lg border border-slate-200 flex justify-between items-center">
+                            <div class="bg-white p-3.5 rounded-lg border border-slate-200 flex justify-between items-center">
                                 <span class="text-slate-500">UNKNOWN:</span>
                                 <span class="px-2 py-0.5 bg-indigo-50 text-indigo-700 rounded font-black">${gaspFail}</span>
                             </div>
