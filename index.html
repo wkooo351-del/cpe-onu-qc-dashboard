@@ -204,7 +204,7 @@
                 if (!text.startsWith('/*O_o*/')) return [];
                 const json = JSON.parse(text.substring(47, text.length - 2));
                 
-                const rows = json.table.rows.map(r => r.c.map(cell => cell ? (cell.v !== null ? cell.v : '') : ''));
+                const rows = json.table.rows.map(r => r.c ? r.c.map(cell => cell ? (cell.v !== null ? cell.v : '') : '') : []);
                 if (rows.length === 0) return [];
 
                 const headers = rows[0].map(h => String(h).trim());
@@ -213,7 +213,8 @@
                 return dataRows.map(row => {
                     let obj = {};
                     headers.forEach((h, idx) => {
-                        obj[h || `col_${idx}`] = row[idx];
+                        let keyName = h || `col_${idx}`;
+                        obj[keyName] = row[idx];
                         obj[`col_${idx}`] = row[idx];
                     });
                     return obj;
@@ -226,8 +227,9 @@
 
         function parseLocalDate(dateRaw) {
             if (!dateRaw && dateRaw !== 0) return "";
-            if (typeof dateRaw === 'string' && dateRaw.startsWith('Date(')) {
-                let parts = dateRaw.match(/\d+/g);
+            let str = String(dateRaw).trim();
+            if (str.startsWith('Date(')) {
+                let parts = str.match(/\d+/g);
                 if (parts && parts.length >= 3) {
                     let y = parts[0];
                     let m = String(parseInt(parts[1]) + 1).padStart(2, '0');
@@ -235,10 +237,9 @@
                     return `${y}-${m}-${d}`;
                 }
             }
-            let str = String(dateRaw).trim();
             if (/^\d{4}-\d{2}-\d{2}/.test(str)) return str.substring(0, 10);
             
-            // Handle MM/DD/YYYY format from Sheets Time column (e.g., 10/17/2026 13:56)
+            // Handle MM/DD/YYYY format from Sheets (e.g. 10/17/2026 13:56)
             if (str.includes('/')) {
                 let parts = str.split(' ')[0].split('/');
                 if (parts.length === 3) {
@@ -840,18 +841,27 @@
             }, 100);
         }
 
-        // Helper to check strictly if status is PASS
+        // Robust Strict Pass Matcher (Check C-Column or Overall Pass/ Fail Column)
         function isStrictPass(row) {
-            let st = String(row['Overall Pass/ Fail'] || row['Overall Pass/Fail'] || row['Status'] || row['Pass/Fail'] || row['col_2'] || row['col_10'] || '').trim().toLowerCase();
-            return st === 'pass';
+            let keys = Object.keys(row);
+            for (let k of keys) {
+                if (k.toLowerCase().includes('overall') || k.toLowerCase().includes('pass/fail') || k === 'col_2' || k === 'col_10') {
+                    let val = String(row[k] || '').trim().toLowerCase();
+                    if (val.includes('pass')) return true;
+                }
+            }
+            return false;
         }
 
-        // Flexible Region Extractor for Row
+        // Flexible Region Extractor (e.g. OVF-Provision-HGAO, OVF-Provision-ENUO)
         function getRowRegion(r) {
-            let val = String(r['Olt Hostname'] || r['OLT Hostname'] || r['OLT Name'] || r['Region'] || r['Regional'] || r['col_0'] || r['col_1'] || '').toUpperCase();
-            if (val.includes("HGAO")) return "HGAO";
-            if (val.includes("ENUO")) return "ENUO";
-            if (val.includes("MDY")) return "MDY";
+            let keys = Object.keys(r);
+            for (let k of keys) {
+                let val = String(r[k] || '').toUpperCase();
+                if (val.includes("HGAO")) return "HGAO";
+                if (val.includes("ENUO")) return "ENUO";
+                if (val.includes("MDY")) return "MDY";
+            }
             return "UNKNOWN";
         }
 
@@ -881,10 +891,10 @@
                 data = filteredByPeriod.filter(r => getRowRegion(r) === currentOnuRegion);
             }
 
-            // RULE: Strict Pass vs Fail (Unknown = Fail)
+            // Strict Pass vs Fail Rule (Unknown = Fail)
             let total = data.length;
             let passed = data.filter(r => isStrictPass(r)).length;
-            let failed = total - passed; // All non-pass (including Unknown) are counted as Failed
+            let failed = total - passed;
 
             let passRate = total > 0 ? ((passed / total) * 100) : 0;
             let failRate = total > 0 ? ((failed / total) * 100) : 0;
@@ -908,7 +918,6 @@
                 targetRegions = [currentOnuRegion];
             }
 
-            // --- 4-Week Period Pass/Fail Rate Comparison Breakdown Calculation ---
             let weekRanges = [
                 { name: "Week 1 (1 - 7)", start: 1, end: 7 },
                 { name: "Week 2 (8 - 14)", start: 8, end: 14 },
@@ -918,7 +927,6 @@
 
             let weeklyCompHtml = "";
             let prevPassRate = null;
-
             let weekTrendCardsHtml = "";
 
             weekRanges.forEach((wk, idx) => {
@@ -935,7 +943,7 @@
 
                 let totalWk = wkRows.length;
                 let passWk = wkRows.filter(r => isStrictPass(r)).length;
-                let failWk = totalWk - passWk; // Unknowns treated as Failed
+                let failWk = totalWk - passWk;
                 let pRate = totalWk > 0 ? ((passWk / totalWk) * 100) : 0;
                 let fRate = totalWk > 0 ? ((failWk / totalWk) * 100) : 0;
 
@@ -987,9 +995,7 @@
                 `;
             });
 
-            // --- Regional Breakdown HTML ---
             let html = `
-                <!-- Week by Week Inspection Performance & Trends Card -->
                 <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4 font-bold">
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-100 pb-3 gap-2">
                         <div>
@@ -1033,18 +1039,27 @@
 
                 let regTotal = regRows.length;
                 let passed = regRows.filter(r => isStrictPass(r)).length;
-                let failed = regTotal - passed; // Unknown included as Failed
+                let failed = regTotal - passed;
                 let passRate = regTotal > 0 ? ((passed / regTotal) * 100).toFixed(1) : "0.0";
                 let failRate = regTotal > 0 ? ((failed / regTotal) * 100).toFixed(1) : "0.0";
 
-                // Failure reasons breakdown
-                let rxFail = regRows.filter(r => String(r['Rx Pass/Fail'] || r['Rx Pass/ Fail'] || '').trim().toLowerCase() === 'fail').length;
-                let biasFail = regRows.filter(r => String(r['Bias Pass/Fail'] || r['Bias Pass/ Fail'] || '').trim().toLowerCase() === 'fail').length;
-                let tempFail = regRows.filter(r => String(r['Temp Pass/Fail'] || r['Temp Pass/ Fail'] || r['Temp Pass/Fail'] || '').trim().toLowerCase() === 'fail').length;
-                let unknownCount = regRows.filter(r => {
-                    let st = String(r['Overall Pass/ Fail'] || r['Overall Pass/Fail'] || r['Status'] || r['Pass/Fail'] || r['Temp Pass/Fail'] || r['col_2'] || '').trim().toLowerCase();
-                    return st !== 'pass' && st !== 'fail' && st !== '';
+                let rxFail = regRows.filter(r => {
+                    let k = Object.keys(r).find(key => key.toLowerCase().includes('rx pass'));
+                    return k && String(r[k] || '').trim().toLowerCase().includes('fail');
                 }).length;
+
+                let biasFail = regRows.filter(r => {
+                    let k = Object.keys(r).find(key => key.toLowerCase().includes('bias pass'));
+                    return k && String(r[k] || '').trim().toLowerCase().includes('fail');
+                }).length;
+
+                let tempFail = regRows.filter(r => {
+                    let k = Object.keys(r).find(key => key.toLowerCase().includes('temp pass'));
+                    return k && String(r[k] || '').trim().toLowerCase().includes('fail');
+                }).length;
+
+                let unknownCount = regRows.filter(r => !isStrictPass(r) && regTotal > 0).length - (rxFail + biasFail + tempFail);
+                if (unknownCount < 0) unknownCount = regTotal - passed;
 
                 let badgeColor = regShort === 'HGAO' ? 'bg-amber-500' : (regShort === 'ENUO' ? 'bg-blue-600' : 'bg-emerald-600');
 
@@ -1073,8 +1088,8 @@
                                 <span class="px-2 py-1 bg-emerald-50 text-emerald-700 rounded font-black">${tempFail} units</span>
                             </div>
                             <div class="bg-white p-3 rounded-lg border border-slate-200 flex justify-between items-center">
-                                <span class="text-slate-500">Unknown (Counted Fail):</span>
-                                <span class="px-2 py-1 bg-amber-50 text-amber-700 rounded font-black">${unknownCount} units</span>
+                                <span class="text-slate-500">Unknown / Other Fail:</span>
+                                <span class="px-2 py-1 bg-amber-50 text-amber-700 rounded font-black">${unknownCount < 0 ? 0 : unknownCount} units</span>
                             </div>
                         </div>
                     </div>
@@ -1094,7 +1109,7 @@
                 let tot = rData.length;
                 let pas = rData.filter(r => isStrictPass(r)).length;
                 passedArr.push(pas);
-                failedArr.push(tot - pas); // Unknown = Fail
+                failedArr.push(tot - pas);
             });
 
             if (oltChartInstance) oltChartInstance.destroy();
@@ -1118,13 +1133,24 @@
                 }
             });
 
-            let rxFail = data.filter(r => String(r['Rx Pass/Fail'] || r['Rx Pass/ Fail'] || '').trim().toLowerCase() === 'fail').length;
-            let biasFail = data.filter(r => String(r['Bias Pass/Fail'] || r['Bias Pass/ Fail'] || '').trim().toLowerCase() === 'fail').length;
-            let tempFail = data.filter(r => String(r['Temp Pass/Fail'] || r['Temp Pass/ Fail'] || '').trim().toLowerCase() === 'fail').length;
-            let unknownFail = data.filter(r => {
-                let st = String(r['Overall Pass/ Fail'] || r['Overall Pass/Fail'] || r['Status'] || r['Pass/Fail'] || r['Temp Pass/Fail'] || r['col_2'] || '').trim().toLowerCase();
-                return st !== 'pass' && st !== 'fail' && st !== '';
+            let rxFail = data.filter(r => {
+                let k = Object.keys(r).find(key => key.toLowerCase().includes('rx pass'));
+                return k && String(r[k] || '').trim().toLowerCase().includes('fail');
             }).length;
+
+            let biasFail = data.filter(r => {
+                let k = Object.keys(r).find(key => key.toLowerCase().includes('bias pass'));
+                return k && String(r[k] || '').trim().toLowerCase().includes('fail');
+            }).length;
+
+            let tempFail = data.filter(r => {
+                let k = Object.keys(r).find(key => key.toLowerCase().includes('temp pass'));
+                return k && String(r[k] || '').trim().toLowerCase().includes('fail');
+            }).length;
+
+            let totalPassed = data.filter(r => isStrictPass(r)).length;
+            let unknownFail = data.length - totalPassed - (rxFail + biasFail + tempFail);
+            if (unknownFail < 0) unknownFail = 0;
 
             if (failureChartInstance) failureChartInstance.destroy();
             failureChartInstance = new Chart(document.getElementById('failureChart'), {
