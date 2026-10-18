@@ -125,8 +125,8 @@
                 </div>
             </div>
 
-            <!-- Top 4 KPI Cards -->
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <!-- Top 5 KPI Cards (Added Fail Rate) -->
+            <div class="grid grid-cols-2 sm:grid-cols-5 gap-4">
                 <div class="bg-white p-5 rounded-xl shadow-sm border-t-4 border-slate-400">
                     <p class="text-xs font-bold text-slate-500 uppercase">TOTAL TESTED</p>
                     <p id="kpi-total" class="mt-2 text-3xl font-black text-slate-800">0</p>
@@ -143,6 +143,10 @@
                     <p class="text-xs font-bold text-slate-500 uppercase">PASS RATE</p>
                     <p id="kpi-pass-rate" class="mt-2 text-3xl font-black text-blue-600">0.00%</p>
                 </div>
+                <div class="bg-white p-5 rounded-xl shadow-sm border-t-4 border-amber-500">
+                    <p class="text-xs font-bold text-slate-500 uppercase">FAIL RATE</p>
+                    <p id="kpi-fail-rate" class="mt-2 text-3xl font-black text-amber-600">0.00%</p>
+                </div>
             </div>
 
             <!-- 2 Main Charts -->
@@ -157,7 +161,7 @@
                 </div>
             </div>
 
-            <!-- Device Model vs Parameter Failure Matrix Table (UPDATED ROW & COLUMN WITH BOLD & SOFT COLORS) -->
+            <!-- Device Model vs Parameter Failure Matrix Table (UPDATED WITH UNKNOWN INSTEAD OF OTHER) -->
             <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
                 <h3 class="text-base font-black text-slate-900">Inspection Parameters Failure Summary (Device-wise Matrix)</h3>
                 <div class="overflow-x-auto rounded-xl border border-slate-300">
@@ -170,7 +174,7 @@
                                 <th class="p-3 border border-slate-300 text-center text-emerald-900 bg-emerald-50">Temperature</th>
                                 <th class="p-3 border border-slate-300 text-center text-purple-900 bg-purple-50">Bias Current</th>
                                 <th class="p-3 border border-slate-300 text-center text-pink-900 bg-pink-50">Voltage</th>
-                                <th class="p-3 border border-slate-300 text-center text-amber-900 bg-amber-50">Other / Unspecified</th>
+                                <th class="p-3 border border-slate-300 text-center text-amber-900 bg-amber-50">Unknown</th>
                                 <th class="p-3 border border-slate-300 text-center text-slate-900 bg-slate-200">TOTAL FAILS</th>
                             </tr>
                         </thead>
@@ -1017,11 +1021,13 @@
             let failed = total - passed;
 
             let passRate = total > 0 ? ((passed / total) * 100) : 0;
+            let failRate = total > 0 ? ((failed / total) * 100) : 0;
 
             document.getElementById('kpi-total').innerText = total.toLocaleString();
             document.getElementById('kpi-passed').innerText = passed.toLocaleString();
             document.getElementById('kpi-failed').innerText = failed.toLocaleString();
             document.getElementById('kpi-pass-rate').innerText = passRate.toFixed(2) + '%';
+            document.getElementById('kpi-fail-rate').innerText = failRate.toFixed(2) + '%';
 
             document.getElementById('chart-comparison-title').innerText = `${testTitleText} - Pass vs Fail & Total Comparison`;
 
@@ -1072,21 +1078,21 @@
             let tempFail = data.filter(r => checkParamFailExact(r, 'temperature')).length;
             let txFail = data.filter(r => checkParamFailExact(r, 'tx')).length;
             let voltFail = data.filter(r => checkParamFailExact(r, 'voltage')).length;
-            let otherFail = data.filter(r => checkParamFailExact(r, 'gasp')).length;
+            let unknownFail = data.filter(r => checkParamFailExact(r, 'gasp')).length;
 
-            let knownFails = rxFail + biasFail + tempFail + txFail + voltFail + otherFail;
+            let knownFails = rxFail + biasFail + tempFail + txFail + voltFail + unknownFail;
             let totalFailed = data.length - data.filter(r => isStrictPass(r)).length;
             if (totalFailed > knownFails) {
-                otherFail += (totalFailed - knownFails);
+                unknownFail += (totalFailed - knownFails);
             }
 
             if (failureChartInstance) failureChartInstance.destroy();
             failureChartInstance = new Chart(document.getElementById('failureChart'), {
                 type: 'doughnut',
                 data: {
-                    labels: ['Rx Power', 'Bias Current', 'Temperature', 'Tx Power', 'Voltage', 'Other / Unspecified'],
+                    labels: ['Rx Power', 'Bias Current', 'Temperature', 'Tx Power', 'Voltage', 'Unknown'],
                     datasets: [{ 
-                        data: [rxFail, biasFail, tempFail, txFail, voltFail, otherFail], 
+                        data: [rxFail, biasFail, tempFail, txFail, voltFail, unknownFail], 
                         backgroundColor: ['#60A5FA', '#818CF8', '#10B981', '#F87171', '#FBBF24', '#C084FC'] 
                     }]
                 },
@@ -1098,21 +1104,20 @@
             });
         }
 
-        // MATRIX TABLE: ROWS = DEVICE NAMES, COLUMNS = PARAMETERS WITH BOLD & SOFT COLORS
+        // MATRIX TABLE: ROWS = DEVICE NAMES, COLUMNS = PARAMETERS WITH UNKNOWN & BOLD
         function renderSummaryTables(data) {
             let deviceStats = {};
             let defaultModels = ['FFO', 'FFG', 'SCP', 'FFA', 'BFFA'];
 
-            // Initialize default models
             defaultModels.forEach(m => {
-                deviceStats[m] = { rx: 0, tx: 0, temp: 0, bias: 0, volt: 0, other: 0, totalFail: 0 };
+                deviceStats[m] = { rx: 0, tx: 0, temp: 0, bias: 0, volt: 0, unknown: 0, totalFail: 0 };
             });
 
             data.forEach(r => {
                 if (!isStrictPass(r)) {
                     let dev = getDeviceName(r);
                     if (!deviceStats[dev]) {
-                        deviceStats[dev] = { rx: 0, tx: 0, temp: 0, bias: 0, volt: 0, other: 0, totalFail: 0 };
+                        deviceStats[dev] = { rx: 0, tx: 0, temp: 0, bias: 0, volt: 0, unknown: 0, totalFail: 0 };
                     }
 
                     let isRx = checkParamFailExact(r, 'rx');
@@ -1129,7 +1134,7 @@
                     if (isVolt) { deviceStats[dev].volt++; matched = true; }
 
                     if (!matched) {
-                        deviceStats[dev].other++;
+                        deviceStats[dev].unknown++;
                     }
                     deviceStats[dev].totalFail++;
                 }
@@ -1137,20 +1142,20 @@
 
             let matrixTbody = document.getElementById('param-summary-tbody');
             let matrixRowsHtml = "";
-            let colTotals = { rx: 0, tx: 0, temp: 0, bias: 0, volt: 0, other: 0, totalFail: 0 };
+            let colTotals = { rx: 0, tx: 0, temp: 0, bias: 0, volt: 0, unknown: 0, totalFail: 0 };
 
             let allDeviceKeys = Object.keys(deviceStats).sort();
 
             allDeviceKeys.forEach(dev => {
                 let stat = deviceStats[dev];
-                if (stat.totalFail === 0 && !defaultModels.includes(dev)) return; // skip empty dynamic models if any
+                if (stat.totalFail === 0 && !defaultModels.includes(dev)) return;
 
                 colTotals.rx += stat.rx;
                 colTotals.tx += stat.tx;
                 colTotals.temp += stat.temp;
                 colTotals.bias += stat.bias;
                 colTotals.volt += stat.volt;
-                colTotals.other += stat.other;
+                colTotals.unknown += stat.unknown;
                 colTotals.totalFail += stat.totalFail;
 
                 matrixRowsHtml += `
@@ -1161,13 +1166,12 @@
                         <td class="p-3 border border-slate-200 text-center font-bold text-emerald-700 bg-emerald-50/40">${stat.temp > 0 ? stat.temp.toLocaleString() : '-'}</td>
                         <td class="p-3 border border-slate-200 text-center font-bold text-purple-700 bg-purple-50/40">${stat.bias > 0 ? stat.bias.toLocaleString() : '-'}</td>
                         <td class="p-3 border border-slate-200 text-center font-bold text-pink-700 bg-pink-50/40">${stat.volt > 0 ? stat.volt.toLocaleString() : '-'}</td>
-                        <td class="p-3 border border-slate-200 text-center font-bold text-amber-700 bg-amber-50/40">${stat.other > 0 ? stat.other.toLocaleString() : '-'}</td>
+                        <td class="p-3 border border-slate-200 text-center font-bold text-amber-700 bg-amber-50/40">${stat.unknown > 0 ? stat.unknown.toLocaleString() : '-'}</td>
                         <td class="p-3 border border-slate-200 text-center font-black text-rose-600 bg-slate-100">${stat.totalFail > 0 ? stat.totalFail.toLocaleString() : '-'}</td>
                     </tr>
                 `;
             });
 
-            // TOTAL ROW
             matrixRowsHtml += `
                 <tr class="bg-slate-200 font-black text-slate-900 border-t-2 border-slate-300">
                     <td class="p-3 border border-slate-300 uppercase">Total Fails</td>
@@ -1176,13 +1180,12 @@
                     <td class="p-3 border border-slate-300 text-center text-emerald-900 bg-emerald-100">${colTotals.temp.toLocaleString()}</td>
                     <td class="p-3 border border-slate-300 text-center text-purple-900 bg-purple-100">${colTotals.bias.toLocaleString()}</td>
                     <td class="p-3 border border-slate-300 text-center text-pink-900 bg-pink-100">${colTotals.volt.toLocaleString()}</td>
-                    <td class="p-3 border border-slate-300 text-center text-amber-900 bg-amber-100">${colTotals.other.toLocaleString()}</td>
+                    <td class="p-3 border border-slate-300 text-center text-amber-900 bg-amber-100">${colTotals.unknown.toLocaleString()}</td>
                     <td class="p-3 border border-slate-300 text-center text-rose-700 text-sm bg-slate-300">${colTotals.totalFail.toLocaleString()}</td>
                 </tr>
             `;
             matrixTbody.innerHTML = matrixRowsHtml;
 
-            // RIGHT TABLE: Device Models Performance & Failures
             let deviceTotals = {};
             defaultModels.forEach(m => { deviceTotals[m] = { total: 0, passed: 0, failed: 0 }; });
 
@@ -1411,7 +1414,7 @@
                                 <span class="px-2 py-0.5 bg-pink-50 text-pink-700 rounded font-black">${voltFail}</span>
                             </div>
                             <div class="bg-white p-2.5 rounded-lg border border-slate-200 flex justify-between items-center">
-                                <span class="text-slate-500">GASP:</span>
+                                <span class="text-slate-500">UNKNOWN:</span>
                                 <span class="px-2 py-0.5 bg-indigo-50 text-indigo-700 rounded font-black">${gaspFail}</span>
                             </div>
                         </div>
