@@ -154,6 +154,9 @@
         const MDY_SHEET_ID = "1XrjpVgSeu1lDpyNNyuJdjYji8MxnoQWuo3bwwPWAs9Q";
         const DAILY_TARGET = 150;
 
+        // Excluded Column Indices (D=3, F=5, H=7, J=9, L=11, N=13, P=15, Q=16, R=17)
+        const EXCLUDED_COL_INDICES = [3, 5, 7, 9, 11, 13, 15, 16, 17];
+
         let staffGroupedData = {};
         let inboundLiveData = {};
         let activeInboundWeek = 'Week 1 (1 - 7)';
@@ -220,6 +223,7 @@
                         obj[keyName] = row[idx];
                         obj[`col_${idx}`] = row[idx];
                     });
+                    obj['_rawArray'] = row;
                     return obj;
                 });
             } catch (err) {
@@ -842,31 +846,49 @@
             }, 100);
         }
 
+        // --- FIXED STRICT PASS DETECTOR ---
         function isStrictPass(row) {
+            let rawArr = row['_rawArray'] || [];
+            
+            // Check overall status across allowed columns
+            for (let idx = 0; idx < rawArr.length; idx++) {
+                if (EXCLUDED_COL_INDICES.includes(idx)) continue; // Skip D, F, H, J, L, N, P, Q, R
+                let val = String(rawArr[idx] || '').trim().toLowerCase();
+                if (val === 'pass' || val.includes('pass')) return true;
+            }
+
+            // Fallback: Check key-values in row object if _rawArray not found
             let keys = Object.keys(row);
             for (let k of keys) {
+                if (k === '_rawArray') continue;
                 let kl = k.toLowerCase();
-                // Exclude columns D, F, H, J, L, N, P, Q, R from calculation
                 if (['col_3', 'col_5', 'col_7', 'col_9', 'col_11', 'col_13', 'col_15', 'col_16', 'col_17'].includes(kl)) continue;
-                if (kl.includes('overall') || kl.includes('pass/fail')) {
-                    let val = String(row[k] || '').trim().toLowerCase();
-                    if (val.includes('pass')) return true;
-                }
+                
+                let val = String(row[k] || '').trim().toLowerCase();
+                if (val === 'pass' || val.includes('pass')) return true;
             }
             return false;
         }
 
+        // --- FIXED DEVICE NAME EXTRACTOR (FROM COLUMN S / INDEX 18) ---
         function getDeviceName(row) {
-            // Get Device Name explicitly from Column S (index 18)
-            let val = String(row['col_18'] || row['Device'] || row['Model'] || '').trim();
-            if (val && !val.toLowerCase().includes('name') && val !== '-') return val;
+            let rawArr = row['_rawArray'] || [];
             
-            let keys = Object.keys(row);
-            if (keys.length > 18 && row['col_18'] !== undefined) {
-                let sVal = String(row['col_18']).trim();
-                if (sVal) return sVal;
+            // Direct fetch from Column S (Index 18)
+            if (rawArr.length > 18 && rawArr[18] !== undefined && rawArr[18] !== null) {
+                let sVal = String(rawArr[18]).trim();
+                if (sVal && !sVal.toLowerCase().includes('name') && sVal !== '-') return sVal;
             }
-            return String(row['col_18'] || row['col_3'] || 'FFA').trim() || 'FFA';
+
+            if (row['col_18'] !== undefined) {
+                let sVal = String(row['col_18']).trim();
+                if (sVal && !sVal.toLowerCase().includes('name') && sVal !== '-') return sVal;
+            }
+
+            let fallback = String(row['Device'] || row['Model'] || row['CPE Type'] || '').trim();
+            if (fallback && !fallback.toLowerCase().includes('name') && fallback !== '-') return fallback;
+
+            return 'UNKNOWN_DEVICE';
         }
 
         function getRowRegion(r) {
@@ -880,20 +902,29 @@
             return "UNKNOWN";
         }
 
+        // --- FIXED PARAMETER FAILURE CHECKER ---
         function checkParamFail(row, keywords) {
-            let keys = Object.keys(row);
-            for (let k of keys) {
-                let kl = k.toLowerCase();
-                // Exclude columns D, F, H, J, L, N, P, Q, R (col_3, col_5, col_7, col_9, col_11, col_13, col_15, col_16, col_17)
-                if (['col_3', 'col_5', 'col_7', 'col_9', 'col_11', 'col_13', 'col_15', 'col_16', 'col_17'].includes(kl)) continue;
-
-                let matchKeyword = keywords.some(kw => kl.includes(kw));
-                if (matchKeyword && (kl.includes('pass') || kl.includes('fail') || kl.includes('status'))) {
-                    let val = String(row[k] || '').trim().toLowerCase();
-                    if (val.includes('fail') || val === 'f' || val === 'no' || val === '0') return true;
+            let rawArr = row['_rawArray'] || [];
+            
+            for (let idx = 0; idx < rawArr.length; idx++) {
+                if (EXCLUDED_COL_INDICES.includes(idx)) continue; // Exclude D, F, H, J, L, N, P, Q, R
+                let cellVal = String(rawArr[idx] || '').trim().toLowerCase();
+                if (cellVal.includes('fail') || cellVal === 'f' || cellVal === 'no' || cellVal === '0') {
+                    // Check if header or field relates to parameter keyword
+                    let keys = Object.keys(row);
+                    for (let k of keys) {
+                        let kl = k.toLowerCase();
+                        if (keywords.some(kw => kl.includes(kw))) {
+                            let kVal = String(row[k] || '').trim().toLowerCase();
+                            if (kVal.includes('fail') || kVal === 'f' || kVal === 'no' || kVal === '0') return true;
+                        }
+                    }
                 }
             }
+
+            let keys = Object.keys(row);
             for (let k of keys) {
+                if (k === '_rawArray') continue;
                 let kl = k.toLowerCase();
                 if (['col_3', 'col_5', 'col_7', 'col_9', 'col_11', 'col_13', 'col_15', 'col_16', 'col_17'].includes(kl)) continue;
 
@@ -1039,7 +1070,6 @@
 
             let overallFailFormatted = `${totalFailCountAll.toLocaleString()} (${totalTestedCount > 0 ? ((totalFailCountAll / totalTestedCount) * 100).toFixed(1) : "0.0"}%)`;
             
-            // Parameter Sums for Table Footer
             deviceRowsHtml += `
                 <tr class="bg-slate-200 font-black text-slate-900 text-center border-t-2 border-slate-400">
                     <td class="p-3 border border-slate-300 text-left pl-4 uppercase">Total Sum</td>
