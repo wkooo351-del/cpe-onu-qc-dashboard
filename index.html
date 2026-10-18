@@ -237,6 +237,18 @@
             }
             let str = String(dateRaw).trim();
             if (/^\d{4}-\d{2}-\d{2}/.test(str)) return str.substring(0, 10);
+            
+            // Handle MM/DD/YYYY format from Sheets Time column (e.g., 10/17/2026 13:56)
+            if (str.includes('/')) {
+                let parts = str.split(' ')[0].split('/');
+                if (parts.length === 3) {
+                    let m = String(parts[0]).padStart(2, '0');
+                    let d = String(parts[1]).padStart(2, '0');
+                    let y = parts[2];
+                    return `${y}-${m}-${d}`;
+                }
+            }
+
             let parsed = new Date(dateRaw);
             if (!isNaN(parsed.getTime())) {
                 let y = parsed.getFullYear();
@@ -274,7 +286,7 @@
 
         function processStaffRows(rows) {
             rows.forEach(row => {
-                let dateRaw = row['Date'] || row['col_0'] || '';
+                let dateRaw = row['Date'] || row['Time'] || row['col_0'] || '';
                 let name = String(row['Name'] || row['Staff Name'] || row['col_1'] || '').trim();
                 let device = String(row['Device Name'] || row['col_2'] || '-').trim();
                 let jd = String(row['Daily (JD)'] || row['col_3'] || '-').trim();
@@ -331,7 +343,7 @@
             };
 
             rows.forEach(r => {
-                let dateStr = parseLocalDate(r['Date'] || r['col_0'] || '');
+                let dateStr = parseLocalDate(r['Date'] || r['Time'] || r['col_0'] || '');
                 if (!dateStr) return;
                 let dayNum = parseInt(dateStr.split('-')[2]) || 1;
 
@@ -344,7 +356,7 @@
                 let region = VALID_REGIONS.find(v => possibleRegion.includes(v));
                 if (!region) return;
 
-                let device = String(r['CPE Type'] || r['Device Name'] || r['Device'] || r['col_3'] || 'ECJ').trim().toUpperCase();
+                let device = String(r['CPE Type'] || r['Device Name'] || r['Devices Name'] || r['Device'] || r['col_3'] || 'ECJ').trim().toUpperCase();
                 if (device.toLowerCase().includes("name") || device === "-") device = "ECJ";
 
                 let qty = parseFloat(r['Qty'] || r['Quantity'] || r['Total'] || r['col_4'] || 1) || 1;
@@ -856,10 +868,10 @@
             // Period Filter
             let filteredByPeriod = rawData;
             if (currentTestType === 'daily') {
-                let dates = rawData.map(r => parseLocalDate(r['Date'] || r['col_0'])).filter(Boolean).sort();
+                let dates = rawData.map(r => parseLocalDate(r['Date'] || r['Time'] || r['col_0'])).filter(Boolean).sort();
                 let latestDate = dates[dates.length - 1];
                 if (latestDate) {
-                    filteredByPeriod = rawData.filter(r => parseLocalDate(r['Date'] || r['col_0']) === latestDate);
+                    filteredByPeriod = rawData.filter(r => parseLocalDate(r['Date'] || r['Time'] || r['col_0']) === latestDate);
                 }
             }
 
@@ -911,7 +923,7 @@
 
             weekRanges.forEach((wk, idx) => {
                 let wkRows = rawData.filter(r => {
-                    let dateStr = parseLocalDate(r['Date'] || r['col_0'] || '');
+                    let dateStr = parseLocalDate(r['Date'] || r['Time'] || r['col_0'] || '');
                     if (!dateStr) return false;
                     let dayNum = parseInt(dateStr.split('-')[2]) || 0;
                     let matchesRegion = true;
@@ -1028,9 +1040,9 @@
                 // Failure reasons breakdown
                 let rxFail = regRows.filter(r => String(r['Rx Pass/Fail'] || r['Rx Pass/ Fail'] || '').trim().toLowerCase() === 'fail').length;
                 let biasFail = regRows.filter(r => String(r['Bias Pass/Fail'] || r['Bias Pass/ Fail'] || '').trim().toLowerCase() === 'fail').length;
-                let tempFail = regRows.filter(r => String(r['Temp Pass/Fail'] || r['Temp Pass/ Fail'] || '').trim().toLowerCase() === 'fail').length;
+                let tempFail = regRows.filter(r => String(r['Temp Pass/Fail'] || r['Temp Pass/ Fail'] || r['Temp Pass/Fail'] || '').trim().toLowerCase() === 'fail').length;
                 let unknownCount = regRows.filter(r => {
-                    let st = String(r['Overall Pass/ Fail'] || r['Overall Pass/Fail'] || r['Status'] || r['Pass/Fail'] || r['col_2'] || '').trim().toLowerCase();
+                    let st = String(r['Overall Pass/ Fail'] || r['Overall Pass/Fail'] || r['Status'] || r['Pass/Fail'] || r['Temp Pass/Fail'] || r['col_2'] || '').trim().toLowerCase();
                     return st !== 'pass' && st !== 'fail' && st !== '';
                 }).length;
 
@@ -1110,7 +1122,7 @@
             let biasFail = data.filter(r => String(r['Bias Pass/Fail'] || r['Bias Pass/ Fail'] || '').trim().toLowerCase() === 'fail').length;
             let tempFail = data.filter(r => String(r['Temp Pass/Fail'] || r['Temp Pass/ Fail'] || '').trim().toLowerCase() === 'fail').length;
             let unknownFail = data.filter(r => {
-                let st = String(r['Overall Pass/ Fail'] || r['Overall Pass/Fail'] || r['Status'] || r['Pass/Fail'] || r['col_2'] || '').trim().toLowerCase();
+                let st = String(r['Overall Pass/ Fail'] || r['Overall Pass/Fail'] || r['Status'] || r['Pass/Fail'] || r['Temp Pass/Fail'] || r['col_2'] || '').trim().toLowerCase();
                 return st !== 'pass' && st !== 'fail' && st !== '';
             }).length;
 
