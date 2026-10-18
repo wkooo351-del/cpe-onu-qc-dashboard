@@ -846,7 +846,7 @@
             let keys = Object.keys(row);
             for (let k of keys) {
                 let kl = k.toLowerCase();
-                // Exclude columns D, F, H, J, L, N, P, Q, R from pass/fail consideration
+                // Exclude columns D, F, H, J, L, N, P, Q, R from calculation
                 if (['col_3', 'col_5', 'col_7', 'col_9', 'col_11', 'col_13', 'col_15', 'col_16', 'col_17'].includes(kl)) continue;
                 if (kl.includes('overall') || kl.includes('pass/fail')) {
                     let val = String(row[k] || '').trim().toLowerCase();
@@ -857,7 +857,7 @@
         }
 
         function getDeviceName(row) {
-            // Column S is index 18 (col_18) or explicitly search for device name in column S
+            // Get Device Name explicitly from Column S (index 18)
             let val = String(row['col_18'] || row['Device'] || row['Model'] || '').trim();
             if (val && !val.toLowerCase().includes('name') && val !== '-') return val;
             
@@ -931,7 +931,7 @@
 
             let total = data.length;
             let passed = data.filter(r => isStrictPass(r)).length;
-            let failed = total - passed; // Unknown is included in Fail
+            let failed = total - passed; // Unknown included in Fail
 
             let passRate = total > 0 ? ((passed / total) * 100) : 0;
             let failRate = total > 0 ? ((failed / total) * 100) : 0;
@@ -968,7 +968,7 @@
                 if (isPass) {
                     deviceStats[devName].pass += 1;
                 } else {
-                    deviceStats[devName].fail += 1; // Unknown included in fail
+                    deviceStats[devName].fail += 1;
 
                     let rxIsFail = checkParamFail(r, ['rx']);
                     let txIsFail = checkParamFail(r, ['tx']);
@@ -984,7 +984,6 @@
                     if (voltIsFail) deviceStats[devName].voltFail += 1;
                     if (gaspIsFail) deviceStats[devName].gaspFail += 1;
 
-                    // If failed but none of the 7 known parameters triggered, count as unknown fail
                     if (!rxIsFail && !txIsFail && !biasIsFail && !tempIsFail && !voltIsFail && !gaspIsFail) {
                         deviceStats[devName].unknownFail += 1;
                     }
@@ -1039,18 +1038,20 @@
             });
 
             let overallFailFormatted = `${totalFailCountAll.toLocaleString()} (${totalTestedCount > 0 ? ((totalFailCountAll / totalTestedCount) * 100).toFixed(1) : "0.0"}%)`;
+            
+            // Parameter Sums for Table Footer
             deviceRowsHtml += `
-                <tr class="bg-slate-100 font-black text-slate-900 text-center border-t-2 border-slate-400">
-                    <td class="p-3 border border-slate-300 text-left pl-4">Total</td>
-                    <td class="p-3 border border-slate-300">${totalSumRx}</td>
-                    <td class="p-3 border border-slate-300">${totalSumTx}</td>
-                    <td class="p-3 border border-slate-300">${totalSumBias}</td>
-                    <td class="p-3 border border-slate-300">${totalSumTemp}</td>
-                    <td class="p-3 border border-slate-300">${totalSumVolt}</td>
-                    <td class="p-3 border border-slate-300">${totalSumGasp}</td>
-                    <td class="p-3 border border-slate-300">${totalSumUnknown}</td>
-                    <td class="p-3 border border-slate-300">${totalTestedCount.toLocaleString()}</td>
-                    <td class="p-3 border border-slate-300">${overallFailFormatted}</td>
+                <tr class="bg-slate-200 font-black text-slate-900 text-center border-t-2 border-slate-400">
+                    <td class="p-3 border border-slate-300 text-left pl-4 uppercase">Total Sum</td>
+                    <td class="p-3 border border-slate-300 text-blue-700">${totalSumRx}</td>
+                    <td class="p-3 border border-slate-300 text-cyan-700">${totalSumTx}</td>
+                    <td class="p-3 border border-slate-300 text-purple-700">${totalSumBias}</td>
+                    <td class="p-3 border border-slate-300 text-emerald-700">${totalSumTemp}</td>
+                    <td class="p-3 border border-slate-300 text-pink-700">${totalSumVolt}</td>
+                    <td class="p-3 border border-slate-300 text-indigo-700">${totalSumGasp}</td>
+                    <td class="p-3 border border-slate-300 text-amber-700">${totalSumUnknown}</td>
+                    <td class="p-3 border border-slate-300 text-slate-900">${totalTestedCount.toLocaleString()}</td>
+                    <td class="p-3 border border-slate-300 text-rose-700">${overallFailFormatted}</td>
                 </tr>
             `;
 
@@ -1058,7 +1059,7 @@
                 <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-6 font-bold">
                     <div>
                         <h3 class='text-lg font-black text-slate-950'>Devices & 7 Parameters Failure Breakdown (${currentTestType.toUpperCase()})</h3>
-                        <p class='text-xs text-slate-500 font-bold'>Excluding D, F, H, J, L, N, P, Q, R columns | Unknown included in Fail</p>
+                        <p class='text-xs text-slate-500 font-bold'>Parameter Sum totals calculated across all active devices</p>
                     </div>
 
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
