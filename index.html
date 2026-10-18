@@ -855,21 +855,22 @@
 
         function getDeviceName(row) {
             let keys = Object.keys(row);
+            // ရှာဖွေမည့် Column နာမည်များကို တိကျစွာ သတ်မှတ်ပေးခြင်း
             for (let k of keys) {
                 let kl = k.toLowerCase();
-                if (kl === 'devices name' || kl === 'device name' || kl === 'cpe type' || kl === 'device' || kl === 'model') {
+                if (kl === 'device' || kl === 'device name' || kl === 'devices name' || kl === 'model' || kl === 'cpe type' || kl === 'onu type') {
                     let val = String(row[k] || '').trim();
-                    if (val && !val.toLowerCase().includes('name') && val !== '-') return val;
+                    if (val && !val.toLowerCase().includes('name') && val !== '-' && !val.startsWith('-')) return val;
                 }
             }
+            // အကယ်၍ Header တိတိကျကျမရှိပါက ပထမဆုံး Column များထဲမှ နံပါတ်မဟုတ်သော စာသားကို ရှာမည်
             for (let k of keys) {
-                let kl = k.toLowerCase();
-                if (kl.includes('device') || kl.includes('cpe') || kl.includes('model')) {
-                    let val = String(row[k] || '').trim();
-                    if (val && !val.toLowerCase().includes('name') && val !== '-') return val;
+                let val = String(row[k] || '').trim();
+                if (val && !val.startsWith('-') && isNaN(val) && !k.toLowerCase().includes('date') && !k.toLowerCase().includes('time')) {
+                    return val;
                 }
             }
-            return String(row['col_3'] || row['col_2'] || 'FFA').trim() || 'FFA';
+            return String(row['col_2'] || row['col_1'] || 'FFA').trim() || 'FFA';
         }
 
         function getRowRegion(r) {
