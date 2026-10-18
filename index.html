@@ -830,8 +830,17 @@
 
         // Helper to check strictly if status is PASS
         function isStrictPass(row) {
-            let st = String(row['Overall Pass/Fail'] || row['Status'] || row['Pass/Fail'] || row['col_10'] || '').trim().toLowerCase();
+            let st = String(row['Overall Pass/ Fail'] || row['Overall Pass/Fail'] || row['Status'] || row['Pass/Fail'] || row['col_2'] || row['col_10'] || '').trim().toLowerCase();
             return st === 'pass';
+        }
+
+        // Flexible Region Extractor for Row
+        function getRowRegion(r) {
+            let val = String(r['Olt Hostname'] || r['OLT Hostname'] || r['OLT Name'] || r['Region'] || r['Regional'] || r['col_0'] || r['col_1'] || '').toUpperCase();
+            if (val.includes("HGAO")) return "HGAO";
+            if (val.includes("ENUO")) return "ENUO";
+            if (val.includes("MDY")) return "MDY";
+            return "UNKNOWN";
         }
 
         function updateOnuDashboard() {
@@ -857,10 +866,7 @@
             // Regional Filter
             let data = filteredByPeriod;
             if (currentOnuRegion !== 'All Region') {
-                data = filteredByPeriod.filter(r => {
-                    let host = String(r['Olt Hostname'] || r['Region'] || r['col_1'] || '').toUpperCase();
-                    return host.includes(currentOnuRegion.toUpperCase());
-                });
+                data = filteredByPeriod.filter(r => getRowRegion(r) === currentOnuRegion);
             }
 
             // RULE: Strict Pass vs Fail (Unknown = Fail)
@@ -910,8 +916,7 @@
                     let dayNum = parseInt(dateStr.split('-')[2]) || 0;
                     let matchesRegion = true;
                     if (currentOnuRegion !== 'All Region') {
-                        let host = String(r['Olt Hostname'] || r['Region'] || r['col_1'] || '').toUpperCase();
-                        matchesRegion = host.includes(currentOnuRegion.toUpperCase());
+                        matchesRegion = getRowRegion(r) === currentOnuRegion;
                     }
                     return dayNum >= wk.start && dayNum <= wk.end && matchesRegion;
                 });
@@ -977,7 +982,6 @@
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-100 pb-3 gap-2">
                         <div>
                             <h3 class='text-lg font-black text-slate-950'>📈 Week-by-Week Pass/Fail Rate Trends & Comparison (${currentTestType.toUpperCase()})</h3>
-                            <p class='text-xs text-slate-500 font-bold'>တစ်ပတ်ချင်းစီ တိုးတက်မှု/ကျဆင်းမှု % နှင့် Pass/Fail Rate ယှဉ်ပြိုင်မှုများ (Unknown များကို Fail အဖြစ် ပေါင်းစပ်ထားသည်)</p>
                         </div>
                     </div>
 
@@ -1013,10 +1017,7 @@
             `;
 
             targetRegions.forEach(regShort => {
-                let regRows = rawData.filter(r => {
-                    let host = String(r['Olt Hostname'] || r['Region'] || r['col_1'] || '').toUpperCase();
-                    return host.includes(regShort.toUpperCase());
-                });
+                let regRows = rawData.filter(r => getRowRegion(r) === regShort);
 
                 let regTotal = regRows.length;
                 let passed = regRows.filter(r => isStrictPass(r)).length;
@@ -1025,11 +1026,11 @@
                 let failRate = regTotal > 0 ? ((failed / regTotal) * 100).toFixed(1) : "0.0";
 
                 // Failure reasons breakdown
-                let rxFail = regRows.filter(r => String(r['Rx Pass/Fail'] || '').trim().toLowerCase() === 'fail').length;
-                let biasFail = regRows.filter(r => String(r['Bias Pass/Fail'] || '').trim().toLowerCase() === 'fail').length;
-                let tempFail = regRows.filter(r => String(r['Temp Pass/Fail'] || '').trim().toLowerCase() === 'fail').length;
+                let rxFail = regRows.filter(r => String(r['Rx Pass/Fail'] || r['Rx Pass/ Fail'] || '').trim().toLowerCase() === 'fail').length;
+                let biasFail = regRows.filter(r => String(r['Bias Pass/Fail'] || r['Bias Pass/ Fail'] || '').trim().toLowerCase() === 'fail').length;
+                let tempFail = regRows.filter(r => String(r['Temp Pass/Fail'] || r['Temp Pass/ Fail'] || '').trim().toLowerCase() === 'fail').length;
                 let unknownCount = regRows.filter(r => {
-                    let st = String(r['Overall Pass/Fail'] || r['Status'] || r['Pass/Fail'] || r['col_10'] || '').trim().toLowerCase();
+                    let st = String(r['Overall Pass/ Fail'] || r['Overall Pass/Fail'] || r['Status'] || r['Pass/Fail'] || r['col_2'] || '').trim().toLowerCase();
                     return st !== 'pass' && st !== 'fail' && st !== '';
                 }).length;
 
@@ -1077,10 +1078,7 @@
             let passedArr = [], failedArr = [];
 
             regions.forEach(reg => {
-                let rData = data.filter(r => {
-                    let host = String(r['Olt Hostname'] || r['Region'] || r['col_1'] || '').toUpperCase();
-                    return host.includes(reg.toUpperCase());
-                });
+                let rData = data.filter(r => getRowRegion(r) === reg);
                 let tot = rData.length;
                 let pas = rData.filter(r => isStrictPass(r)).length;
                 passedArr.push(pas);
@@ -1108,11 +1106,11 @@
                 }
             });
 
-            let rxFail = data.filter(r => String(r['Rx Pass/Fail'] || '').trim().toLowerCase() === 'fail').length;
-            let biasFail = data.filter(r => String(r['Bias Pass/Fail'] || '').trim().toLowerCase() === 'fail').length;
-            let tempFail = data.filter(r => String(r['Temp Pass/Fail'] || '').trim().toLowerCase() === 'fail').length;
+            let rxFail = data.filter(r => String(r['Rx Pass/Fail'] || r['Rx Pass/ Fail'] || '').trim().toLowerCase() === 'fail').length;
+            let biasFail = data.filter(r => String(r['Bias Pass/Fail'] || r['Bias Pass/ Fail'] || '').trim().toLowerCase() === 'fail').length;
+            let tempFail = data.filter(r => String(r['Temp Pass/Fail'] || r['Temp Pass/ Fail'] || '').trim().toLowerCase() === 'fail').length;
             let unknownFail = data.filter(r => {
-                let st = String(r['Overall Pass/Fail'] || r['Status'] || r['Pass/Fail'] || r['col_10'] || '').trim().toLowerCase();
+                let st = String(r['Overall Pass/ Fail'] || r['Overall Pass/Fail'] || r['Status'] || r['Pass/Fail'] || r['col_2'] || '').trim().toLowerCase();
                 return st !== 'pass' && st !== 'fail' && st !== '';
             }).length;
 
