@@ -161,27 +161,37 @@
                 </div>
             </div>
 
-            <!-- Device Model vs Parameter Failure Matrix Table -->
+            <!-- Device Model vs Parameter Failure Matrix Table & Side-by-Side Chart -->
             <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
                 <h3 class="text-base font-black text-slate-900">Inspection Parameters Failure Summary (Device-wise Matrix)</h3>
-                <div class="overflow-x-auto rounded-xl border border-slate-300">
-                    <table class="w-full text-left border-collapse border border-slate-300 text-xs">
-                        <thead class="bg-slate-100 text-slate-800 uppercase font-black border-b border-slate-300">
-                            <tr>
-                                <th class="p-3 border border-slate-300 bg-slate-200 text-slate-900">DEVICE NAME</th>
-                                <th class="p-3 border border-slate-300 text-center text-blue-900 bg-blue-50">Rx Power</th>
-                                <th class="p-3 border border-slate-300 text-center text-indigo-900 bg-indigo-50">Tx Power</th>
-                                <th class="p-3 border border-slate-300 text-center text-emerald-900 bg-emerald-50">Temperature</th>
-                                <th class="p-3 border border-slate-300 text-center text-purple-900 bg-purple-50">Bias Current</th>
-                                <th class="p-3 border border-slate-300 text-center text-pink-900 bg-pink-50">Voltage</th>
-                                <th class="p-3 border border-slate-300 text-center text-amber-900 bg-amber-50">Unknown</th>
-                                <th class="p-3 border border-slate-300 text-center text-slate-900 bg-slate-200">TOTAL FAILS</th>
-                            </tr>
-                        </thead>
-                        <tbody id="param-summary-tbody" class="font-bold text-slate-800">
-                            <tr><td colspan="8" class="p-4 text-center text-slate-400">Loading...</td></tr>
-                        </tbody>
-                    </table>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+                    <!-- Table (Left 7 Cols) -->
+                    <div class="lg:col-span-7 overflow-x-auto rounded-xl border border-slate-300">
+                        <table class="w-full text-left border-collapse border border-slate-300 text-xs">
+                            <thead class="bg-slate-100 text-slate-800 uppercase font-black border-b border-slate-300">
+                                <tr>
+                                    <th class="p-2.5 border border-slate-300 bg-slate-200 text-slate-900">DEVICE</th>
+                                    <th class="p-2.5 border border-slate-300 text-center text-blue-900 bg-blue-50">Rx</th>
+                                    <th class="p-2.5 border border-slate-300 text-center text-indigo-900 bg-indigo-50">Tx</th>
+                                    <th class="p-2.5 border border-slate-300 text-center text-emerald-900 bg-emerald-50">Temp</th>
+                                    <th class="p-2.5 border border-slate-300 text-center text-purple-900 bg-purple-50">Bias</th>
+                                    <th class="p-2.5 border border-slate-300 text-center text-pink-900 bg-pink-50">Volt</th>
+                                    <th class="p-2.5 border border-slate-300 text-center text-amber-900 bg-amber-50">Unk</th>
+                                    <th class="p-2.5 border border-slate-300 text-center text-slate-900 bg-slate-200">TOTAL</th>
+                                </tr>
+                            </thead>
+                            <tbody id="param-summary-tbody" class="font-bold text-slate-800">
+                                <tr><td colspan="8" class="p-4 text-center text-slate-400">Loading...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Parameter Failures Bar Chart (Right 5 Cols) -->
+                    <div class="lg:col-span-5 p-4 rounded-xl border border-slate-200 bg-slate-50/50">
+                        <h4 class="text-xs font-black uppercase text-slate-700 mb-2 text-center">Parameter Failures Comparison Chart</h4>
+                        <div class="relative h-64"><canvas id="paramBarChart"></canvas></div>
+                    </div>
                 </div>
             </div>
 
@@ -230,7 +240,7 @@
         let inboundLiveData = {};
         let activeInboundWeek = 'Week 1 (1 - 7)';
         let onuData = { firstTest: [], secondTest: [], exchangeTest: [] };
-        let oltChartInstance = null, failureChartInstance = null, pieChartInstance = null, multiBarChartInstance = null, deviceModelChartInstance = null;
+        let oltChartInstance = null, failureChartInstance = null, pieChartInstance = null, multiBarChartInstance = null, deviceModelChartInstance = null, paramBarChartInstance = null;
         let currentTestType = 'first';
         let currentOnuRegion = 'All Region';
 
@@ -948,14 +958,12 @@
 
         function getRowRegion(row) {
             let rawArr = row['_rawArray'] || [];
-            // Column P (Index 15) မှ OLT Hostname ကို တိုက်ရိုက်ဖတ်မည်
             let oltHostname = String(rawArr[15] || row['OLT Hostname'] || row['col_15'] || '').toUpperCase();
             
             if (oltHostname.includes("ENUO")) return "ENUO";
             if (oltHostname.includes("MDY")) return "MDY";
             if (oltHostname.includes("HGAO")) return "HGAO";
 
-            // တစ်ခါတရံ အခြား Column များတွင် ပါနေပါက တစ်ပါတည်း စစ်ဆေးပေးမည်
             let fullText = rawArr.join(' ').toUpperCase();
             if (fullText.includes("ENUO")) return "ENUO";
             if (fullText.includes("MDY")) return "MDY";
@@ -1139,31 +1147,60 @@
 
                 matrixRowsHtml += `
                     <tr class="hover:bg-slate-50 border-b border-slate-200">
-                        <td class="p-3 border border-slate-200 font-black bg-slate-100 text-slate-900">${dev}</td>
-                        <td class="p-3 border border-slate-200 text-center font-bold text-blue-700 bg-blue-50/40">${stat.rx > 0 ? stat.rx.toLocaleString() : '-'}</td>
-                        <td class="p-3 border border-slate-200 text-center font-bold text-indigo-700 bg-indigo-50/40">${stat.tx > 0 ? stat.tx.toLocaleString() : '-'}</td>
-                        <td class="p-3 border border-slate-200 text-center font-bold text-emerald-700 bg-emerald-50/40">${stat.temp > 0 ? stat.temp.toLocaleString() : '-'}</td>
-                        <td class="p-3 border border-slate-200 text-center font-bold text-purple-700 bg-purple-50/40">${stat.bias > 0 ? stat.bias.toLocaleString() : '-'}</td>
-                        <td class="p-3 border border-slate-200 text-center font-bold text-pink-700 bg-pink-50/40">${stat.volt > 0 ? stat.volt.toLocaleString() : '-'}</td>
-                        <td class="p-3 border border-slate-200 text-center font-bold text-amber-700 bg-amber-50/40">${stat.unknown > 0 ? stat.unknown.toLocaleString() : '-'}</td>
-                        <td class="p-3 border border-slate-200 text-center font-black text-rose-600 bg-slate-100">${stat.totalFail > 0 ? stat.totalFail.toLocaleString() : '-'}</td>
+                        <td class="p-2 border border-slate-200 font-black bg-slate-100 text-slate-900">${dev}</td>
+                        <td class="p-2 border border-slate-200 text-center font-bold text-blue-700 bg-blue-50/40">${stat.rx > 0 ? stat.rx.toLocaleString() : '-'}</td>
+                        <td class="p-2 border border-slate-200 text-center font-bold text-indigo-700 bg-indigo-50/40">${stat.tx > 0 ? stat.tx.toLocaleString() : '-'}</td>
+                        <td class="p-2 border border-slate-200 text-center font-bold text-emerald-700 bg-emerald-50/40">${stat.temp > 0 ? stat.temp.toLocaleString() : '-'}</td>
+                        <td class="p-2 border border-slate-200 text-center font-bold text-purple-700 bg-purple-50/40">${stat.bias > 0 ? stat.bias.toLocaleString() : '-'}</td>
+                        <td class="p-2 border border-slate-200 text-center font-bold text-pink-700 bg-pink-50/40">${stat.volt > 0 ? stat.volt.toLocaleString() : '-'}</td>
+                        <td class="p-2 border border-slate-200 text-center font-bold text-amber-700 bg-amber-50/40">${stat.unknown > 0 ? stat.unknown.toLocaleString() : '-'}</td>
+                        <td class="p-2 border border-slate-200 text-center font-black text-rose-600 bg-slate-100">${stat.totalFail > 0 ? stat.totalFail.toLocaleString() : '-'}</td>
                     </tr>
                 `;
             });
 
             matrixRowsHtml += `
                 <tr class="bg-slate-200 font-black text-slate-900 border-t-2 border-slate-300">
-                    <td class="p-3 border border-slate-300 uppercase">Total Fails</td>
-                    <td class="p-3 border border-slate-300 text-center text-blue-900 bg-blue-100">${colTotals.rx.toLocaleString()}</td>
-                    <td class="p-3 border border-slate-300 text-center text-indigo-900 bg-indigo-100">${colTotals.tx.toLocaleString()}</td>
-                    <td class="p-3 border border-slate-300 text-center text-emerald-900 bg-emerald-100">${colTotals.temp.toLocaleString()}</td>
-                    <td class="p-3 border border-slate-300 text-center text-purple-900 bg-purple-100">${colTotals.bias.toLocaleString()}</td>
-                    <td class="p-3 border border-slate-300 text-center text-pink-900 bg-pink-100">${colTotals.volt.toLocaleString()}</td>
-                    <td class="p-3 border border-slate-300 text-center text-amber-900 bg-amber-100">${colTotals.unknown.toLocaleString()}</td>
-                    <td class="p-3 border border-slate-300 text-center text-rose-700 text-sm bg-slate-300">${colTotals.totalFail.toLocaleString()}</td>
+                    <td class="p-2.5 border border-slate-300 uppercase">Total</td>
+                    <td class="p-2.5 border border-slate-300 text-center text-blue-900 bg-blue-100">${colTotals.rx.toLocaleString()}</td>
+                    <td class="p-2.5 border border-slate-300 text-center text-indigo-900 bg-indigo-100">${colTotals.tx.toLocaleString()}</td>
+                    <td class="p-2.5 border border-slate-300 text-center text-emerald-900 bg-emerald-100">${colTotals.temp.toLocaleString()}</td>
+                    <td class="p-2.5 border border-slate-300 text-center text-purple-900 bg-purple-100">${colTotals.bias.toLocaleString()}</td>
+                    <td class="p-2.5 border border-slate-300 text-center text-pink-900 bg-pink-100">${colTotals.volt.toLocaleString()}</td>
+                    <td class="p-2.5 border border-slate-300 text-center text-amber-900 bg-amber-100">${colTotals.unknown.toLocaleString()}</td>
+                    <td class="p-2.5 border border-slate-300 text-center text-rose-700 text-sm bg-slate-300">${colTotals.totalFail.toLocaleString()}</td>
                 </tr>
             `;
             matrixTbody.innerHTML = matrixRowsHtml;
+
+            // Render Parameter Failures Bar Chart beside the table
+            setTimeout(() => {
+                let ctxParam = document.getElementById('paramBarChart');
+                if (ctxParam) {
+                    if (paramBarChartInstance) paramBarChartInstance.destroy();
+                    paramBarChartInstance = new Chart(ctxParam, {
+                        type: 'bar',
+                        data: {
+                            labels: ['Rx Power', 'Tx Power', 'Temp', 'Bias', 'Volt', 'Unknown'],
+                            datasets: [{
+                                label: 'Failure Count',
+                                data: [colTotals.rx, colTotals.tx, colTotals.temp, colTotals.bias, colTotals.volt, colTotals.unknown],
+                                backgroundColor: ['#3b82f6', '#6366f1', '#10b981', '#a855f7', '#ec4899', '#f59e0b'],
+                                borderRadius: 4
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: { legend: { display: false } },
+                            scales: {
+                                x: { ticks: { font: { weight: 'bold', size: 10 }, color: '#0f172a' } },
+                                y: { ticks: { font: { weight: 'bold' }, color: '#0f172a' } }
+                            }
+                        }
+                    });
+                }
+            }, 50);
 
             let deviceTotals = {};
             defaultModels.forEach(m => { deviceTotals[m] = { total: 0, passed: 0, failed: 0 }; });
