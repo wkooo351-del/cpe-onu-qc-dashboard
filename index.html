@@ -213,10 +213,11 @@
                 const rows = json.table.rows.map(r => r.c ? r.c.map(cell => cell ? (cell.v !== null ? cell.v : '') : '') : []);
                 if (rows.length === 0) return [];
 
+                // Store raw headers array as property on the returned array for easy index-based mapping
                 const headers = rows[0].map(h => String(h).trim());
                 const dataRows = rows.slice(1);
                 
-                return dataRows.map(row => {
+                let mappedRows = dataRows.map(row => {
                     let obj = {};
                     headers.forEach((h, idx) => {
                         let keyName = h || `col_${idx}`;
@@ -224,8 +225,10 @@
                         obj[`col_${idx}`] = row[idx];
                     });
                     obj['_rawArray'] = row;
+                    obj['_headers'] = headers;
                     return obj;
                 });
+                return mappedRows;
             } catch (err) {
                 console.error("Fetch error:", err);
                 return [];
@@ -855,7 +858,7 @@
             }
             let keys = Object.keys(row);
             for (let k of keys) {
-                if (k === '_rawArray') continue;
+                if (k === '_rawArray' || k === '_headers') continue;
                 let kl = k.toLowerCase();
                 if (['col_3', 'col_5', 'col_7', 'col_9', 'col_11', 'col_13', 'col_15', 'col_16', 'col_17'].includes(kl)) continue;
                 let val = String(row[k] || '').trim().toLowerCase();
@@ -882,6 +885,7 @@
         function getRowRegion(r) {
             let keys = Object.keys(r);
             for (let k of keys) {
+                if (k === '_rawArray' || k === '_headers') continue;
                 let val = String(r[k] || '').toUpperCase();
                 if (val.includes("HGAO")) return "HGAO";
                 if (val.includes("ENUO")) return "ENUO";
@@ -890,18 +894,33 @@
             return "UNKNOWN";
         }
 
-        // --- FIXED PARAMETER FAILURE CHECKER MATCHING IMAGES ---
-        function checkParamFail(row, paramName) {
+        // --- ENHANCED FLEXIBLE PARAMETER FAILURE CHECKER ---
+        function checkParamFail(row, paramKeyword) {
+            let headers = row['_headers'] || [];
+            let rawArr = row['_rawArray'] || [];
+
+            // Method 1: Scan headers matching keyword and check corresponding pass/fail column value
+            for (let idx = 0; idx < headers.length; idx++) {
+                if (EXCLUDED_COL_INDICES.includes(idx)) continue;
+                let hLower = headers[idx].toLowerCase();
+                
+                // If header contains the parameter keyword (e.g. "rx", "tx", "bias", "temp", "voltage")
+                if (hLower.includes(paramKeyword)) {
+                    let cellVal = String(rawArr[idx] || '').trim().toLowerCase();
+                    if (cellVal === 'fail' || cellVal === 'f' || cellVal === 'no' || cellVal === '0' || cellVal.includes('fail')) {
+                        return true;
+                    }
+                }
+            }
+
+            // Method 2: Fallback scan across object keys matching pass/fail and keyword
             let keys = Object.keys(row);
             for (let k of keys) {
-                if (k === '_rawArray') continue;
+                if (k === '_rawArray' || k === '_headers') continue;
                 let kl = k.toLowerCase();
-                
-                // Exclude D, F, H, J, L, N, P, Q, R columns
                 if (['col_3', 'col_5', 'col_7', 'col_9', 'col_11', 'col_13', 'col_15', 'col_16', 'col_17'].includes(kl)) continue;
 
-                // Match specific Pass/Fail column name e.g., "rx pass/fail", "tx pass/fail", etc.
-                if (kl.includes(paramName) && kl.includes('pass/fail')) {
+                if (kl.includes(paramKeyword)) {
                     let val = String(row[k] || '').trim().toLowerCase();
                     if (val === 'fail' || val === 'f' || val === 'no' || val === '0' || val.includes('fail')) return true;
                 }
