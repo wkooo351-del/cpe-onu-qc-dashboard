@@ -33,7 +33,7 @@
 
     <main class="max-w-7xl mx-auto space-y-6">
         
-        <!-- SECTION 1: Staff KPI View (Untouched) -->
+        <!-- SECTION 1: Staff KPI View -->
         <div id="section-hc" class="dashboard-section space-y-6">
             <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
                 <div id="staff-buttons-container" class="staff-grid-nav justify-center">
@@ -71,7 +71,7 @@
             </div>
         </div>
 
-        <!-- SECTION 2: Inbound Regional KPI View (Untouched) -->
+        <!-- SECTION 2: Inbound Regional KPI View -->
         <div id="section-inbound" class="dashboard-section hidden space-y-6">
             <div class="flex flex-wrap gap-2 justify-center">
                 <button onclick="renderInboundWeek('Week 1 (1 - 7)', this)" class="inbound-wk-btn px-4 py-2 text-sm font-bold rounded-xl bg-blue-600 text-white shadow">Week 1 (1 - 7)</button>
@@ -113,9 +113,8 @@
                     </div>
                 </div>
 
-                <!-- Sticky Filters Container (Region & Parameter Filters) -->
+                <!-- Sticky Filters Container -->
                 <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-md space-y-2">
-                    <!-- Regional Filter Tabs -->
                     <div class="flex flex-wrap gap-2 justify-center items-center">
                         <span class="text-xs text-slate-400 uppercase font-black mr-2">Region Filter:</span>
                         <button onclick="switchOnuRegion('All Region', this)" class="onu-region-btn px-3 py-1.5 text-xs font-bold rounded-xl bg-indigo-600 text-white shadow transition">All Region</button>
@@ -124,7 +123,6 @@
                         <button onclick="switchOnuRegion('MDY', this)" class="onu-region-btn px-3 py-1.5 text-xs font-bold rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300 transition">MDY</button>
                     </div>
 
-                    <!-- Parameter Filters Section -->
                     <div class="flex flex-wrap gap-2 justify-center items-center border-t border-slate-100 pt-2">
                         <span class="text-xs text-slate-400 uppercase font-black mr-2">Parameter Filter:</span>
                         <button onclick="switchOnuParam('all', this)" class="onu-param-btn px-3 py-1.5 text-xs font-bold rounded-xl bg-slate-800 text-white shadow transition">All Parameters</button>
@@ -133,7 +131,6 @@
                         <button onclick="switchOnuParam('bias', this)" class="onu-param-btn px-3 py-1.5 text-xs font-bold rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300 transition">Bias Fail</button>
                         <button onclick="switchOnuParam('temp', this)" class="onu-param-btn px-3 py-1.5 text-xs font-bold rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300 transition">Temp Fail</button>
                         <button onclick="switchOnuParam('voltage', this)" class="onu-param-btn px-3 py-1.5 text-xs font-bold rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300 transition">Voltage Fail</button>
-                        <button onclick="switchOnuParam('gasp', this)" class="onu-param-btn px-3 py-1.5 text-xs font-bold rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300 transition">Gasp Fail</button>
                     </div>
                 </div>
             </div>
@@ -179,9 +176,9 @@
                         <table class="w-full text-left border-collapse border border-slate-300 text-xs">
                             <thead class="bg-slate-100 text-slate-700 uppercase font-black border-b border-slate-300">
                                 <tr>
-                                    <th class="p-3 border border-slate-300">PARAMETER</th>
-                                    <th class="p-3 border border-slate-300 text-center">FAILED COUNT</th>
-                                    <th class="p-3 border border-slate-300 text-center">SHARE (%)</th>
+                                    <th class="p-3 border border-slate-300">INSPECTION PARAMETER</th>
+                                    <th class="p-3 border border-slate-300 text-center">FAILED COUNT (UNITS)</th>
+                                    <th class="p-3 border border-slate-300 text-center">SHARE OF FAILURES (%)</th>
                                 </tr>
                             </thead>
                             <tbody id="param-summary-tbody" class="font-bold text-slate-800">
@@ -926,7 +923,6 @@
             }, 100);
         }
 
-        // ONU PASS / FAIL LOGIC
         function isStrictPass(row) {
             let rawArr = row['_rawArray'] || [];
             for (let idx = 0; idx < rawArr.length; idx++) {
@@ -1026,12 +1022,10 @@
 
             let data = filteredByPeriod;
 
-            // Apply Regional Filter
             if (currentOnuRegion !== 'All Region') {
                 data = data.filter(r => getRowRegion(r) === currentOnuRegion);
             }
 
-            // Apply Parameter Filter
             if (currentOnuParam !== 'all') {
                 data = data.filter(r => checkParamFail(r, currentOnuParam));
             }
@@ -1122,6 +1116,7 @@
             });
         }
 
+        // RENDER SUMMARY TABLES (COUNT ONLY BY PARAMETER UNITS)
         function renderSummaryTables(data) {
             let rxFail = data.filter(r => checkParamFail(r, 'rx')).length;
             let biasFail = data.filter(r => checkParamFail(r, 'bias')).length;
@@ -1138,30 +1133,32 @@
             let totalParamFailSum = rxFail + biasFail + tempFail + txFail + voltFail + otherFail;
 
             let params = [
-                { name: 'Rx Power', count: rxFail },
-                { name: 'Bias Current', count: biasFail },
-                { name: 'Temperature', count: tempFail },
-                { name: 'Tx Power', count: txFail },
-                { name: 'Voltage', count: voltFail },
-                { name: 'Other / Unspecified', count: otherFail }
+                { name: 'Rx Power Issue', count: rxFail },
+                { name: 'Bias Current Issue', count: biasFail },
+                { name: 'Temperature Issue', count: tempFail },
+                { name: 'Tx Power Issue', count: txFail },
+                { name: 'Voltage Issue', count: voltFail },
+                { name: 'Other / Unspecified Issue', count: otherFail }
             ];
 
             let paramTbody = document.getElementById('param-summary-tbody');
             let paramRowsHtml = "";
+
             params.forEach(p => {
                 let share = totalParamFailSum > 0 ? ((p.count / totalParamFailSum) * 100).toFixed(2) : "0.00";
                 paramRowsHtml += `
                     <tr class="hover:bg-slate-50 border-b border-slate-200">
                         <td class="p-3 border border-slate-200 text-slate-800 font-bold">${p.name}</td>
-                        <td class="p-3 border border-slate-200 text-center font-black text-rose-600">${p.count}</td>
+                        <td class="p-3 border border-slate-200 text-center font-black text-rose-600">${p.count.toLocaleString()} Units</td>
                         <td class="p-3 border border-slate-200 text-center font-bold text-slate-700">${share}%</td>
                     </tr>
                 `;
             });
+
             paramRowsHtml += `
                 <tr class="bg-slate-100 font-black border-t-2 border-slate-300">
-                    <td class="p-3 border border-slate-300">Total</td>
-                    <td class="p-3 border border-slate-300 text-center text-rose-700">${totalParamFailSum}</td>
+                    <td class="p-3 border border-slate-300">Total Parameter Issues</td>
+                    <td class="p-3 border border-slate-300 text-center text-rose-700">${totalParamFailSum.toLocaleString()} Units</td>
                     <td class="p-3 border border-slate-300 text-center text-slate-900">100.00%</td>
                 </tr>
             `;
