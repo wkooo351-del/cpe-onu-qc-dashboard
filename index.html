@@ -220,8 +220,6 @@
         const MDY_SHEET_ID = "1XrjpVgSeu1lDpyNNyuJdjYji8MxnoQWuo3bwwPWAs9Q";
         const DAILY_TARGET = 150;
 
-        const EXCLUDED_COL_INDICES = [3, 5, 7, 9, 11, 13, 15, 16, 17];
-
         let staffGroupedData = {};
         let inboundLiveData = {};
         let activeInboundWeek = 'Week 1 (1 - 7)';
@@ -914,80 +912,42 @@
 
         function isStrictPass(row) {
             let rawArr = row['_rawArray'] || [];
-            for (let idx = 0; idx < rawArr.length; idx++) {
-                if (EXCLUDED_COL_INDICES.includes(idx)) continue;
+            let overallVal = String(rawArr[2] || '').trim().toLowerCase(); // Column C (Overall Pass/Fail)
+            if (overallVal === 'fail' || overallVal.includes('fail')) return false;
+            if (overallVal === 'pass' || overallVal.includes('pass')) return true;
+
+            for (let idx = 4; idx < rawArr.length; idx += 2) {
                 let val = String(rawArr[idx] || '').trim().toLowerCase();
-                if (val === 'pass' || val.includes('pass')) return true;
+                if (val === 'fail' || val.includes('fail')) return false;
             }
-            let keys = Object.keys(row);
-            for (let k of keys) {
-                if (k === '_rawArray' || k === '_headers') continue;
-                let kl = k.toLowerCase();
-                if (['col_3', 'col_5', 'col_7', 'col_9', 'col_11', 'col_13', 'col_15', 'col_16', 'col_17'].includes(kl)) continue;
-                let val = String(row[k] || '').trim().toLowerCase();
-                if (val === 'pass' || val.includes('pass')) return true;
-            }
-            return false;
+            return true;
         }
 
         function getDeviceName(row) {
             let rawArr = row['_rawArray'] || [];
-            if (rawArr.length > 18 && rawArr[18] !== undefined && rawArr[18] !== null) {
-                let sVal = String(rawArr[18]).trim();
-                if (sVal && !sVal.toLowerCase().includes('name') && sVal !== '-') return sVal;
-            }
-            if (row['col_18'] !== undefined) {
-                let sVal = String(row['col_18']).trim();
-                if (sVal && !sVal.toLowerCase().includes('name') && sVal !== '-') return sVal;
-            }
-            let fallback = String(row['Device'] || row['Model'] || row['CPE Type'] || '').trim();
-            if (fallback && !fallback.toLowerCase().includes('name') && fallback !== '-') return fallback;
-            return 'UNKNOWN_DEVICE';
+            let serial = String(rawArr[1] || '').trim().toUpperCase(); // Column B (ONU Serial)
+            if (serial.startsWith('FFO')) return 'FFO';
+            if (serial.startsWith('FFG')) return 'FFG';
+            if (serial.startsWith('SCP')) return 'SCP';
+            if (serial.startsWith('FFA')) return 'FFA';
+            if (serial.startsWith('BFFA')) return 'BFFA';
+            if (serial.length >= 3) return serial.substring(0, 3);
+            return 'UNKNOWN';
         }
 
         function getRowRegion(r) {
-            let keys = Object.keys(r);
-            for (let k of keys) {
-                if (k === '_rawArray' || k === '_headers') continue;
-                let val = String(r[k] || '').toUpperCase();
-                if (val.includes("HGAO")) return "HGAO";
-                if (val.includes("ENUO")) return "ENUO";
-                if (val.includes("MDY")) return "MDY";
-            }
-            return "UNKNOWN";
+            let rawArr = r['_rawArray'] || [];
+            let timeVal = String(rawArr[0] || '').toUpperCase();
+            if (timeVal.includes("HGAO")) return "HGAO";
+            if (timeVal.includes("ENUO")) return "ENUO";
+            if (timeVal.includes("MDY")) return "MDY";
+            return "HGAO";
         }
 
-        // Updated flexible and robust check for sheet headers like "Rx Pass/Fail", "Tx Pass/Fail", etc.
-        function checkParamFailFlexible(row, targetKeywords) {
-            let headers = row['_headers'] || [];
+        function checkParamFailIndex(row, colIndex) {
             let rawArr = row['_rawArray'] || [];
-
-            for (let idx = 0; idx < headers.length; idx++) {
-                if (EXCLUDED_COL_INDICES.includes(idx)) continue;
-                let hLower = headers[idx].toLowerCase();
-                
-                let matches = targetKeywords.some(kw => hLower.includes(kw));
-                if (matches) {
-                    let cellVal = String(rawArr[idx] || '').trim().toLowerCase();
-                    if (cellVal === 'fail' || cellVal === 'f' || cellVal === 'no' || cellVal === '0' || cellVal.includes('fail')) {
-                        return true;
-                    }
-                }
-            }
-
-            let keys = Object.keys(row);
-            for (let k of keys) {
-                if (k === '_rawArray' || k === '_headers') continue;
-                let kl = k.toLowerCase();
-                if (['col_3', 'col_5', 'col_7', 'col_9', 'col_11', 'col_13', 'col_15', 'col_16', 'col_17'].includes(kl)) continue;
-
-                let matches = targetKeywords.some(kw => kl.includes(kw));
-                if (matches) {
-                    let val = String(row[k] || '').trim().toLowerCase();
-                    if (val === 'fail' || val === 'f' || val === 'no' || val === '0' || val.includes('fail')) return true;
-                }
-            }
-            return false;
+            let val = String(rawArr[colIndex] || '').trim().toLowerCase();
+            return (val === 'fail' || val === 'f' || val === 'no' || val === '0' || val.includes('fail'));
         }
 
         function updateOnuDashboard() {
@@ -1076,26 +1036,23 @@
                 }
             });
 
-            let rxFail = data.filter(r => checkParamFailFlexible(r, ['rx'])).length;
-            let biasFail = data.filter(r => checkParamFailFlexible(r, ['bias'])).length;
-            let tempFail = data.filter(r => checkParamFailFlexible(r, ['temp'])).length;
-            let txFail = data.filter(r => checkParamFailFlexible(r, ['tx'])).length;
-            let voltFail = data.filter(r => checkParamFailFlexible(r, ['voltage', 'volt'])).length;
-            let unknownFail = data.filter(r => checkParamFailFlexible(r, ['gasp'])).length;
-
-            let knownFails = rxFail + biasFail + tempFail + txFail + voltFail + unknownFail;
+            let rxFail = data.filter(r => checkParamFailIndex(r, 4)).length;   // Col E
+            let txFail = data.filter(r => checkParamFailIndex(r, 6)).length;   // Col G
+            let voltFail = data.filter(r => checkParamFailIndex(r, 8)).length; // Col I
+            let biasFail = data.filter(r => checkParamFailIndex(r, 10)).length;// Col K
+            let tempFail = data.filter(r => checkParamFailIndex(r, 12)).length;// Col M
+            
+            let knownFails = rxFail + txFail + voltFail + biasFail + tempFail;
             let totalFailed = data.length - data.filter(r => isStrictPass(r)).length;
-            if (totalFailed > knownFails) {
-                unknownFail += (totalFailed - knownFails);
-            }
+            let unknownFail = totalFailed > knownFails ? (totalFailed - knownFails) : 0;
 
             if (failureChartInstance) failureChartInstance.destroy();
             failureChartInstance = new Chart(document.getElementById('failureChart'), {
                 type: 'doughnut',
                 data: {
-                    labels: ['Rx Power', 'Bias Current', 'Temperature', 'Tx Power', 'Voltage', 'Unknown'],
+                    labels: ['Rx Power', 'Tx Power', 'Voltage', 'Bias Current', 'Temperature', 'Unknown'],
                     datasets: [{ 
-                        data: [rxFail, biasFail, tempFail, txFail, voltFail, unknownFail], 
+                        data: [rxFail, txFail, voltFail, biasFail, tempFail, unknownFail], 
                         backgroundColor: ['#60A5FA', '#818CF8', '#10B981', '#F87171', '#FBBF24', '#C084FC'] 
                     }]
                 },
@@ -1123,11 +1080,11 @@
                         deviceStats[dev] = { rx: 0, tx: 0, temp: 0, bias: 0, volt: 0, unknown: 0, totalFail: 0 };
                     }
 
-                    let isRx = checkParamFailFlexible(r, ['rx']);
-                    let isTx = checkParamFailFlexible(r, ['tx']);
-                    let isTemp = checkParamFailFlexible(r, ['temp']);
-                    let isBias = checkParamFailFlexible(r, ['bias']);
-                    let isVolt = checkParamFailFlexible(r, ['voltage', 'volt']);
+                    let isRx = checkParamFailIndex(r, 4);   // Col E
+                    let isTx = checkParamFailIndex(r, 6);   // Col G
+                    let isVolt = checkParamFailIndex(r, 8); // Col I
+                    let isBias = checkParamFailIndex(r, 10);// Col K
+                    let isTemp = checkParamFailIndex(r, 12);// Col M
 
                     let matched = false;
                     if (isRx) { deviceStats[dev].rx++; matched = true; }
@@ -1375,12 +1332,14 @@
                 let passRate = regTotal > 0 ? ((passed / regTotal) * 100).toFixed(1) : "0.0";
                 let failRate = regTotal > 0 ? ((failed / regTotal) * 100).toFixed(1) : "0.0";
 
-                let rxFail = regRows.filter(r => checkParamFailFlexible(r, ['rx'])).length;
-                let txFail = regRows.filter(r => checkParamFailFlexible(r, ['tx'])).length;
-                let biasFail = regRows.filter(r => checkParamFailFlexible(r, ['bias'])).length;
-                let tempFail = regRows.filter(r => checkParamFailFlexible(r, ['temp'])).length;
-                let voltFail = regRows.filter(r => checkParamFailFlexible(r, ['voltage', 'volt'])).length;
-                let gaspFail = regRows.filter(r => checkParamFailFlexible(r, ['gasp'])).length;
+                let rxFail = regRows.filter(r => checkParamFailIndex(r, 4)).length;
+                let txFail = regRows.filter(r => checkParamFailIndex(r, 6)).length;
+                let voltFail = regRows.filter(r => checkParamFailIndex(r, 8)).length;
+                let biasFail = regRows.filter(r => checkParamFailIndex(r, 10)).length;
+                let tempFail = regRows.filter(r => checkParamFailIndex(r, 12)).length;
+                
+                let knownF = rxFail + txFail + voltFail + biasFail + tempFail;
+                let gaspFail = failed > knownF ? (failed - knownF) : 0;
 
                 let badgeColor = regShort === 'HGAO' ? 'bg-amber-500' : (regShort === 'ENUO' ? 'bg-blue-600' : 'bg-emerald-600');
 
@@ -1405,16 +1364,16 @@
                                 <span class="px-2 py-0.5 bg-cyan-50 text-cyan-700 rounded font-black">${txFail}</span>
                             </div>
                             <div class="bg-white p-2.5 rounded-lg border border-slate-200 flex justify-between items-center">
+                                <span class="text-slate-500">VOLT:</span>
+                                <span class="px-2 py-0.5 bg-pink-50 text-pink-700 rounded font-black">${voltFail}</span>
+                            </div>
+                            <div class="bg-white p-2.5 rounded-lg border border-slate-200 flex justify-between items-center">
                                 <span class="text-slate-500">BIAS:</span>
                                 <span class="px-2 py-0.5 bg-purple-50 text-purple-700 rounded font-black">${biasFail}</span>
                             </div>
                             <div class="bg-white p-2.5 rounded-lg border border-slate-200 flex justify-between items-center">
                                 <span class="text-slate-500">TEMP:</span>
                                 <span class="px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded font-black">${tempFail}</span>
-                            </div>
-                            <div class="bg-white p-2.5 rounded-lg border border-slate-200 flex justify-between items-center">
-                                <span class="text-slate-500">VOLT:</span>
-                                <span class="px-2 py-0.5 bg-pink-50 text-pink-700 rounded font-black">${voltFail}</span>
                             </div>
                             <div class="bg-white p-2.5 rounded-lg border border-slate-200 flex justify-between items-center">
                                 <span class="text-slate-500">UNKNOWN:</span>
