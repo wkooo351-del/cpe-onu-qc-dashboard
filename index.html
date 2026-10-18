@@ -113,7 +113,7 @@
                     </div>
                 </div>
 
-                <!-- Sticky Regional Filter Tabs (OVF ဖြုတ်ထားသည်) -->
+                <!-- Sticky Regional Filter Tabs -->
                 <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-md flex flex-wrap gap-2 justify-center">
                     <button onclick="switchOnuRegion('All Region', this)" class="onu-region-btn px-4 py-2 text-sm font-bold rounded-xl bg-indigo-600 text-white shadow transition">All Region</button>
                     <button onclick="switchOnuRegion('HGAO', this)" class="onu-region-btn px-4 py-2 text-sm font-bold rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300 transition">HGAO</button>
@@ -126,9 +126,9 @@
             <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
                 <div class="bg-white p-5 rounded-xl shadow-sm border-t-4 border-indigo-500"><p class="text-xs font-semibold text-gray-400 uppercase">Total Tested</p><p id="kpi-total" class="mt-2 text-2xl sm:text-3xl font-bold text-gray-900">0</p></div>
                 <div class="bg-white p-5 rounded-xl shadow-sm border-t-4 border-emerald-500"><p class="text-xs font-semibold text-gray-400 uppercase">Passed Units</p><p id="kpi-passed" class="mt-2 text-2xl sm:text-3xl font-bold text-emerald-600">0</p></div>
-                <div class="bg-white p-5 rounded-xl shadow-sm border-t-4 border-rose-500"><p class="text-xs font-semibold text-gray-400 uppercase">Failed Units</p><p id="kpi-failed" class="mt-2 text-2xl sm:text-3xl font-bold text-rose-600">0</p></div>
-                <div class="bg-white p-5 rounded-xl shadow-sm border-t-4 border-blue-500"><p class="text-xs font-semibold text-gray-400 uppercase">Pass Rate</p><p id="kpi-pass-rate" class="mt-2 text-2xl sm:text-3xl font-bold text-blue-600">0.00%</p></div>
-                <div class="bg-white p-5 rounded-xl shadow-sm border-t-4 border-amber-500 col-span-2 sm:col-span-1"><p class="text-xs font-semibold text-gray-400 uppercase">Fail Rate</p><p id="kpi-fail-rate" class="mt-2 text-2xl sm:text-3xl font-bold text-amber-600">0.00%</p></div>
+                <div class="bg-white p-5 rounded-xl shadow-sm border-t-4 border-rose-500"><p class="text-xs font-semibold text-gray-400 uppercase">Failed Units (Inc. Unknown)</p><p id="kpi-failed" class="mt-2 text-2xl sm:text-3xl font-bold text-rose-600">0</p></div>
+                <div class="bg-white p-5 rounded-xl shadow-sm border-t-4 border-blue-500"><p class="text-xs font-semibold text-gray-400 uppercase">Pass Rate %</p><p id="kpi-pass-rate" class="mt-2 text-2xl sm:text-3xl font-bold text-blue-600">0.00%</p></div>
+                <div class="bg-white p-5 rounded-xl shadow-sm border-t-4 border-amber-500 col-span-2 sm:col-span-1"><p class="text-xs font-semibold text-gray-400 uppercase">Fail Rate %</p><p id="kpi-fail-rate" class="mt-2 text-2xl sm:text-3xl font-bold text-amber-600">0.00%</p></div>
             </div>
 
             <!-- Charts -->
@@ -261,7 +261,6 @@
             processInboundLiveRows(inboundRows);
             renderInboundWeek(activeInboundWeek);
 
-            // Fetch distinct sheets for First Test, Second Test, and Exchange
             onuData.firstTest = await fetchGoogleSheetData(ONU_SS_ID, "First Test");
             onuData.secondTest = await fetchGoogleSheetData(ONU_SS_ID, "Second Test");
             onuData.exchangeTest = await fetchGoogleSheetData(ONU_SS_ID, "Exchange");
@@ -829,9 +828,14 @@
             }, 100);
         }
 
+        // Helper to check strictly if status is PASS
+        function isStrictPass(row) {
+            let st = String(row['Overall Pass/Fail'] || row['Status'] || row['Pass/Fail'] || row['col_10'] || '').trim().toLowerCase();
+            return st === 'pass';
+        }
+
         function updateOnuDashboard() {
             let rawData = [];
-            // Map main tabs to exact Google Sheet Data Sources
             if (currentTestType === 'first' || currentTestType === 'daily' || currentTestType === 'monthly') {
                 rawData = onuData.firstTest;
             } else if (currentTestType === 'second') {
@@ -840,24 +844,41 @@
                 rawData = onuData.exchangeTest;
             }
 
-            // Filter by Region (HGAO, ENUO, MDY matches OVF-Provision-...)
-            let data = rawData;
-            if (currentOnuRegion !== 'All Region') {
-                data = rawData.filter(r => String(r['Olt Hostname'] || '').includes(currentOnuRegion));
+            // Period Filter
+            let filteredByPeriod = rawData;
+            if (currentTestType === 'daily') {
+                let dates = rawData.map(r => parseLocalDate(r['Date'] || r['col_0'])).filter(Boolean).sort();
+                let latestDate = dates[dates.length - 1];
+                if (latestDate) {
+                    filteredByPeriod = rawData.filter(r => parseLocalDate(r['Date'] || r['col_0']) === latestDate);
+                }
             }
 
+            // Regional Filter
+            let data = filteredByPeriod;
+            if (currentOnuRegion !== 'All Region') {
+                data = filteredByPeriod.filter(r => {
+                    let host = String(r['Olt Hostname'] || r['Region'] || r['col_1'] || '').toUpperCase();
+                    return host.includes(currentOnuRegion.toUpperCase());
+                });
+            }
+
+            // RULE: Strict Pass vs Fail (Unknown = Fail)
             let total = data.length;
-            let passed = data.filter(r => String(r['Overall Pass/Fail'] || '').trim().toLowerCase() === 'pass').length;
-            let failed = total - passed;
+            let passed = data.filter(r => isStrictPass(r)).length;
+            let failed = total - passed; // All non-pass (including Unknown) are counted as Failed
+
+            let passRate = total > 0 ? ((passed / total) * 100) : 0;
+            let failRate = total > 0 ? ((failed / total) * 100) : 0;
 
             document.getElementById('kpi-total').innerText = total.toLocaleString();
             document.getElementById('kpi-passed').innerText = passed.toLocaleString();
             document.getElementById('kpi-failed').innerText = failed.toLocaleString();
-            document.getElementById('kpi-pass-rate').innerText = total > 0 ? ((passed / total) * 100).toFixed(2) + '%' : '0.00%';
-            document.getElementById('kpi-fail-rate').innerText = total > 0 ? ((failed / total) * 100).toFixed(2) + '%' : '0.00%';
+            document.getElementById('kpi-pass-rate').innerText = passRate.toFixed(2) + '%';
+            document.getElementById('kpi-fail-rate').innerText = failRate.toFixed(2) + '%';
 
             renderOnuCharts(data);
-            renderOnuRegionalBreakdown(rawData);
+            renderOnuRegionalBreakdown(filteredByPeriod);
         }
 
         function renderOnuRegionalBreakdown(rawData) {
@@ -869,30 +890,148 @@
                 targetRegions = [currentOnuRegion];
             }
 
+            // --- 4-Week Period Pass/Fail Rate Comparison Breakdown Calculation ---
+            let weekRanges = [
+                { name: "Week 1 (1 - 7)", start: 1, end: 7 },
+                { name: "Week 2 (8 - 14)", start: 8, end: 14 },
+                { name: "Week 3 (15 - 21)", start: 15, end: 21 },
+                { name: "Week 4 (22 - End)", start: 22, end: 31 }
+            ];
+
+            let weeklyCompHtml = "";
+            let prevPassRate = null;
+
+            let weekTrendCardsHtml = "";
+
+            weekRanges.forEach((wk, idx) => {
+                let wkRows = rawData.filter(r => {
+                    let dateStr = parseLocalDate(r['Date'] || r['col_0'] || '');
+                    if (!dateStr) return false;
+                    let dayNum = parseInt(dateStr.split('-')[2]) || 0;
+                    let matchesRegion = true;
+                    if (currentOnuRegion !== 'All Region') {
+                        let host = String(r['Olt Hostname'] || r['Region'] || r['col_1'] || '').toUpperCase();
+                        matchesRegion = host.includes(currentOnuRegion.toUpperCase());
+                    }
+                    return dayNum >= wk.start && dayNum <= wk.end && matchesRegion;
+                });
+
+                let totalWk = wkRows.length;
+                let passWk = wkRows.filter(r => isStrictPass(r)).length;
+                let failWk = totalWk - passWk; // Unknowns treated as Failed
+                let pRate = totalWk > 0 ? ((passWk / totalWk) * 100) : 0;
+                let fRate = totalWk > 0 ? ((failWk / totalWk) * 100) : 0;
+
+                let rateDiffBadge = "-";
+                if (prevPassRate !== null && totalWk > 0) {
+                    let diff = pRate - prevPassRate;
+                    if (diff > 0) {
+                        rateDiffBadge = `<span class="text-emerald-600 font-extrabold">▲ +${diff.toFixed(1)}% (Improved)</span>`;
+                    } else if (diff < 0) {
+                        rateDiffBadge = `<span class="text-rose-600 font-extrabold">▼ ${diff.toFixed(1)}% (Dropped)</span>`;
+                    } else {
+                        rateDiffBadge = `<span class="text-slate-500 font-bold">▶ 0.0% (Stable)</span>`;
+                    }
+                }
+                if (totalWk > 0) prevPassRate = pRate;
+
+                weeklyCompHtml += `
+                    <tr class="hover:bg-slate-50 border-b border-slate-200 text-center">
+                        <td class="p-3 text-slate-900 border border-slate-300 font-black">${wk.name}</td>
+                        <td class="p-3 border border-slate-300 text-slate-800">${totalWk.toLocaleString()}</td>
+                        <td class="p-3 border border-slate-300 text-emerald-600 font-black">${passWk.toLocaleString()}</td>
+                        <td class="p-3 border border-slate-300 text-rose-600 font-black">${failWk.toLocaleString()}</td>
+                        <td class="p-3 border border-slate-300 text-blue-600 font-black">${pRate.toFixed(2)}%</td>
+                        <td class="p-3 border border-slate-300 text-amber-600 font-black">${fRate.toFixed(2)}%</td>
+                        <td class="p-3 border border-slate-300 text-xs">${rateDiffBadge}</td>
+                    </tr>
+                `;
+
+                weekTrendCardsHtml += `
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 flex flex-col justify-between">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-xs font-black text-slate-700">${wk.name}</span>
+                            <span class="text-xs px-2 py-0.5 rounded bg-indigo-100 text-indigo-700 font-bold">${totalWk} Tested</span>
+                        </div>
+                        <div class="space-y-1">
+                            <div class="flex justify-between text-xs">
+                                <span class="text-slate-500">Pass Rate:</span>
+                                <span class="text-emerald-600 font-black">${pRate.toFixed(1)}%</span>
+                            </div>
+                            <div class="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
+                                <div class="bg-emerald-500 h-1.5 rounded-full" style="width: ${pRate}%;"></div>
+                            </div>
+                            <div class="flex justify-between text-xs pt-1">
+                                <span class="text-slate-500">Fail Rate:</span>
+                                <span class="text-rose-600 font-black">${fRate.toFixed(1)}%</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            // --- Regional Breakdown HTML ---
             let html = `
+                <!-- Week by Week Inspection Performance & Trends Card -->
+                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4 font-bold">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-100 pb-3 gap-2">
+                        <div>
+                            <h3 class='text-lg font-black text-slate-950'>📈 Week-by-Week Pass/Fail Rate Trends & Comparison (${currentTestType.toUpperCase()})</h3>
+                            <p class='text-xs text-slate-500 font-bold'>တစ်ပတ်ချင်းစီ တိုးတက်မှု/ကျဆင်းမှု % နှင့် Pass/Fail Rate ယှဉ်ပြိုင်မှုများ (Unknown များကို Fail အဖြစ် ပေါင်းစပ်ထားသည်)</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                        ${weekTrendCardsHtml}
+                    </div>
+
+                    <div class="overflow-x-auto rounded-xl border border-slate-300 mt-4">
+                        <table class="w-full text-left border-collapse border border-slate-300 text-xs">
+                            <thead class="bg-slate-800 text-white uppercase font-black text-center">
+                                <tr>
+                                    <th class="p-3 border border-slate-600">Period Week</th>
+                                    <th class="p-3 border border-slate-600">Total Tested</th>
+                                    <th class="p-3 border border-slate-600">Pass Units</th>
+                                    <th class="p-3 border border-slate-600">Fail Units (Inc. Unknown)</th>
+                                    <th class="p-3 border border-slate-600">Pass Rate %</th>
+                                    <th class="p-3 border border-slate-600">Fail Rate %</th>
+                                    <th class="p-3 border border-slate-600">Weekly Progress Trend</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${weeklyCompHtml}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
                 <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-6 font-bold">
                     <div>
-                        <h3 class='text-lg font-black text-slate-950'>📍 Regional & Device Inspection Breakdown (${currentTestType.toUpperCase()})</h3>
-                        <p class='text-xs text-slate-500 font-bold'>Region အလိုက် စမ်းသပ်ခဲ့သော Device အရေအတွက်များနှင့် Pass/Fail အကြောင်းအရင်းများ။</p>
+                        <h3 class='text-lg font-black text-slate-950'>📍 Regional Inspection & Failure Reasons Breakdown</h3>
+                        <p class='text-xs text-slate-500 font-bold'>Region အလိုက် စမ်းသပ်ခဲ့သော Pass/Fail အရေအတွက်များနှင့် Fail ရသည့် အကြောင်းအရင်းများ။</p>
                     </div>
             `;
 
             targetRegions.forEach(regShort => {
-                let regRows = rawData.filter(r => String(r['Olt Hostname'] || '').includes(regShort));
+                let regRows = rawData.filter(r => {
+                    let host = String(r['Olt Hostname'] || r['Region'] || r['col_1'] || '').toUpperCase();
+                    return host.includes(regShort.toUpperCase());
+                });
+
                 let regTotal = regRows.length;
-                
-                if (regTotal === 0 && currentOnuRegion !== 'All Region') {
-                    html += `<div class="p-4 bg-slate-50 rounded-xl text-center text-slate-400">No records found for ${regShort}</div>`;
-                    return;
-                }
+                let passed = regRows.filter(r => isStrictPass(r)).length;
+                let failed = regTotal - passed; // Unknown included as Failed
+                let passRate = regTotal > 0 ? ((passed / regTotal) * 100).toFixed(1) : "0.0";
+                let failRate = regTotal > 0 ? ((failed / regTotal) * 100).toFixed(1) : "0.0";
 
-                let passed = regRows.filter(r => String(r['Overall Pass/Fail'] || '').trim().toLowerCase() === 'pass').length;
-                let failed = regTotal - passed;
-                let passRate = regTotal > 0 ? ((passed / regTotal) * 100).toFixed(1) : 0;
-
+                // Failure reasons breakdown
                 let rxFail = regRows.filter(r => String(r['Rx Pass/Fail'] || '').trim().toLowerCase() === 'fail').length;
                 let biasFail = regRows.filter(r => String(r['Bias Pass/Fail'] || '').trim().toLowerCase() === 'fail').length;
                 let tempFail = regRows.filter(r => String(r['Temp Pass/Fail'] || '').trim().toLowerCase() === 'fail').length;
+                let unknownCount = regRows.filter(r => {
+                    let st = String(r['Overall Pass/Fail'] || r['Status'] || r['Pass/Fail'] || r['col_10'] || '').trim().toLowerCase();
+                    return st !== 'pass' && st !== 'fail' && st !== '';
+                }).length;
 
                 let badgeColor = regShort === 'HGAO' ? 'bg-amber-500' : (regShort === 'ENUO' ? 'bg-blue-600' : 'bg-emerald-600');
 
@@ -901,25 +1040,28 @@
                         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-slate-200 pb-3">
                             <span class="px-3 py-1.5 rounded-lg text-xs font-black text-white ${badgeColor}">${regShort} Region</span>
                             <div class="flex flex-wrap gap-3 text-xs">
-                                <span class="text-slate-700">Total: <strong class="text-slate-900">${regTotal}</strong></span>
-                                <span class="text-emerald-600">Passed: <strong>${passed}</strong></span>
-                                <span class="text-rose-600">Failed: <strong>${failed}</strong></span>
-                                <span class="text-blue-600">Pass Rate: <strong>${passRate}%</strong></span>
+                                <span class="text-slate-700">Total: <strong class="text-slate-900">${regTotal.toLocaleString()}</strong></span>
+                                <span class="text-emerald-600">Passed: <strong>${passed.toLocaleString()}</strong> (${passRate}%)</span>
+                                <span class="text-rose-600">Failed: <strong>${failed.toLocaleString()}</strong> (${failRate}%)</span>
                             </div>
                         </div>
 
-                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                        <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 text-xs">
                             <div class="bg-white p-3 rounded-lg border border-slate-200 flex justify-between items-center">
-                                <span class="text-slate-500">Rx Power Failures:</span>
+                                <span class="text-slate-500">Rx Power Fail:</span>
                                 <span class="px-2 py-1 bg-blue-50 text-blue-700 rounded font-black">${rxFail} units</span>
                             </div>
                             <div class="bg-white p-3 rounded-lg border border-slate-200 flex justify-between items-center">
-                                <span class="text-slate-500">Bias Current Failures:</span>
+                                <span class="text-slate-500">Bias Current Fail:</span>
                                 <span class="px-2 py-1 bg-purple-50 text-purple-700 rounded font-black">${biasFail} units</span>
                             </div>
                             <div class="bg-white p-3 rounded-lg border border-slate-200 flex justify-between items-center">
-                                <span class="text-slate-500">Temperature Failures:</span>
+                                <span class="text-slate-500">Temperature Fail:</span>
                                 <span class="px-2 py-1 bg-emerald-50 text-emerald-700 rounded font-black">${tempFail} units</span>
+                            </div>
+                            <div class="bg-white p-3 rounded-lg border border-slate-200 flex justify-between items-center">
+                                <span class="text-slate-500">Unknown (Counted Fail):</span>
+                                <span class="px-2 py-1 bg-amber-50 text-amber-700 rounded font-black">${unknownCount} units</span>
                             </div>
                         </div>
                     </div>
@@ -935,11 +1077,14 @@
             let passedArr = [], failedArr = [];
 
             regions.forEach(reg => {
-                let rData = data.filter(r => String(r['Olt Hostname'] || '').includes(reg));
+                let rData = data.filter(r => {
+                    let host = String(r['Olt Hostname'] || r['Region'] || r['col_1'] || '').toUpperCase();
+                    return host.includes(reg.toUpperCase());
+                });
                 let tot = rData.length;
-                let pas = rData.filter(r => String(r['Overall Pass/Fail'] || '').trim().toLowerCase() === 'pass').length;
+                let pas = rData.filter(r => isStrictPass(r)).length;
                 passedArr.push(pas);
-                failedArr.push(tot - pas);
+                failedArr.push(tot - pas); // Unknown = Fail
             });
 
             if (oltChartInstance) oltChartInstance.destroy();
@@ -949,7 +1094,7 @@
                     labels: ['HGAO', 'ENUO', 'MDY'],
                     datasets: [
                         { label: 'Passed', data: passedArr, backgroundColor: '#10B981', borderRadius: 4 },
-                        { label: 'Failed', data: failedArr, backgroundColor: '#EF4444', borderRadius: 4 }
+                        { label: 'Failed (Inc. Unknown)', data: failedArr, backgroundColor: '#EF4444', borderRadius: 4 }
                     ]
                 },
                 options: { 
@@ -966,13 +1111,17 @@
             let rxFail = data.filter(r => String(r['Rx Pass/Fail'] || '').trim().toLowerCase() === 'fail').length;
             let biasFail = data.filter(r => String(r['Bias Pass/Fail'] || '').trim().toLowerCase() === 'fail').length;
             let tempFail = data.filter(r => String(r['Temp Pass/Fail'] || '').trim().toLowerCase() === 'fail').length;
+            let unknownFail = data.filter(r => {
+                let st = String(r['Overall Pass/Fail'] || r['Status'] || r['Pass/Fail'] || r['col_10'] || '').trim().toLowerCase();
+                return st !== 'pass' && st !== 'fail' && st !== '';
+            }).length;
 
             if (failureChartInstance) failureChartInstance.destroy();
             failureChartInstance = new Chart(document.getElementById('failureChart'), {
                 type: 'doughnut',
                 data: {
-                    labels: ['Rx Power', 'Bias Current', 'Temperature'],
-                    datasets: [{ data: [rxFail || 10, biasFail || 5, tempFail || 2], backgroundColor: ['#3B82F6', '#8B5CF6', '#10B981'] }]
+                    labels: ['Rx Power', 'Bias Current', 'Temperature', 'Unknown (Fail)'],
+                    datasets: [{ data: [rxFail, biasFail, tempFail, unknownFail], backgroundColor: ['#3B82F6', '#8B5CF6', '#10B981', '#F59E0B'] }]
                 },
                 options: { 
                     responsive: true, 
