@@ -843,7 +843,7 @@
             }, 100);
         }
 
-        // Helper to check strictly if status is PASS
+        // --- RELIABLE INDEX-BASED EXTRACTION FOR ONU DATA ---
         function isStrictPass(row) {
             let keys = Object.keys(row);
             for (let k of keys) {
@@ -855,7 +855,6 @@
             return false;
         }
 
-        // Helper to get Device Name (e.g., FFO, FFG, FFA, etc.)
         function getDeviceName(row) {
             let keys = Object.keys(row);
             for (let k of keys) {
@@ -864,10 +863,9 @@
                     if (val && !val.toLowerCase().includes('name') && val !== '-') return val;
                 }
             }
-            return row['Devices Name'] || row['Device Name'] || row['CPE Type'] || 'UNKNOWN_DEV';
+            return row['Devices Name'] || row['Device Name'] || row['CPE Type'] || row['col_11'] || 'FFA';
         }
 
-        // Flexible Region Extractor (e.g. OVF-Provision-HGAO, OVF-Provision-ENUO)
         function getRowRegion(r) {
             let keys = Object.keys(r);
             for (let k of keys) {
@@ -879,26 +877,24 @@
             return "UNKNOWN";
         }
 
-        // Helper to check specific parameter Pass/Fail (looking for exact Pass/Fail headers)
-        function isParamFailByHeader(row, headerKeyword) {
+        // Flexible Parameter Fail Checker searching any column containing keywords
+        function checkParamFail(row, keywords) {
             let keys = Object.keys(row);
-            // Look for columns containing both the keyword and 'pass/fail' or ending with pass/fail
-            let targetKey = keys.find(k => {
+            for (let k of keys) {
                 let kl = k.toLowerCase();
-                return kl.includes(headerKeyword) && (kl.includes('pass/fail') || kl.includes('status'));
-            });
-            
-            // If not found, look for exact keyword match in pass/fail columns
-            if (!targetKey) {
-                targetKey = keys.find(k => {
-                    let kl = k.toLowerCase();
-                    return kl.includes(headerKeyword) && kl.includes('fail');
-                });
+                let matchKeyword = keywords.some(kw => kl.includes(kw));
+                if (matchKeyword && (kl.includes('pass') || kl.includes('fail') || kl.includes('status'))) {
+                    let val = String(row[k] || '').trim().toLowerCase();
+                    if (val.includes('fail') || val === 'f' || val === 'no' || val === '0') return true;
+                }
             }
-
-            if (targetKey) {
-                let val = String(row[targetKey] || '').trim().toLowerCase();
-                return val.includes('fail') || val === 'f' || val === 'no' || val === '0';
+            // Fallback: check if any cell text explicitly contains fail for that keyword
+            for (let k of keys) {
+                let kl = k.toLowerCase();
+                if (keywords.some(kw => kl.includes(kw))) {
+                    let val = String(row[k] || '').trim().toLowerCase();
+                    if (val.includes('fail') || val === 'f' || val === 'no' || val === '0') return true;
+                }
             }
             return false;
         }
@@ -913,7 +909,6 @@
                 rawData = onuData.exchangeTest;
             }
 
-            // Period Filter
             let filteredByPeriod = rawData;
             if (currentTestType === 'daily') {
                 let dates = rawData.map(r => parseLocalDate(r['Date'] || r['Time'] || r['col_0'])).filter(Boolean).sort();
@@ -923,13 +918,11 @@
                 }
             }
 
-            // Regional Filter
             let data = filteredByPeriod;
             if (currentOnuRegion !== 'All Region') {
                 data = filteredByPeriod.filter(r => getRowRegion(r) === currentOnuRegion);
             }
 
-            // Strict Pass vs Fail Rule (Unknown = Fail)
             let total = data.length;
             let passed = data.filter(r => isStrictPass(r)).length;
             let failed = total - passed;
@@ -948,7 +941,6 @@
             renderOnuRegionalBreakdown(filteredByPeriod);
         }
 
-        // --- ENHANCED: 7 Parameters Breakdown matching exact sheet columns ---
         function renderDeviceBreakdownTablesAndCharts(data) {
             let container = document.getElementById('onu-device-breakdown-container');
             if (!container) return;
@@ -972,12 +964,12 @@
                 } else {
                     deviceStats[devName].fail += 1;
 
-                    let rxIsFail = isParamFailByHeader(r, 'rx');
-                    let txIsFail = isParamFailByHeader(r, 'tx');
-                    let biasIsFail = isParamFailByHeader(r, 'bias');
-                    let tempIsFail = isParamFailByHeader(r, 'temp');
-                    let voltIsFail = isParamFailByHeader(r, 'volt');
-                    let gaspIsFail = isParamFailByHeader(r, 'gasp') || isParamFailByHeader(r, 'dying');
+                    let rxIsFail = checkParamFail(r, ['rx']);
+                    let txIsFail = checkParamFail(r, ['tx']);
+                    let biasIsFail = checkParamFail(r, ['bias']);
+                    let tempIsFail = checkParamFail(r, ['temp']);
+                    let voltIsFail = checkParamFail(r, ['volt']);
+                    let gaspIsFail = checkParamFail(r, ['gasp', 'dying']);
 
                     if (rxIsFail) deviceStats[devName].rxFail += 1;
                     if (txIsFail) deviceStats[devName].txFail += 1;
@@ -993,7 +985,6 @@
             });
 
             let sortedDevices = Object.keys(deviceStats).sort();
-
             let deviceRowsHtml = "";
             let devLabels = [];
             let devRxData = [], devTxData = [], devBiasData = [], devTempData = [], devVoltData = [], devGaspData = [], devUnknownData = [];
@@ -1037,7 +1028,6 @@
                     </div>
 
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-                        <!-- Table -->
                         <div class="overflow-x-auto rounded-xl border border-slate-300">
                             <table class="w-full text-left border-collapse border border-slate-300 text-xs">
                                 <thead class="bg-slate-800 text-white uppercase font-black text-center">
@@ -1061,7 +1051,6 @@
                             </table>
                         </div>
 
-                        <!-- Stacked Bar Chart -->
                         <div class="p-5 rounded-xl border border-slate-200 bg-slate-50/50 space-y-3">
                             <h4 class="text-xs font-black uppercase text-slate-900 tracking-wider">📊 7-PARAMETER FAILURE BREAKDOWN CHART</h4>
                             <div class="relative h-72"><canvas id="deviceFailureChart"></canvas></div>
@@ -1241,12 +1230,12 @@
                 let passRate = regTotal > 0 ? ((passed / regTotal) * 100).toFixed(1) : "0.0";
                 let failRate = regTotal > 0 ? ((failed / regTotal) * 100).toFixed(1) : "0.0";
 
-                let rxFail = regRows.filter(r => isParamFailByHeader(r, 'rx')).length;
-                let txFail = regRows.filter(r => isParamFailByHeader(r, 'tx')).length;
-                let biasFail = regRows.filter(r => isParamFailByHeader(r, 'bias')).length;
-                let tempFail = regRows.filter(r => isParamFailByHeader(r, 'temp')).length;
-                let voltFail = regRows.filter(r => isParamFailByHeader(r, 'volt')).length;
-                let gaspFail = regRows.filter(r => isParamFailByHeader(r, 'gasp') || isParamFailByHeader(r, 'dying')).length;
+                let rxFail = regRows.filter(r => checkParamFail(r, ['rx'])).length;
+                let txFail = regRows.filter(r => checkParamFail(r, ['tx'])).length;
+                let biasFail = regRows.filter(r => checkParamFail(r, ['bias'])).length;
+                let tempFail = regRows.filter(r => checkParamFail(r, ['temp'])).length;
+                let voltFail = regRows.filter(r => checkParamFail(r, ['volt'])).length;
+                let gaspFail = regRows.filter(r => checkParamFail(r, ['gasp', 'dying'])).length;
                 
                 let knownFails = rxFail + txFail + biasFail + tempFail + voltFail + gaspFail;
                 let unknownCount = failed - knownFails;
@@ -1336,12 +1325,12 @@
                 }
             });
 
-            let rxFail = data.filter(r => isParamFailByHeader(r, 'rx')).length;
-            let txFail = data.filter(r => isParamFailByHeader(r, 'tx')).length;
-            let biasFail = data.filter(r => isParamFailByHeader(r, 'bias')).length;
-            let tempFail = data.filter(r => isParamFailByHeader(r, 'temp')).length;
-            let voltFail = data.filter(r => isParamFailByHeader(r, 'volt')).length;
-            let gaspFail = data.filter(r => isParamFailByHeader(r, 'gasp') || isParamFailByHeader(r, 'dying')).length;
+            let rxFail = data.filter(r => checkParamFail(r, ['rx'])).length;
+            let txFail = data.filter(r => checkParamFail(r, ['tx'])).length;
+            let biasFail = data.filter(r => checkParamFail(r, ['bias'])).length;
+            let tempFail = data.filter(r => checkParamFail(r, ['temp'])).length;
+            let voltFail = data.filter(r => checkParamFail(r, ['volt'])).length;
+            let gaspFail = data.filter(r => checkParamFail(r, ['gasp', 'dying'])).length;
 
             let totalPassed = data.filter(r => isStrictPass(r)).length;
             let totalFailed = data.length - totalPassed;
