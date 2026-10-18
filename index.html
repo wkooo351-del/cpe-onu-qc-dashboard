@@ -846,48 +846,36 @@
             }, 100);
         }
 
-        // --- FIXED STRICT PASS DETECTOR ---
         function isStrictPass(row) {
             let rawArr = row['_rawArray'] || [];
-            
-            // Check overall status across allowed columns
             for (let idx = 0; idx < rawArr.length; idx++) {
-                if (EXCLUDED_COL_INDICES.includes(idx)) continue; // Skip D, F, H, J, L, N, P, Q, R
+                if (EXCLUDED_COL_INDICES.includes(idx)) continue;
                 let val = String(rawArr[idx] || '').trim().toLowerCase();
                 if (val === 'pass' || val.includes('pass')) return true;
             }
-
-            // Fallback: Check key-values in row object if _rawArray not found
             let keys = Object.keys(row);
             for (let k of keys) {
                 if (k === '_rawArray') continue;
                 let kl = k.toLowerCase();
                 if (['col_3', 'col_5', 'col_7', 'col_9', 'col_11', 'col_13', 'col_15', 'col_16', 'col_17'].includes(kl)) continue;
-                
                 let val = String(row[k] || '').trim().toLowerCase();
                 if (val === 'pass' || val.includes('pass')) return true;
             }
             return false;
         }
 
-        // --- FIXED DEVICE NAME EXTRACTOR (FROM COLUMN S / INDEX 18) ---
         function getDeviceName(row) {
             let rawArr = row['_rawArray'] || [];
-            
-            // Direct fetch from Column S (Index 18)
             if (rawArr.length > 18 && rawArr[18] !== undefined && rawArr[18] !== null) {
                 let sVal = String(rawArr[18]).trim();
                 if (sVal && !sVal.toLowerCase().includes('name') && sVal !== '-') return sVal;
             }
-
             if (row['col_18'] !== undefined) {
                 let sVal = String(row['col_18']).trim();
                 if (sVal && !sVal.toLowerCase().includes('name') && sVal !== '-') return sVal;
             }
-
             let fallback = String(row['Device'] || row['Model'] || row['CPE Type'] || '').trim();
             if (fallback && !fallback.toLowerCase().includes('name') && fallback !== '-') return fallback;
-
             return 'UNKNOWN_DEVICE';
         }
 
@@ -902,35 +890,20 @@
             return "UNKNOWN";
         }
 
-        // --- FIXED PARAMETER FAILURE CHECKER ---
-        function checkParamFail(row, keywords) {
-            let rawArr = row['_rawArray'] || [];
-            
-            for (let idx = 0; idx < rawArr.length; idx++) {
-                if (EXCLUDED_COL_INDICES.includes(idx)) continue; // Exclude D, F, H, J, L, N, P, Q, R
-                let cellVal = String(rawArr[idx] || '').trim().toLowerCase();
-                if (cellVal.includes('fail') || cellVal === 'f' || cellVal === 'no' || cellVal === '0') {
-                    // Check if header or field relates to parameter keyword
-                    let keys = Object.keys(row);
-                    for (let k of keys) {
-                        let kl = k.toLowerCase();
-                        if (keywords.some(kw => kl.includes(kw))) {
-                            let kVal = String(row[k] || '').trim().toLowerCase();
-                            if (kVal.includes('fail') || kVal === 'f' || kVal === 'no' || kVal === '0') return true;
-                        }
-                    }
-                }
-            }
-
+        // --- FIXED PARAMETER FAILURE CHECKER MATCHING IMAGES ---
+        function checkParamFail(row, paramName) {
             let keys = Object.keys(row);
             for (let k of keys) {
                 if (k === '_rawArray') continue;
                 let kl = k.toLowerCase();
+                
+                // Exclude D, F, H, J, L, N, P, Q, R columns
                 if (['col_3', 'col_5', 'col_7', 'col_9', 'col_11', 'col_13', 'col_15', 'col_16', 'col_17'].includes(kl)) continue;
 
-                if (keywords.some(kw => kl.includes(kw))) {
+                // Match specific Pass/Fail column name e.g., "rx pass/fail", "tx pass/fail", etc.
+                if (kl.includes(paramName) && kl.includes('pass/fail')) {
                     let val = String(row[k] || '').trim().toLowerCase();
-                    if (val.includes('fail') || val === 'f' || val === 'no' || val === '0') return true;
+                    if (val === 'fail' || val === 'f' || val === 'no' || val === '0' || val.includes('fail')) return true;
                 }
             }
             return false;
@@ -1001,12 +974,12 @@
                 } else {
                     deviceStats[devName].fail += 1;
 
-                    let rxIsFail = checkParamFail(r, ['rx']);
-                    let txIsFail = checkParamFail(r, ['tx']);
-                    let biasIsFail = checkParamFail(r, ['bias']);
-                    let tempIsFail = checkParamFail(r, ['temp']);
-                    let voltIsFail = checkParamFail(r, ['volt']);
-                    let gaspIsFail = checkParamFail(r, ['gasp', 'dying']);
+                    let rxIsFail = checkParamFail(r, 'rx');
+                    let txIsFail = checkParamFail(r, 'tx');
+                    let biasIsFail = checkParamFail(r, 'bias');
+                    let tempIsFail = checkParamFail(r, 'temp');
+                    let voltIsFail = checkParamFail(r, 'voltage');
+                    let gaspIsFail = checkParamFail(r, 'gasp');
 
                     if (rxIsFail) deviceStats[devName].rxFail += 1;
                     if (txIsFail) deviceStats[devName].txFail += 1;
@@ -1293,12 +1266,12 @@
                 let passRate = regTotal > 0 ? ((passed / regTotal) * 100).toFixed(1) : "0.0";
                 let failRate = regTotal > 0 ? ((failed / regTotal) * 100).toFixed(1) : "0.0";
 
-                let rxFail = regRows.filter(r => checkParamFail(r, ['rx'])).length;
-                let txFail = regRows.filter(r => checkParamFail(r, ['tx'])).length;
-                let biasFail = regRows.filter(r => checkParamFail(r, ['bias'])).length;
-                let tempFail = regRows.filter(r => checkParamFail(r, ['temp'])).length;
-                let voltFail = regRows.filter(r => checkParamFail(r, ['volt'])).length;
-                let gaspFail = regRows.filter(r => checkParamFail(r, ['gasp', 'dying'])).length;
+                let rxFail = regRows.filter(r => checkParamFail(r, 'rx')).length;
+                let txFail = regRows.filter(r => checkParamFail(r, 'tx')).length;
+                let biasFail = regRows.filter(r => checkParamFail(r, 'bias')).length;
+                let tempFail = regRows.filter(r => checkParamFail(r, 'temp')).length;
+                let voltFail = regRows.filter(r => checkParamFail(r, 'voltage')).length;
+                let gaspFail = regRows.filter(r => checkParamFail(r, 'gasp')).length;
                 
                 let knownFails = rxFail + txFail + biasFail + tempFail + voltFail + gaspFail;
                 let unknownCount = failed - knownFails;
@@ -1388,12 +1361,12 @@
                 }
             });
 
-            let rxFail = data.filter(r => checkParamFail(r, ['rx'])).length;
-            let txFail = data.filter(r => checkParamFail(r, ['tx'])).length;
-            let biasFail = data.filter(r => checkParamFail(r, ['bias'])).length;
-            let tempFail = data.filter(r => checkParamFail(r, ['temp'])).length;
-            let voltFail = data.filter(r => checkParamFail(r, ['volt'])).length;
-            let gaspFail = data.filter(r => checkParamFail(r, ['gasp', 'dying'])).length;
+            let rxFail = data.filter(r => checkParamFail(r, 'rx')).length;
+            let txFail = data.filter(r => checkParamFail(r, 'tx')).length;
+            let biasFail = data.filter(r => checkParamFail(r, 'bias')).length;
+            let tempFail = data.filter(r => checkParamFail(r, 'temp')).length;
+            let voltFail = data.filter(r => checkParamFail(r, 'voltage')).length;
+            let gaspFail = data.filter(r => checkParamFail(r, 'gasp')).length;
 
             let totalPassed = data.filter(r => isStrictPass(r)).length;
             let totalFailed = data.length - totalPassed;
