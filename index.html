@@ -24,9 +24,9 @@
                 <p class="text-slate-300 text-sm font-bold mt-1">Staff Performance & Regional Inbound Tracking</p>
             </div>
             <div class="flex flex-wrap gap-2 bg-slate-900 p-1.5 rounded-xl border border-slate-700">
-                <button onclick="switchMasterTab('section-hc', this)" id="master-btn-hc" class="px-4 py-2 text-sm font-bold rounded-lg bg-blue-600 text-white transition shadow">👤 Staff KPI</button>
-                <button onclick="switchMasterTab('section-inbound', this)" id="master-btn-inbound" class="px-4 py-2 text-sm font-bold rounded-lg text-slate-200 hover:text-white transition">📦 Inbound Regional KPI</button>
-                <button onclick="switchMasterTab('section-onu', this)" id="master-btn-onu" class="px-4 py-2 text-sm font-bold rounded-lg text-slate-200 hover:text-white transition">🔍 ONU Inspection</button>
+                <button onclick="switchMasterTab('section-hc', this)" id="master-btn-hc" class="px-4 py-2 text-sm font-bold rounded-lg bg-blue-600 text-white transition shadow">Staff KPI</button>
+                <button onclick="switchMasterTab('section-inbound', this)" id="master-btn-inbound" class="px-4 py-2 text-sm font-bold rounded-lg text-slate-200 hover:text-white transition">Inbound Regional KPI</button>
+                <button onclick="switchMasterTab('section-onu', this)" id="master-btn-onu" class="px-4 py-2 text-sm font-bold rounded-lg text-slate-200 hover:text-white transition">ONU Inspection</button>
             </div>
         </div>
     </div>
@@ -78,7 +78,7 @@
                 <button onclick="renderInboundWeek('Week 2 (8 - 14)', this)" class="inbound-wk-btn px-4 py-2 text-sm font-bold rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300">Week 2 (8 - 14)</button>
                 <button onclick="renderInboundWeek('Week 3 (15 - 21)', this)" class="inbound-wk-btn px-4 py-2 text-sm font-bold rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300">Week 3 (15 - 21)</button>
                 <button onclick="renderInboundWeek('Week 4 (22 - End)', this)" class="inbound-wk-btn px-4 py-2 text-sm font-bold rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300">Week 4 (22 - End)</button>
-                <button onclick="renderInboundWeek('week-comparison', this)" class="inbound-wk-btn px-4 py-2 text-sm font-extrabold rounded-xl bg-slate-900 text-white shadow">📊 Week-by-Week Comparison</button>
+                <button onclick="renderInboundWeek('week-comparison', this)" class="inbound-wk-btn px-4 py-2 text-sm font-extrabold rounded-xl bg-slate-900 text-white shadow">Week-by-Week Comparison</button>
             </div>
             
             <div id="inbound-dynamic-container" class="space-y-6"></div>
@@ -424,9 +424,9 @@
                 });
 
                 if (isLeave) {
-                    alertsHtml += `<div class='bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-xl text-amber-900 font-bold text-sm'>🏖️ ${name} is on Leave on ${dt} (Status: Leave)</div>`;
+                    alertsHtml += `<div class='bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-xl text-amber-900 font-bold text-sm'>${name} is on Leave on ${dt} (Status: Leave)</div>`;
                 } else if (dayTotal < DAILY_TARGET) {
-                    alertsHtml += `<div class='bg-red-50 border-l-4 border-red-500 p-4 rounded-r-xl text-red-900 font-bold text-sm'>⚠️ ${name} No Meet Daily KPI. ${dt} (Total: ${dayTotal} / Target: ${DAILY_TARGET})</div>`;
+                    alertsHtml += `<div class='bg-red-50 border-l-4 border-red-500 p-4 rounded-r-xl text-red-900 font-bold text-sm'>${name} No Meet Daily KPI. ${dt} (Total: ${dayTotal} / Target: ${DAILY_TARGET})</div>`;
                 }
                 if (!isLeave) grandTotal += dayTotal;
 
@@ -580,7 +580,7 @@
                                     <div class="space-y-2">${overallRegBarsHtml}</div>
                                 </div>
                                 <div class="pt-8 mt-16 border-t border-slate-200 space-y-3">
-                                    <h4 class="text-xs font-black uppercase text-slate-900 tracking-wider">📊 REGIONAL WEEKLY CHART</h4>
+                                    <h4 class="text-xs font-black uppercase text-slate-900 tracking-wider">REGIONAL WEEKLY CHART</h4>
                                     <div class="relative h-80"><canvas id="regionalMultiBarChart"></canvas></div>
                                 </div>
                             </div>
@@ -658,8 +658,7 @@
             if (!wData || wData.rawRows.length === 0) {
                 container.innerHTML = `
                     <div class='bg-white p-12 rounded-2xl text-center border border-slate-200 shadow-sm space-y-3'>
-                        <h3 class='text-lg font-black text-slate-800'>📭 No Inbound Data for ${weekKey}</h3>
-                        <p class='text-xs text-slate-500 font-bold'>Google Sheets ထဲတွင် ဤပတ်အတွက် အချက်အလက်များ ထည့်သွင်းထားခြင်း မရှိသေးပါ။</p>
+                        <h3 class='text-lg font-black text-slate-800'>No Inbound Data for ${weekKey}</h3>
                     </div>
                 `;
                 return;
@@ -742,7 +741,7 @@
 
                 let regTotQty = 0;
                 tableRowsHtml += `<tr class="bg-slate-100/80 font-black border-t-2 border-b-2 border-slate-300">`;
-                tableRowsHtml += `<td colspan="2" class="p-3 text-right text-xs uppercase text-slate-900">📌 ${regName} TOTAL:</td>`;
+                tableRowsHtml += `<td colspan="2" class="p-3 text-right text-xs uppercase text-slate-900">${regName} TOTAL:</td>`;
                 cpeTypesArr.forEach(cpe => {
                     let val = regSubtotal[cpe] || 0;
                     regTotQty += val;
@@ -777,12 +776,12 @@
 
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 font-bold">
                     <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-                        <h4 class="text-sm font-black text-slate-900 uppercase tracking-wide">📈 CPE-TYPE COMPARISON (${weekKey})</h4>
+                        <h4 class="text-sm font-black text-slate-900 uppercase tracking-wide">CPE-TYPE COMPARISON (${weekKey})</h4>
                         <div>${cpeBarsHtml}</div>
                     </div>
 
                     <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
-                        <h4 class="text-sm font-black text-slate-900 uppercase tracking-wide mb-2">📊 REGIONAL COMPARISON (${weekKey})</h4>
+                        <h4 class="text-sm font-black text-slate-900 uppercase tracking-wide mb-2">REGIONAL COMPARISON (${weekKey})</h4>
                         <div class="w-full max-w-[280px] h-[180px] mx-auto flex justify-center items-center my-1">
                             <canvas id="inboundPieChart"></canvas>
                         </div>
@@ -793,7 +792,7 @@
                 </div>
 
                 <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm font-bold space-y-4">
-                    <h3 class="text-base font-black text-slate-900">📋 ${weekKey} Detailed Inbound Report</h3>
+                    <h3 class="text-base font-black text-slate-900">${weekKey} Detailed Inbound Report</h3>
                     <div class="overflow-x-auto rounded-xl border border-slate-300">
                         <table class="w-full text-left border-collapse border border-slate-300 text-sm">
                             <thead class="bg-slate-800 text-white uppercase text-xs font-black">
@@ -843,11 +842,11 @@
             }, 100);
         }
 
-        // --- RELIABLE INDEX-BASED EXTRACTION FOR ONU DATA ---
+        // --- RELIABLE DEVICE NAME EXTRACTION & ONU DATA ---
         function isStrictPass(row) {
             let keys = Object.keys(row);
             for (let k of keys) {
-                if (k.toLowerCase().includes('overall') || k.toLowerCase().includes('pass/fail') || k === 'col_2' || k === 'col_10') {
+                if (k.toLowerCase().includes('overall') || k.toLowerCase().includes('pass/fail')) {
                     let val = String(row[k] || '').trim().toLowerCase();
                     if (val.includes('pass')) return true;
                 }
@@ -856,14 +855,24 @@
         }
 
         function getDeviceName(row) {
+            // Specifically look for 'Devices Name' or 'Device Name' first
             let keys = Object.keys(row);
             for (let k of keys) {
-                if (k.toLowerCase().includes('device') || k.toLowerCase().includes('cpe')) {
+                let kl = k.toLowerCase();
+                if (kl === 'devices name' || kl === 'device name' || kl === 'cpe type' || kl === 'device') {
                     let val = String(row[k] || '').trim();
                     if (val && !val.toLowerCase().includes('name') && val !== '-') return val;
                 }
             }
-            return row['Devices Name'] || row['Device Name'] || row['CPE Type'] || row['col_11'] || 'FFA';
+            // Fallback search
+            for (let k of keys) {
+                let kl = k.toLowerCase();
+                if (kl.includes('device') || kl.includes('cpe')) {
+                    let val = String(row[k] || '').trim();
+                    if (val && !val.toLowerCase().includes('name') && val !== '-') return val;
+                }
+            }
+            return 'FFA';
         }
 
         function getRowRegion(r) {
@@ -877,7 +886,6 @@
             return "UNKNOWN";
         }
 
-        // Flexible Parameter Fail Checker searching any column containing keywords
         function checkParamFail(row, keywords) {
             let keys = Object.keys(row);
             for (let k of keys) {
@@ -888,7 +896,6 @@
                     if (val.includes('fail') || val === 'f' || val === 'no' || val === '0') return true;
                 }
             }
-            // Fallback: check if any cell text explicitly contains fail for that keyword
             for (let k of keys) {
                 let kl = k.toLowerCase();
                 if (keywords.some(kw => kl.includes(kw))) {
@@ -1023,8 +1030,8 @@
             container.innerHTML = `
                 <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-6 font-bold">
                     <div>
-                        <h3 class='text-lg font-black text-slate-950'>📱 Devices & 7 Parameters Failure Breakdown (${currentTestType.toUpperCase()})</h3>
-                        <p class='text-xs text-slate-500 font-bold'>Device တစ်ခုချင်းစီအလိုက် Rx, Tx, Bias, Temp, Voltage, Dying Gasp နှင့် Unknown Parameter (၇) ချက်ဖြင့် အသေးစိတ်ခွဲခြားပြသထားခြင်း။</p>
+                        <h3 class='text-lg font-black text-slate-950'>Devices & 7 Parameters Failure Breakdown (${currentTestType.toUpperCase()})</h3>
+                        <p class='text-xs text-slate-500 font-bold'>Detailed breakdown of Rx, Tx, Bias, Temp, Voltage, Dying Gasp and Unknown parameters per device.</p>
                     </div>
 
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
@@ -1032,17 +1039,17 @@
                             <table class="w-full text-left border-collapse border border-slate-300 text-xs">
                                 <thead class="bg-slate-800 text-white uppercase font-black text-center">
                                     <tr>
-                                        <th class="p-2 border border-slate-600">Device</th>
-                                        <th class="p-2 border border-slate-600">Total</th>
-                                        <th class="p-2 border border-slate-600">Pass</th>
-                                        <th class="p-2 border border-slate-600">Fail</th>
-                                        <th class="p-2 border border-slate-600 bg-blue-900">Rx</th>
-                                        <th class="p-2 border border-slate-600 bg-cyan-900">Tx</th>
-                                        <th class="p-2 border border-slate-600 bg-purple-900">Bias</th>
-                                        <th class="p-2 border border-slate-600 bg-emerald-900">Temp</th>
-                                        <th class="p-2 border border-slate-600 bg-pink-900">Volt</th>
-                                        <th class="p-2 border border-slate-600 bg-indigo-900">Gasp</th>
-                                        <th class="p-2 border border-slate-600 bg-amber-900">Unknown</th>
+                                        <th class="p-2 border border-slate-600">DEVICE</th>
+                                        <th class="p-2 border border-slate-600">TOTAL</th>
+                                        <th class="p-2 border border-slate-600">PASS</th>
+                                        <th class="p-2 border border-slate-600">FAIL</th>
+                                        <th class="p-2 border border-slate-600 bg-blue-900">RX</th>
+                                        <th class="p-2 border border-slate-600 bg-cyan-900">TX</th>
+                                        <th class="p-2 border border-slate-600 bg-purple-900">BIAS</th>
+                                        <th class="p-2 border border-slate-600 bg-emerald-900">TEMP</th>
+                                        <th class="p-2 border border-slate-600 bg-pink-900">VOLT</th>
+                                        <th class="p-2 border border-slate-600 bg-indigo-900">GASP</th>
+                                        <th class="p-2 border border-slate-600 bg-amber-900">UNKNOWN</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -1052,7 +1059,7 @@
                         </div>
 
                         <div class="p-5 rounded-xl border border-slate-200 bg-slate-50/50 space-y-3">
-                            <h4 class="text-xs font-black uppercase text-slate-900 tracking-wider">📊 7-PARAMETER FAILURE BREAKDOWN CHART</h4>
+                            <h4 class="text-xs font-black uppercase text-slate-900 tracking-wider">7-PARAMETER FAILURE BREAKDOWN CHART</h4>
                             <div class="relative h-72"><canvas id="deviceFailureChart"></canvas></div>
                         </div>
                     </div>
@@ -1186,7 +1193,7 @@
                 <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4 font-bold">
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-100 pb-3 gap-2">
                         <div>
-                            <h3 class='text-lg font-black text-slate-950'>📈 Week-by-Week Pass/Fail Rate Trends & Comparison (${currentTestType.toUpperCase()})</h3>
+                            <h3 class='text-lg font-black text-slate-950'>Week-by-Week Pass/Fail Rate Trends & Comparison (${currentTestType.toUpperCase()})</h3>
                         </div>
                     </div>
 
@@ -1216,8 +1223,7 @@
 
                 <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-6 font-bold">
                     <div>
-                        <h3 class='text-lg font-black text-slate-950'>📍 Regional Inspection & 7-Parameter Failure Breakdown</h3>
-                        <p class='text-xs text-slate-500 font-bold'>Region အလိုက် စမ်းသပ်ခဲ့သော Pass/Fail အရေအတွက်များနှင့် 7-Parameter Fail အကြောင်းအရင်းများ။</p>
+                        <h3 class='text-lg font-black text-slate-950'>Regional Inspection & 7-Parameter Failure Breakdown</h3>
                     </div>
             `;
 
