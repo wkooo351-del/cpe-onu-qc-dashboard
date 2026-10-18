@@ -113,24 +113,14 @@
                     </div>
                 </div>
 
-                <!-- Sticky Filters Container -->
-                <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-md space-y-2">
+                <!-- Sticky Filters Container (Regional Filter Only) -->
+                <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-md">
                     <div class="flex flex-wrap gap-2 justify-center items-center">
                         <span class="text-xs text-slate-400 uppercase font-black mr-2">Region Filter:</span>
                         <button onclick="switchOnuRegion('All Region', this)" class="onu-region-btn px-3 py-1.5 text-xs font-bold rounded-xl bg-indigo-600 text-white shadow transition">All Region</button>
                         <button onclick="switchOnuRegion('HGAO', this)" class="onu-region-btn px-3 py-1.5 text-xs font-bold rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300 transition">HGAO</button>
                         <button onclick="switchOnuRegion('ENUO', this)" class="onu-region-btn px-3 py-1.5 text-xs font-bold rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300 transition">ENUO</button>
                         <button onclick="switchOnuRegion('MDY', this)" class="onu-region-btn px-3 py-1.5 text-xs font-bold rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300 transition">MDY</button>
-                    </div>
-
-                    <div class="flex flex-wrap gap-2 justify-center items-center border-t border-slate-100 pt-2">
-                        <span class="text-xs text-slate-400 uppercase font-black mr-2">Parameter Filter:</span>
-                        <button onclick="switchOnuParam('all', this)" class="onu-param-btn px-3 py-1.5 text-xs font-bold rounded-xl bg-slate-800 text-white shadow transition">All Parameters</button>
-                        <button onclick="switchOnuParam('rx', this)" class="onu-param-btn px-3 py-1.5 text-xs font-bold rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300 transition">Rx Power Fail</button>
-                        <button onclick="switchOnuParam('tx', this)" class="onu-param-btn px-3 py-1.5 text-xs font-bold rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300 transition">Tx Power Fail</button>
-                        <button onclick="switchOnuParam('bias', this)" class="onu-param-btn px-3 py-1.5 text-xs font-bold rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300 transition">Bias Fail</button>
-                        <button onclick="switchOnuParam('temp', this)" class="onu-param-btn px-3 py-1.5 text-xs font-bold rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300 transition">Temp Fail</button>
-                        <button onclick="switchOnuParam('voltage', this)" class="onu-param-btn px-3 py-1.5 text-xs font-bold rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300 transition">Voltage Fail</button>
                     </div>
                 </div>
             </div>
@@ -176,9 +166,9 @@
                         <table class="w-full text-left border-collapse border border-slate-300 text-xs">
                             <thead class="bg-slate-100 text-slate-700 uppercase font-black border-b border-slate-300">
                                 <tr>
-                                    <th class="p-3 border border-slate-300">INSPECTION PARAMETER</th>
-                                    <th class="p-3 border border-slate-300 text-center">FAILED COUNT (UNITS)</th>
-                                    <th class="p-3 border border-slate-300 text-center">SHARE OF FAILURES (%)</th>
+                                    <th class="p-3 border border-slate-300">PARAMETER</th>
+                                    <th class="p-3 border border-slate-300 text-center">FAILED COUNT</th>
+                                    <th class="p-3 border border-slate-300 text-center">SHARE (%)</th>
                                 </tr>
                             </thead>
                             <tbody id="param-summary-tbody" class="font-bold text-slate-800">
@@ -190,17 +180,20 @@
 
                 <!-- Device Models Performance & Failure Summary Table -->
                 <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-                    <h3 class="text-base font-bold text-slate-900">Device Models Performance & Failure</h3>
+                    <h3 class="text-base font-bold text-slate-900">Device Models Performance & Failures</h3>
                     <div class="overflow-x-auto rounded-xl border border-slate-300">
                         <table class="w-full text-left border-collapse border border-slate-300 text-xs">
                             <thead class="bg-slate-100 text-slate-700 uppercase font-black border-b border-slate-300">
                                 <tr>
                                     <th class="p-3 border border-slate-300">PERIOD</th>
                                     <th class="p-3 border border-slate-300 text-center">TOTAL TESTED</th>
+                                    <th class="p-3 border border-slate-300 text-center">PASSED</th>
+                                    <th class="p-3 border border-slate-300 text-center">FAILED</th>
+                                    <th class="p-3 border border-slate-300 text-center">FAIL RATE</th>
                                 </tr>
                             </thead>
                             <tbody id="device-model-tbody" class="font-bold text-slate-800">
-                                <tr><td colspan="2" class="p-4 text-center text-slate-400">Loading...</td></tr>
+                                <tr><td colspan="5" class="p-4 text-center text-slate-400">Loading...</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -230,7 +223,6 @@
         let oltChartInstance = null, failureChartInstance = null, pieChartInstance = null, multiBarChartInstance = null;
         let currentTestType = 'first';
         let currentOnuRegion = 'All Region';
-        let currentOnuParam = 'all';
 
         const VALID_REGIONS = ["ENUO", "HGAO", "MYFO"];
 
@@ -265,15 +257,6 @@
                 b.className = 'onu-region-btn px-3 py-1.5 text-xs font-bold rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300 transition';
             });
             btn.className = 'onu-region-btn px-3 py-1.5 text-xs font-bold rounded-xl bg-indigo-600 text-white shadow transition';
-            updateOnuDashboard();
-        }
-
-        function switchOnuParam(paramKeyword, btn) {
-            currentOnuParam = paramKeyword;
-            document.querySelectorAll('.onu-param-btn').forEach(b => {
-                b.className = 'onu-param-btn px-3 py-1.5 text-xs font-bold rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300 transition';
-            });
-            btn.className = 'onu-param-btn px-3 py-1.5 text-xs font-bold rounded-xl bg-slate-800 text-white shadow transition';
             updateOnuDashboard();
         }
 
@@ -1026,10 +1009,6 @@
                 data = data.filter(r => getRowRegion(r) === currentOnuRegion);
             }
 
-            if (currentOnuParam !== 'all') {
-                data = data.filter(r => checkParamFail(r, currentOnuParam));
-            }
-
             let total = data.length;
             let passed = data.filter(r => isStrictPass(r)).length;
             let failed = total - passed;
@@ -1116,7 +1095,6 @@
             });
         }
 
-        // RENDER SUMMARY TABLES (COUNT ONLY BY PARAMETER UNITS)
         function renderSummaryTables(data) {
             let rxFail = data.filter(r => checkParamFail(r, 'rx')).length;
             let biasFail = data.filter(r => checkParamFail(r, 'bias')).length;
@@ -1133,12 +1111,12 @@
             let totalParamFailSum = rxFail + biasFail + tempFail + txFail + voltFail + otherFail;
 
             let params = [
-                { name: 'Rx Power Issue', count: rxFail },
-                { name: 'Bias Current Issue', count: biasFail },
-                { name: 'Temperature Issue', count: tempFail },
-                { name: 'Tx Power Issue', count: txFail },
-                { name: 'Voltage Issue', count: voltFail },
-                { name: 'Other / Unspecified Issue', count: otherFail }
+                { name: 'Rx Power', count: rxFail },
+                { name: 'Bias Current', count: biasFail },
+                { name: 'Temperature', count: tempFail },
+                { name: 'Tx Power', count: txFail },
+                { name: 'Voltage', count: voltFail },
+                { name: 'Other / Unspecified', count: otherFail }
             ];
 
             let paramTbody = document.getElementById('param-summary-tbody');
@@ -1149,7 +1127,7 @@
                 paramRowsHtml += `
                     <tr class="hover:bg-slate-50 border-b border-slate-200">
                         <td class="p-3 border border-slate-200 text-slate-800 font-bold">${p.name}</td>
-                        <td class="p-3 border border-slate-200 text-center font-black text-rose-600">${p.count.toLocaleString()} Units</td>
+                        <td class="p-3 border border-slate-200 text-center font-black text-rose-600">${p.count}</td>
                         <td class="p-3 border border-slate-200 text-center font-bold text-slate-700">${share}%</td>
                     </tr>
                 `;
@@ -1157,52 +1135,81 @@
 
             paramRowsHtml += `
                 <tr class="bg-slate-100 font-black border-t-2 border-slate-300">
-                    <td class="p-3 border border-slate-300">Total Parameter Issues</td>
-                    <td class="p-3 border border-slate-300 text-center text-rose-700">${totalParamFailSum.toLocaleString()} Units</td>
+                    <td class="p-3 border border-slate-300">Total</td>
+                    <td class="p-3 border border-slate-300 text-center text-rose-700">${totalParamFailSum}</td>
                     <td class="p-3 border border-slate-300 text-center text-slate-900">100.00%</td>
                 </tr>
             `;
             paramTbody.innerHTML = paramRowsHtml;
 
-            let deviceCounts = {};
+            let deviceStats = {};
             data.forEach(r => {
                 let dev = getDeviceName(r);
-                deviceCounts[dev] = (deviceCounts[dev] || 0) + 1;
+                if (!deviceStats[dev]) {
+                    deviceStats[dev] = { total: 0, passed: 0, failed: 0 };
+                }
+                deviceStats[dev].total += 1;
+                if (isStrictPass(r)) {
+                    deviceStats[dev].passed += 1;
+                } else {
+                    deviceStats[dev].failed += 1;
+                }
             });
 
             let defaultModels = ['FFO', 'FFG', 'SCP', 'FFA', 'BFFA'];
             let modelTbody = document.getElementById('device-model-tbody');
             let modelRowsHtml = "";
-            let grandDeviceTotal = 0;
+            let grandTotalTested = 0, grandPassed = 0, grandFailed = 0;
 
             defaultModels.forEach(m => {
-                let c = deviceCounts[m] || 0;
-                grandDeviceTotal += c;
+                let stat = deviceStats[m] || { total: 0, passed: 0, failed: 0 };
+                grandTotalTested += stat.total;
+                grandPassed += stat.passed;
+                grandFailed += stat.failed;
+
+                let failRate = stat.total > 0 ? ((stat.failed / stat.total) * 100).toFixed(2) : "0.00";
+
                 modelRowsHtml += `
                     <tr class="hover:bg-slate-50 border-b border-slate-200">
                         <td class="p-3 border border-slate-200 text-slate-800 font-bold">${m}</td>
-                        <td class="p-3 border border-slate-200 text-center font-black text-slate-900">${c.toLocaleString()}</td>
+                        <td class="p-3 border border-slate-200 text-center font-black text-slate-900">${stat.total.toLocaleString()}</td>
+                        <td class="p-3 border border-slate-200 text-center font-black text-emerald-600">${stat.passed.toLocaleString()}</td>
+                        <td class="p-3 border border-slate-200 text-center font-black text-rose-600">${stat.failed.toLocaleString()}</td>
+                        <td class="p-3 border border-slate-200 text-center font-bold text-slate-700">${failRate}%</td>
                     </tr>
                 `;
             });
 
-            Object.keys(deviceCounts).forEach(devKey => {
+            Object.keys(deviceStats).forEach(devKey => {
                 if (!defaultModels.includes(devKey) && devKey !== 'UNKNOWN_DEVICE') {
-                    let c = deviceCounts[devKey];
-                    grandDeviceTotal += c;
+                    let stat = deviceStats[devKey];
+                    grandTotalTested += stat.total;
+                    grandPassed += stat.passed;
+                    grandFailed += stat.failed;
+
+                    let failRate = stat.total > 0 ? ((stat.failed / stat.total) * 100).toFixed(2) : "0.00";
+
                     modelRowsHtml += `
                         <tr class="hover:bg-slate-50 border-b border-slate-200">
                             <td class="p-3 border border-slate-200 text-slate-800 font-bold">${devKey}</td>
-                            <td class="p-3 border border-slate-200 text-center font-black text-slate-900">${c.toLocaleString()}</td>
+                            <td class="p-3 border border-slate-200 text-center font-black text-slate-900">${stat.total.toLocaleString()}</td>
+                            <td class="p-3 border border-slate-200 text-center font-black text-emerald-600">${stat.passed.toLocaleString()}</td>
+                            <td class="p-3 border border-slate-200 text-center font-black text-rose-600">${stat.failed.toLocaleString()}</td>
+                            <td class="p-3 border border-slate-200 text-center font-bold text-slate-700">${failRate}%</td>
                         </tr>
                     `;
                 }
             });
 
+            let overallFailRate = grandTotalTested > 0 ? ((grandFailed / grandTotalTested) * 100).toFixed(2) : "0.00";
+
             modelRowsHtml += `
                 <tr class="bg-slate-100 font-black border-t-2 border-slate-300">
                     <td class="p-3 border border-slate-300">Total</td>
-                    <td class="p-3 border border-slate-300 text-center text-blue-900">${grandDeviceTotal.toLocaleString()}</td>
+                    <td class="p-3 border border-slate-300 text-center text-slate-900">${grandTotalTested.toLocaleString()}</td>
+                    <td class="p-3 border border-slate-300 text-center text-emerald-700">${grandPassed.toLocaleString()}</td>
+                    <td class="p-3 border border-slate-300 text-center text-rose-700">${grandFailed.toLocaleString()}</td>
+                    <td class="p-3 border border-slate-300 text-center text-slate-900">${overallFailRate}%</td>
                 </tr>
             `;
             modelTbody.innerHTML = modelRowsHtml;
