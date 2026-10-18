@@ -33,7 +33,7 @@
 
     <main class="max-w-7xl mx-auto space-y-6">
         
-        <!-- SECTION 1: Staff KPI View -->
+        <!-- SECTION 1: Staff KPI View (Untouched) -->
         <div id="section-hc" class="dashboard-section space-y-6">
             <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
                 <div id="staff-buttons-container" class="staff-grid-nav justify-center">
@@ -71,7 +71,7 @@
             </div>
         </div>
 
-        <!-- SECTION 2: Inbound Regional KPI View -->
+        <!-- SECTION 2: Inbound Regional KPI View (Untouched) -->
         <div id="section-inbound" class="dashboard-section hidden space-y-6">
             <div class="flex flex-wrap gap-2 justify-center">
                 <button onclick="renderInboundWeek('Week 1 (1 - 7)', this)" class="inbound-wk-btn px-4 py-2 text-sm font-bold rounded-xl bg-blue-600 text-white shadow">Week 1 (1 - 7)</button>
@@ -1035,7 +1035,6 @@
                 `;
             });
 
-            // Total row matching the exact image layout
             let overallFailPercentAll = totalTestedCount > 0 ? ((totalFailCountAll / totalTestedCount) * 100).toFixed(1) : "0.0";
             deviceRowsHtml += `
                 <tr class="bg-slate-100 font-black text-slate-900 text-center border-t-2 border-slate-400">
