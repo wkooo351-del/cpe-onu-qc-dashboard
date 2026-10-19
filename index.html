@@ -210,7 +210,7 @@
                         <table class="w-full text-left border-collapse border border-slate-300 text-xs">
                             <thead class="bg-slate-100 text-slate-800 uppercase font-black border-b border-slate-300">
                                 <tr>
-                                    <th class="p-3 border border-slate-300 bg-slate-200 text-slate-900">PERIOD</th>
+                                    <th class="p-3 border border-slate-300 bg-slate-200 text-slate-900">MODEL</th>
                                     <th class="p-3 border border-slate-300 text-center">TOTAL TESTED</th>
                                     <th class="p-3 border border-slate-300 text-center">PASSED</th>
                                     <th class="p-3 border border-slate-300 text-center">FAILED</th>
@@ -953,18 +953,12 @@
 
         function getDeviceName(row) {
             let rawArr = row['_rawArray'] || [];
-            let devName = String(rawArr[18] || row['Device Name'] || row['Device'] || '').trim().toUpperCase();
+            // Column S is index 18
+            let devName = String(rawArr[18] || row['Devices Name'] || row['Device Name'] || row['Device'] || '').trim().toUpperCase();
             if (devName && !devName.toLowerCase().includes('name') && devName !== '-') {
                 return devName;
             }
-            let serial = String(rawArr[1] || '').trim().toUpperCase();
-            if (serial.startsWith('FFO')) return 'FFO';
-            if (serial.startsWith('FFG')) return 'FFG';
-            if (serial.startsWith('SCP')) return 'SCP';
-            if (serial.startsWith('FFA')) return 'FFA';
-            if (serial.startsWith('BFFA')) return 'BFFA';
-            if (serial.length >= 3) return serial.substring(0, 3);
-            return 'FFA';
+            return 'FFO';
         }
 
         function getRowRegion(row) {
@@ -1105,11 +1099,6 @@
 
         function renderSummaryTables(data) {
             let deviceStats = {};
-            let defaultModels = ['FFO', 'FFG', 'SCP', 'FFA', 'BFFA'];
-
-            defaultModels.forEach(m => {
-                deviceStats[m] = { rx: 0, tx: 0, temp: 0, bias: 0, volt: 0, unknown: 0, totalFail: 0 };
-            });
 
             data.forEach(r => {
                 if (!isStrictPass(r)) {
@@ -1142,46 +1131,49 @@
             let matrixRowsHtml = "";
             let colTotals = { rx: 0, tx: 0, temp: 0, bias: 0, volt: 0, unknown: 0, totalFail: 0 };
 
-            let allDeviceKeys = Object.keys(deviceStats).sort();
+            let activeDevicesWithFailures = Object.keys(deviceStats).filter(d => deviceStats[d].totalFail > 0).sort();
 
-            allDeviceKeys.forEach(dev => {
-                let stat = deviceStats[dev];
-                if (stat.totalFail === 0 && !defaultModels.includes(dev)) return;
+            if (activeDevicesWithFailures.length === 0) {
+                matrixRowsHtml = `<tr><td colspan="8" class="p-4 text-center text-emerald-600 font-bold">No parameter failures recorded for selected filter.</td></tr>`;
+            } else {
+                activeDevicesWithFailures.forEach(dev => {
+                    let stat = deviceStats[dev];
 
-                colTotals.rx += stat.rx;
-                colTotals.tx += stat.tx;
-                colTotals.temp += stat.temp;
-                colTotals.bias += stat.bias;
-                colTotals.volt += stat.volt;
-                colTotals.unknown += stat.unknown;
-                colTotals.totalFail += stat.totalFail;
+                    colTotals.rx += stat.rx;
+                    colTotals.tx += stat.tx;
+                    colTotals.temp += stat.temp;
+                    colTotals.bias += stat.bias;
+                    colTotals.volt += stat.volt;
+                    colTotals.unknown += stat.unknown;
+                    colTotals.totalFail += stat.totalFail;
+
+                    matrixRowsHtml += `
+                        <tr class="hover:bg-slate-50 border-b border-slate-200">
+                            <td class="p-2 border border-slate-200 font-black bg-slate-100 text-slate-900">${dev}</td>
+                            <td class="p-2 border border-slate-200 text-center font-bold text-blue-700 bg-blue-50/40">${stat.rx > 0 ? stat.rx.toLocaleString() : '-'}</td>
+                            <td class="p-2 border border-slate-200 text-center font-bold text-indigo-700 bg-indigo-50/40">${stat.tx > 0 ? stat.tx.toLocaleString() : '-'}</td>
+                            <td class="p-2 border border-slate-200 text-center font-bold text-emerald-700 bg-emerald-50/40">${stat.temp > 0 ? stat.temp.toLocaleString() : '-'}</td>
+                            <td class="p-2 border border-slate-200 text-center font-bold text-purple-700 bg-purple-50/40">${stat.bias > 0 ? stat.bias.toLocaleString() : '-'}</td>
+                            <td class="p-2 border border-slate-200 text-center font-bold text-pink-700 bg-pink-50/40">${stat.volt > 0 ? stat.volt.toLocaleString() : '-'}</td>
+                            <td class="p-2 border border-slate-200 text-center font-bold text-amber-700 bg-amber-50/40">${stat.unknown > 0 ? stat.unknown.toLocaleString() : '-'}</td>
+                            <td class="p-2 border border-slate-200 text-center font-black text-rose-600 bg-slate-100">${stat.totalFail.toLocaleString()}</td>
+                        </tr>
+                    `;
+                });
 
                 matrixRowsHtml += `
-                    <tr class="hover:bg-slate-50 border-b border-slate-200">
-                        <td class="p-2 border border-slate-200 font-black bg-slate-100 text-slate-900">${dev}</td>
-                        <td class="p-2 border border-slate-200 text-center font-bold text-blue-700 bg-blue-50/40">${stat.rx > 0 ? stat.rx.toLocaleString() : '-'}</td>
-                        <td class="p-2 border border-slate-200 text-center font-bold text-indigo-700 bg-indigo-50/40">${stat.tx > 0 ? stat.tx.toLocaleString() : '-'}</td>
-                        <td class="p-2 border border-slate-200 text-center font-bold text-emerald-700 bg-emerald-50/40">${stat.temp > 0 ? stat.temp.toLocaleString() : '-'}</td>
-                        <td class="p-2 border border-slate-200 text-center font-bold text-purple-700 bg-purple-50/40">${stat.bias > 0 ? stat.bias.toLocaleString() : '-'}</td>
-                        <td class="p-2 border border-slate-200 text-center font-bold text-pink-700 bg-pink-50/40">${stat.volt > 0 ? stat.volt.toLocaleString() : '-'}</td>
-                        <td class="p-2 border border-slate-200 text-center font-bold text-amber-700 bg-amber-50/40">${stat.unknown > 0 ? stat.unknown.toLocaleString() : '-'}</td>
-                        <td class="p-2 border border-slate-200 text-center font-black text-rose-600 bg-slate-100">${stat.totalFail > 0 ? stat.totalFail.toLocaleString() : '-'}</td>
+                    <tr class="bg-slate-200 font-black text-slate-900 border-t-2 border-slate-300">
+                        <td class="p-2.5 border border-slate-300 uppercase">Total</td>
+                        <td class="p-2.5 border border-slate-300 text-center text-blue-900 bg-blue-100">${colTotals.rx.toLocaleString()}</td>
+                        <td class="p-2.5 border border-slate-300 text-center text-indigo-900 bg-indigo-100">${colTotals.tx.toLocaleString()}</td>
+                        <td class="p-2.5 border border-slate-300 text-center text-emerald-900 bg-emerald-100">${colTotals.temp.toLocaleString()}</td>
+                        <td class="p-2.5 border border-slate-300 text-center text-purple-900 bg-purple-100">${colTotals.bias.toLocaleString()}</td>
+                        <td class="p-2.5 border border-slate-300 text-center text-pink-900 bg-pink-100">${colTotals.volt.toLocaleString()}</td>
+                        <td class="p-2.5 border border-slate-300 text-center text-amber-900 bg-amber-100">${colTotals.unknown.toLocaleString()}</td>
+                        <td class="p-2.5 border border-slate-300 text-center text-rose-700 text-sm bg-slate-300">${colTotals.totalFail.toLocaleString()}</td>
                     </tr>
                 `;
-            });
-
-            matrixRowsHtml += `
-                <tr class="bg-slate-200 font-black text-slate-900 border-t-2 border-slate-300">
-                    <td class="p-2.5 border border-slate-300 uppercase">Total</td>
-                    <td class="p-2.5 border border-slate-300 text-center text-blue-900 bg-blue-100">${colTotals.rx.toLocaleString()}</td>
-                    <td class="p-2.5 border border-slate-300 text-center text-indigo-900 bg-indigo-100">${colTotals.tx.toLocaleString()}</td>
-                    <td class="p-2.5 border border-slate-300 text-center text-emerald-900 bg-emerald-100">${colTotals.temp.toLocaleString()}</td>
-                    <td class="p-2.5 border border-slate-300 text-center text-purple-900 bg-purple-100">${colTotals.bias.toLocaleString()}</td>
-                    <td class="p-2.5 border border-slate-300 text-center text-pink-900 bg-pink-100">${colTotals.volt.toLocaleString()}</td>
-                    <td class="p-2.5 border border-slate-300 text-center text-amber-900 bg-amber-100">${colTotals.unknown.toLocaleString()}</td>
-                    <td class="p-2.5 border border-slate-300 text-center text-rose-700 text-sm bg-slate-300">${colTotals.totalFail.toLocaleString()}</td>
-                </tr>
-            `;
+            }
             matrixTbody.innerHTML = matrixRowsHtml;
 
             setTimeout(() => {
@@ -1213,7 +1205,6 @@
             }, 50);
 
             let deviceTotals = {};
-            defaultModels.forEach(m => { deviceTotals[m] = { total: 0, passed: 0, failed: 0 }; });
 
             data.forEach(r => {
                 let dev = getDeviceName(r);
@@ -1233,40 +1224,46 @@
             let grandTotalTested = 0, grandPassed = 0, grandFailed = 0;
             let chartLabels = [], chartPassedData = [], chartFailedData = [];
 
-            Object.keys(deviceTotals).sort().forEach(m => {
-                let stat = deviceTotals[m];
-                grandTotalTested += stat.total;
-                grandPassed += stat.passed;
-                grandFailed += stat.failed;
+            let testedDeviceKeys = Object.keys(deviceTotals).filter(d => deviceTotals[d].total > 0).sort();
 
-                chartLabels.push(m);
-                chartPassedData.push(stat.passed);
-                chartFailedData.push(stat.failed);
+            if (testedDeviceKeys.length === 0) {
+                modelRowsHtml = `<tr><td colspan="5" class="p-4 text-center text-slate-400">No device model records found.</td></tr>`;
+            } else {
+                testedDeviceKeys.forEach(m => {
+                    let stat = deviceTotals[m];
+                    grandTotalTested += stat.total;
+                    grandPassed += stat.passed;
+                    grandFailed += stat.failed;
 
-                let failRate = stat.total > 0 ? ((stat.failed / stat.total) * 100).toFixed(2) : "0.00";
+                    chartLabels.push(m);
+                    chartPassedData.push(stat.passed);
+                    chartFailedData.push(stat.failed);
+
+                    let failRate = stat.total > 0 ? ((stat.failed / stat.total) * 100).toFixed(2) : "0.00";
+
+                    modelRowsHtml += `
+                        <tr class="hover:bg-slate-50 border-b border-slate-200">
+                            <td class="p-3 border border-slate-200 font-black text-slate-900 bg-slate-50">${m}</td>
+                            <td class="p-3 border border-slate-200 text-center font-black text-slate-900">${stat.total.toLocaleString()}</td>
+                            <td class="p-3 border border-slate-200 text-center font-black text-emerald-600">${stat.passed.toLocaleString()}</td>
+                            <td class="p-3 border border-slate-200 text-center font-black text-rose-600">${stat.failed.toLocaleString()}</td>
+                            <td class="p-3 border border-slate-200 text-center font-bold text-slate-700">${failRate}%</td>
+                        </tr>
+                    `;
+                });
+
+                let overallFailRate = grandTotalTested > 0 ? ((grandFailed / grandTotalTested) * 100).toFixed(2) : "0.00";
 
                 modelRowsHtml += `
-                    <tr class="hover:bg-slate-50 border-b border-slate-200">
-                        <td class="p-3 border border-slate-200 font-black text-slate-900 bg-slate-50">${m}</td>
-                        <td class="p-3 border border-slate-200 text-center font-black text-slate-900">${stat.total.toLocaleString()}</td>
-                        <td class="p-3 border border-slate-200 text-center font-black text-emerald-600">${stat.passed.toLocaleString()}</td>
-                        <td class="p-3 border border-slate-200 text-center font-black text-rose-600">${stat.failed.toLocaleString()}</td>
-                        <td class="p-3 border border-slate-200 text-center font-bold text-slate-700">${failRate}%</td>
+                    <tr class="bg-slate-200 font-black text-slate-900 border-t-2 border-slate-300">
+                        <td class="p-3 border border-slate-300 uppercase">Total</td>
+                        <td class="p-3 border border-slate-300 text-center text-slate-900">${grandTotalTested.toLocaleString()}</td>
+                        <td class="p-3 border border-slate-300 text-center text-emerald-700">${grandPassed.toLocaleString()}</td>
+                        <td class="p-3 border border-slate-300 text-center text-rose-700">${grandFailed.toLocaleString()}</td>
+                        <td class="p-3 border border-slate-300 text-center text-slate-900">${overallFailRate}%</td>
                     </tr>
                 `;
-            });
-
-            let overallFailRate = grandTotalTested > 0 ? ((grandFailed / grandTotalTested) * 100).toFixed(2) : "0.00";
-
-            modelRowsHtml += `
-                <tr class="bg-slate-200 font-black text-slate-900 border-t-2 border-slate-300">
-                    <td class="p-3 border border-slate-300 uppercase">Total</td>
-                    <td class="p-3 border border-slate-300 text-center text-slate-900">${grandTotalTested.toLocaleString()}</td>
-                    <td class="p-3 border border-slate-300 text-center text-emerald-700">${grandPassed.toLocaleString()}</td>
-                    <td class="p-3 border border-slate-300 text-center text-rose-700">${grandFailed.toLocaleString()}</td>
-                    <td class="p-3 border border-slate-300 text-center text-slate-900">${overallFailRate}%</td>
-                </tr>
-            `;
+            }
             modelTbody.innerHTML = modelRowsHtml;
 
             setTimeout(() => {
