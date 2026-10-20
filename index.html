@@ -82,12 +82,18 @@
 
         <!-- SECTION 2: Inbound Regional KPI View -->
         <div id="section-inbound" class="dashboard-section hidden space-y-6">
-            <div class="flex flex-wrap gap-2 justify-center">
-                <button onclick="renderInboundWeek('Week 1 (1 - 7)', this)" class="inbound-wk-btn px-4 py-2 text-sm font-bold rounded-xl bg-blue-600 text-white shadow">Week 1 (1 - 7)</button>
-                <button onclick="renderInboundWeek('Week 2 (8 - 14)', this)" class="inbound-wk-btn px-4 py-2 text-sm font-bold rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300">Week 2 (8 - 14)</button>
-                <button onclick="renderInboundWeek('Week 3 (15 - 21)', this)" class="inbound-wk-btn px-4 py-2 text-sm font-bold rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300">Week 3 (15 - 21)</button>
-                <button onclick="renderInboundWeek('Week 4 (22 - End)', this)" class="inbound-wk-btn px-4 py-2 text-sm font-bold rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300">Week 4 (22 - End)</button>
-                <button onclick="renderInboundWeek('week-comparison', this)" class="inbound-wk-btn px-4 py-2 text-sm font-extrabold rounded-xl bg-slate-900 text-white shadow">Week-by-Week Comparison</button>
+            
+            <!-- Sticky Freeze Header for Inbound Week Tabs & Summary Cards -->
+            <div class="sticky top-[68px] z-40 bg-slate-50 pt-1 pb-3 space-y-3">
+                <div class="flex flex-wrap gap-2 justify-center bg-white p-3 rounded-2xl border border-slate-200 shadow-md">
+                    <button onclick="renderInboundWeek('Week 1 (1 - 7)', this)" class="inbound-wk-btn px-4 py-2 text-sm font-bold rounded-xl bg-blue-600 text-white shadow">Week 1 (1 - 7)</button>
+                    <button onclick="renderInboundWeek('Week 2 (8 - 14)', this)" class="inbound-wk-btn px-4 py-2 text-sm font-bold rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300">Week 2 (8 - 14)</button>
+                    <button onclick="renderInboundWeek('Week 3 (15 - 21)', this)" class="inbound-wk-btn px-4 py-2 text-sm font-bold rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300">Week 3 (15 - 21)</button>
+                    <button onclick="renderInboundWeek('Week 4 (22 - End)', this)" class="inbound-wk-btn px-4 py-2 text-sm font-bold rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300">Week 4 (22 - End)</button>
+                    <button onclick="renderInboundWeek('week-comparison', this)" class="inbound-wk-btn px-4 py-2 text-sm font-extrabold rounded-xl bg-slate-900 text-white shadow">Week-by-Week Comparison</button>
+                </div>
+
+                <div id="inbound-sticky-kpi-container"></div>
             </div>
             
             <div id="inbound-dynamic-container" class="space-y-6"></div>
@@ -97,7 +103,7 @@
         <div id="section-onu" class="dashboard-section hidden space-y-6">
             
             <!-- Sticky Filter Header Section -->
-            <div class="sticky top-[75px] z-40 space-y-3 pb-2 bg-slate-50">
+            <div class="sticky top-[68px] z-40 space-y-3 pb-2 bg-slate-50">
                 <div class="bg-indigo-600 shadow-md rounded-2xl p-3.5 flex flex-col md:flex-row justify-between items-center gap-3">
                     <div class="flex items-center space-x-2.5">
                         <span class="bg-white p-2 rounded-lg shadow text-indigo-600 font-bold text-sm">📊</span>
@@ -584,8 +590,10 @@
             }
 
             let container = document.getElementById('inbound-dynamic-container');
+            let stickyKpiContainer = document.getElementById('inbound-sticky-kpi-container');
 
             if (weekKey === 'week-comparison') {
+                if (stickyKpiContainer) stickyKpiContainer.innerHTML = '';
                 let allCpeTotals = {};
                 let allRegionalTotals = { "ENUO": 0, "HGAO": 0, "MYFO": 0, "MDY": 0 };
                 let weekKeys = ["Week 1 (1 - 7)", "Week 2 (8 - 14)", "Week 3 (15 - 21)", "Week 4 (22 - End)"];
@@ -752,6 +760,7 @@
 
             let wData = inboundLiveData[weekKey];
             if (!wData || wData.rawRows.length === 0) {
+                if (stickyKpiContainer) stickyKpiContainer.innerHTML = '';
                 container.innerHTML = `
                     <div class='bg-white p-12 rounded-2xl text-center border border-slate-200 shadow-sm space-y-3'>
                         <h3 class='text-lg font-black text-slate-800'>No Inbound Data for ${weekKey}</h3>
@@ -762,6 +771,26 @@
 
             let cpeTypesArr = Array.from(wData.cpeTypes).sort();
             let regionsArr = Array.from(wData.activeRegions).filter(r => VALID_REGIONS.includes(r)).sort();
+
+            // Render Sticky KPI Cards Container
+            if (stickyKpiContainer) {
+                stickyKpiContainer.innerHTML = `
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 font-bold">
+                        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                            <p class="text-xs uppercase text-slate-500 font-bold">Total Inbound Quantity</p>
+                            <h3 class="text-2xl font-black text-slate-900 mt-1">${wData.totalQty.toLocaleString()}</h3>
+                        </div>
+                        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                            <p class="text-xs uppercase text-slate-500 font-bold">Active Regions</p>
+                            <h3 class="text-2xl font-black text-slate-900 mt-1">${regionsArr.length}</h3>
+                        </div>
+                        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                            <p class="text-xs uppercase text-slate-500 font-bold">Device Categories</p>
+                            <h3 class="text-2xl font-black text-slate-900 mt-1">${cpeTypesArr.length}</h3>
+                        </div>
+                    </div>
+                `;
+            }
 
             let cpeBarsHtml = "";
             let maxCpe = Math.max(...Object.values(wData.cpeTotals), 100);
@@ -855,21 +884,6 @@
             grandRowHtml += `<td class="p-3.5 text-center text-amber-300 text-base">${wData.totalQty.toLocaleString()}</td></tr>`;
 
             container.innerHTML = `
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 font-bold">
-                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-                        <p class="text-xs uppercase text-slate-500 font-bold">Total Inbound Quantity</p>
-                        <h3 class="text-3xl font-black text-slate-900 mt-2">${wData.totalQty.toLocaleString()}</h3>
-                    </div>
-                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-                        <p class="text-xs uppercase text-slate-500 font-bold">Active Regions</p>
-                        <h3 class="text-3xl font-black text-slate-900 mt-2">${regionsArr.length}</h3>
-                    </div>
-                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-                        <p class="text-xs uppercase text-slate-500 font-bold">Device Categories</p>
-                        <h3 class="text-3xl font-black text-slate-900 mt-2">${cpeTypesArr.length}</h3>
-                    </div>
-                </div>
-
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 font-bold">
                     <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
                         <h4 class="text-sm font-black text-slate-900 uppercase tracking-wide">CPE-TYPE COMPARISON (${weekKey})</h4>
@@ -953,7 +967,6 @@
 
         function getDeviceName(row) {
             let rawArr = row['_rawArray'] || [];
-            // Column S is index 18
             let devName = String(rawArr[18] || row['Devices Name'] || row['Device Name'] || row['Device'] || '').trim().toUpperCase();
             if (devName && !devName.toLowerCase().includes('name') && devName !== '-') {
                 return devName;
