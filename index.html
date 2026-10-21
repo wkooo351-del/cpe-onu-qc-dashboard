@@ -196,12 +196,11 @@
                                     <th class="p-2 border border-slate-300 text-center text-red-900 bg-red-50">BIP8</th>
                                     <th class="p-2 border border-slate-300 text-center text-yellow-900 bg-yellow-50">Gasp</th>
                                     <th class="p-2 border border-slate-300 text-center text-violet-900 bg-violet-50">LOS</th>
-                                    <th class="p-2 border border-slate-300 text-center text-amber-900 bg-amber-50">Unk</th>
                                     <th class="p-2 border border-slate-300 text-center text-slate-900 bg-slate-200">TOTAL</th>
                                 </tr>
                             </thead>
                             <tbody id="param-summary-tbody" class="font-bold text-slate-800">
-                                <tr><td colspan="13" class="p-4 text-center text-slate-400">Loading...</td></tr>
+                                <tr><td colspan="12" class="p-4 text-center text-slate-400">Loading...</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -957,23 +956,6 @@
             }, 100);
         }
 
-        // --- ONU INSPECTION MAPPINGS ACCORDING TO NEW COLUMNS ---
-        // A: 0 (_time)
-        // B: 1 (olt_hostname)
-        // C: 2 (serial)
-        // E: 4 (overall_status)
-        // F: 5 (rx_status)
-        // G: 6 (tx_status)
-        // H: 7 (bias_status)
-        // I: 8 (voltage_status)
-        // J: 9 (temperature_status)
-        // R: 17 (online_status)
-        // T: 19 (offline_status)
-        // V: 21 (bip8_error_status)
-        // X: 23 (dying_gasp_status)
-        // Z: 25 (port_los_status)
-        // AC: 28 (Devices Name)
-
         function isStrictPass(row) {
             let rawArr = row['_rawArray'] || [];
             let overallVal = String(rawArr[4] || '').trim().toLowerCase();
@@ -1115,19 +1097,15 @@
             let bip8Fail = data.filter(r => checkParamFailIndex(r, 21)).length;
             let gaspFail = data.filter(r => checkParamFailIndex(r, 23)).length;
             let losFail = data.filter(r => checkParamFailIndex(r, 25)).length;
-            
-            let knownFails = rxFail + txFail + biasFail + voltFail + tempFail + onlineFail + offlineFail + bip8Fail + gaspFail + losFail;
-            let totalFailed = data.length - data.filter(r => isStrictPass(r)).length;
-            let unknownFail = totalFailed > knownFails ? (totalFailed - knownFails) : 0;
 
             if (failureChartInstance) failureChartInstance.destroy();
             failureChartInstance = new Chart(document.getElementById('failureChart'), {
                 type: 'doughnut',
                 data: {
-                    labels: ['Rx', 'Tx', 'Bias', 'Volt', 'Temp', 'Online', 'Offline', 'BIP8', 'Gasp', 'LOS', 'Unknown'],
+                    labels: ['Rx', 'Tx', 'Bias', 'Volt', 'Temp', 'Online', 'Offline', 'BIP8', 'Gasp', 'LOS'],
                     datasets: [{ 
-                        data: [rxFail, txFail, biasFail, voltFail, tempFail, onlineFail, offlineFail, bip8Fail, gaspFail, losFail, unknownFail], 
-                        backgroundColor: ['#3b82f6', '#6366f1', '#a855f7', '#ec4899', '#10b981', '#06b6d4', '#f97316', '#ef4444', '#eab308', '#8b5cf6', '#64748b'] 
+                        data: [rxFail, txFail, biasFail, voltFail, tempFail, onlineFail, offlineFail, bip8Fail, gaspFail, losFail], 
+                        backgroundColor: ['#3b82f6', '#6366f1', '#a855f7', '#ec4899', '#10b981', '#06b6d4', '#f97316', '#ef4444', '#eab308', '#8b5cf6'] 
                     }]
                 },
                 options: { 
@@ -1145,47 +1123,32 @@
                 if (!isStrictPass(r)) {
                     let dev = getDeviceName(r);
                     if (!deviceStats[dev]) {
-                        deviceStats[dev] = { rx: 0, tx: 0, bias: 0, volt: 0, temp: 0, online: 0, offline: 0, bip8: 0, gasp: 0, los: 0, unknown: 0, totalFail: 0 };
+                        deviceStats[dev] = { rx: 0, tx: 0, bias: 0, volt: 0, temp: 0, online: 0, offline: 0, bip8: 0, gasp: 0, los: 0, totalFail: 0 };
                     }
 
-                    let isRx = checkParamFailIndex(r, 5);
-                    let isTx = checkParamFailIndex(r, 6);
-                    let isBias = checkParamFailIndex(r, 7);
-                    let isVolt = checkParamFailIndex(r, 8);
-                    let isTemp = checkParamFailIndex(r, 9);
-                    let isOnline = checkParamFailIndex(r, 17);
-                    let isOffline = checkParamFailIndex(r, 19);
-                    let isBip8 = checkParamFailIndex(r, 21);
-                    let isGasp = checkParamFailIndex(r, 23);
-                    let isLos = checkParamFailIndex(r, 25);
+                    if (checkParamFailIndex(r, 5)) deviceStats[dev].rx++;
+                    if (checkParamFailIndex(r, 6)) deviceStats[dev].tx++;
+                    if (checkParamFailIndex(r, 7)) deviceStats[dev].bias++;
+                    if (checkParamFailIndex(r, 8)) deviceStats[dev].volt++;
+                    if (checkParamFailIndex(r, 9)) deviceStats[dev].temp++;
+                    if (checkParamFailIndex(r, 17)) deviceStats[dev].online++;
+                    if (checkParamFailIndex(r, 19)) deviceStats[dev].offline++;
+                    if (checkParamFailIndex(r, 21)) deviceStats[dev].bip8++;
+                    if (checkParamFailIndex(r, 23)) deviceStats[dev].gasp++;
+                    if (checkParamFailIndex(r, 25)) deviceStats[dev].los++;
 
-                    let matched = false;
-                    if (isRx) { deviceStats[dev].rx++; matched = true; }
-                    if (isTx) { deviceStats[dev].tx++; matched = true; }
-                    if (isBias) { deviceStats[dev].bias++; matched = true; }
-                    if (isVolt) { deviceStats[dev].volt++; matched = true; }
-                    if (isTemp) { deviceStats[dev].temp++; matched = true; }
-                    if (isOnline) { deviceStats[dev].online++; matched = true; }
-                    if (isOffline) { deviceStats[dev].offline++; matched = true; }
-                    if (isBip8) { deviceStats[dev].bip8++; matched = true; }
-                    if (isGasp) { deviceStats[dev].gasp++; matched = true; }
-                    if (isLos) { deviceStats[dev].los++; matched = true; }
-
-                    if (!matched) {
-                        deviceStats[dev].unknown++;
-                    }
                     deviceStats[dev].totalFail++;
                 }
             });
 
             let matrixTbody = document.getElementById('param-summary-tbody');
             let matrixRowsHtml = "";
-            let colTotals = { rx: 0, tx: 0, bias: 0, volt: 0, temp: 0, online: 0, offline: 0, bip8: 0, gasp: 0, los: 0, unknown: 0, totalFail: 0 };
+            let colTotals = { rx: 0, tx: 0, bias: 0, volt: 0, temp: 0, online: 0, offline: 0, bip8: 0, gasp: 0, los: 0, totalFail: 0 };
 
             let activeDevicesWithFailures = Object.keys(deviceStats).filter(d => deviceStats[d].totalFail > 0).sort();
 
             if (activeDevicesWithFailures.length === 0) {
-                matrixRowsHtml = `<tr><td colspan="13" class="p-4 text-center text-emerald-600 font-bold">No parameter failures recorded for selected filter.</td></tr>`;
+                matrixRowsHtml = `<tr><td colspan="12" class="p-4 text-center text-emerald-600 font-bold">No parameter failures recorded for selected filter.</td></tr>`;
             } else {
                 activeDevicesWithFailures.forEach(dev => {
                     let stat = deviceStats[dev];
@@ -1200,7 +1163,6 @@
                     colTotals.bip8 += stat.bip8;
                     colTotals.gasp += stat.gasp;
                     colTotals.los += stat.los;
-                    colTotals.unknown += stat.unknown;
                     colTotals.totalFail += stat.totalFail;
 
                     matrixRowsHtml += `
@@ -1216,7 +1178,6 @@
                             <td class="p-2 border border-slate-200 text-center font-bold text-red-700 bg-red-50/40">${stat.bip8 > 0 ? stat.bip8.toLocaleString() : '-'}</td>
                             <td class="p-2 border border-slate-200 text-center font-bold text-yellow-700 bg-yellow-50/40">${stat.gasp > 0 ? stat.gasp.toLocaleString() : '-'}</td>
                             <td class="p-2 border border-slate-200 text-center font-bold text-violet-700 bg-violet-50/40">${stat.los > 0 ? stat.los.toLocaleString() : '-'}</td>
-                            <td class="p-2 border border-slate-200 text-center font-bold text-amber-700 bg-amber-50/40">${stat.unknown > 0 ? stat.unknown.toLocaleString() : '-'}</td>
                             <td class="p-2 border border-slate-200 text-center font-black text-rose-600 bg-slate-100">${stat.totalFail.toLocaleString()}</td>
                         </tr>
                     `;
@@ -1235,7 +1196,6 @@
                         <td class="p-2.5 border border-slate-300 text-center text-red-900 bg-red-100">${colTotals.bip8.toLocaleString()}</td>
                         <td class="p-2.5 border border-slate-300 text-center text-yellow-900 bg-yellow-100">${colTotals.gasp.toLocaleString()}</td>
                         <td class="p-2.5 border border-slate-300 text-center text-violet-900 bg-violet-100">${colTotals.los.toLocaleString()}</td>
-                        <td class="p-2.5 border border-slate-300 text-center text-amber-900 bg-amber-100">${colTotals.unknown.toLocaleString()}</td>
                         <td class="p-2.5 border border-slate-300 text-center text-rose-700 text-sm bg-slate-300">${colTotals.totalFail.toLocaleString()}</td>
                     </tr>
                 `;
@@ -1249,11 +1209,11 @@
                     paramBarChartInstance = new Chart(ctxParam, {
                         type: 'bar',
                         data: {
-                            labels: ['Rx', 'Tx', 'Bias', 'Volt', 'Temp', 'Online', 'Offline', 'BIP8', 'Gasp', 'LOS', 'Unk'],
+                            labels: ['Rx', 'Tx', 'Bias', 'Volt', 'Temp', 'Online', 'Offline', 'BIP8', 'Gasp', 'LOS'],
                             datasets: [{
                                 label: 'Failure Count',
-                                data: [colTotals.rx, colTotals.tx, colTotals.bias, colTotals.volt, colTotals.temp, colTotals.online, colTotals.offline, colTotals.bip8, colTotals.gasp, colTotals.los, colTotals.unknown],
-                                backgroundColor: ['#3b82f6', '#6366f1', '#a855f7', '#ec4899', '#10b981', '#06b6d4', '#f97316', '#ef4444', '#eab308', '#8b5cf6', '#64748b'],
+                                data: [colTotals.rx, colTotals.tx, colTotals.bias, colTotals.volt, colTotals.temp, colTotals.online, colTotals.offline, colTotals.bip8, colTotals.gasp, colTotals.los],
+                                backgroundColor: ['#3b82f6', '#6366f1', '#a855f7', '#ec4899', '#10b981', '#06b6d4', '#f97316', '#ef4444', '#eab308', '#8b5cf6'],
                                 borderRadius: 4
                             }]
                         },
@@ -1502,9 +1462,6 @@
                 let bip8Fail = regRows.filter(r => checkParamFailIndex(r, 21)).length;
                 let gaspFail = regRows.filter(r => checkParamFailIndex(r, 23)).length;
                 let losFail = regRows.filter(r => checkParamFailIndex(r, 25)).length;
-                
-                let knownF = rxFail + txFail + biasFail + voltFail + tempFail + onlineFail + offlineFail + bip8Fail + gaspFail + losFail;
-                let gaspUnknown = failed > knownF ? (failed - knownF) : 0;
 
                 let badgeColor = regShort === 'HGAO' ? 'bg-amber-500' : (regShort === 'ENUO' ? 'bg-blue-600' : (regShort === 'MDY' ? 'bg-purple-600' : 'bg-emerald-600'));
 
@@ -1519,7 +1476,7 @@
                             </div>
                         </div>
 
-                        <div class="grid grid-cols-2 sm:grid-cols-6 gap-2 text-xs">
+                        <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 text-xs">
                             <div class="bg-white p-2.5 rounded-lg border border-slate-200 flex justify-between items-center">
                                 <span class="text-slate-500">RX:</span>
                                 <span class="px-2 py-0.5 bg-blue-50 text-blue-700 rounded font-black">${rxFail}</span>
@@ -1559,10 +1516,6 @@
                             <div class="bg-white p-2.5 rounded-lg border border-slate-200 flex justify-between items-center">
                                 <span class="text-slate-500">LOS:</span>
                                 <span class="px-2 py-0.5 bg-violet-50 text-violet-700 rounded font-black">${losFail}</span>
-                            </div>
-                            <div class="bg-white p-2.5 rounded-lg border border-slate-200 flex justify-between items-center">
-                                <span class="text-slate-500">UNKNOWN:</span>
-                                <span class="px-2 py-0.5 bg-amber-50 text-amber-700 rounded font-black">${gaspUnknown}</span>
                             </div>
                         </div>
                     </div>
