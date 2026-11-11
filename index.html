@@ -364,7 +364,7 @@
         }
 
         async function loadAllData() {
-            let rows1 = await fetchGoogleSheetData(STAFF_SHEET_ID, "Oct 26");
+            let rows1 = await fetchGoogleSheetData(STAFF_SHEET_ID, "Nov 26");
             if (rows1.length === 0) rows1 = await fetchGoogleSheetData(STAFF_SHEET_ID);
             processStaffRows(rows1);
 
@@ -372,7 +372,7 @@
             processStaffRows(rows2);
             renderStaffButtons();
 
-            let inboundRows = await fetchGoogleSheetData(INBOUND_SHEET_ID, "Oct'26");
+            let inboundRows = await fetchGoogleSheetData(INBOUND_SHEET_ID, "Nov'26");
             if (inboundRows.length === 0) inboundRows = await fetchGoogleSheetData(INBOUND_SHEET_ID);
             processInboundLiveRows(inboundRows);
             renderInboundWeek(activeInboundWeek);
