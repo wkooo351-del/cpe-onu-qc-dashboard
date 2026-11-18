@@ -21,7 +21,7 @@
 </head>
 <body class="text-slate-900 font-bold p-4 sm:p-6">
 
-    <!-- Master Navigation Header (Compact Freeze) -->
+    <!-- Master Navigation Header -->
     <div class="sticky top-0 z-50 bg-slate-50 pb-2 mb-4">
         <div class="bg-slate-800 text-white px-5 py-3 rounded-xl shadow-md flex flex-col md:flex-row justify-between items-center gap-3 border border-slate-700">
             <div>
@@ -41,7 +41,6 @@
         
         <!-- SECTION 1: Staff KPI View -->
         <div id="section-hc" class="dashboard-section space-y-6">
-            
             <div class="sticky top-[68px] z-40 bg-slate-50 pb-2 space-y-2">
                 <div class="bg-white p-3 rounded-2xl shadow-md border border-slate-200 flex flex-col sm:flex-row justify-between items-center gap-2">
                     <div class="flex items-center gap-2">
@@ -53,7 +52,6 @@
                     </div>
                     <span id="staff-active-month-badge" class="text-xs px-3 py-1 bg-blue-50 text-blue-700 rounded-lg font-black border border-blue-200">Active: Nov'26</span>
                 </div>
-
                 <div class="bg-white p-3 rounded-2xl shadow-md border border-slate-200">
                     <div id="staff-buttons-container" class="staff-grid-nav">
                         <span class="text-xs text-slate-400 font-bold px-2">Loading Staff Members...</span>
@@ -69,9 +67,7 @@
                         <p class="text-xs text-slate-400 font-bold">Performance & Daily Activities</p>
                     </div>
                 </div>
-
                 <div id="staff-alerts-container" class="space-y-2"></div>
-
                 <div class="overflow-x-auto rounded-xl border border-slate-300">
                     <table class="w-full text-left border-collapse border border-slate-300">
                         <thead>
@@ -93,7 +89,6 @@
 
         <!-- SECTION 2: Inbound Regional KPI View -->
         <div id="section-inbound" class="dashboard-section hidden space-y-6">
-            
             <div class="sticky top-[68px] z-40 bg-slate-50 pt-1 pb-3 space-y-3">
                 <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-md space-y-2.5">
                     <div class="flex flex-wrap gap-2 justify-center items-center pb-2 border-b border-slate-100">
@@ -103,7 +98,6 @@
                             <option value="Oct'26">Oct'26</option>
                         </select>
                     </div>
-
                     <div class="flex flex-wrap gap-2 justify-center">
                         <button onclick="renderInboundWeek('Week 1 (1 - 7)', this)" class="inbound-wk-btn px-4 py-2 text-sm font-bold rounded-xl bg-blue-600 text-white shadow">Week 1 (1 - 7)</button>
                         <button onclick="renderInboundWeek('Week 2 (8 - 14)', this)" class="inbound-wk-btn px-4 py-2 text-sm font-bold rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300">Week 2 (8 - 14)</button>
@@ -112,16 +106,13 @@
                         <button onclick="renderInboundWeek('week-comparison', this)" class="inbound-wk-btn px-4 py-2 text-sm font-extrabold rounded-xl bg-slate-900 text-white shadow">Week-by-Week Comparison</button>
                     </div>
                 </div>
-
                 <div id="inbound-sticky-kpi-container"></div>
             </div>
-            
             <div id="inbound-dynamic-container" class="space-y-6"></div>
         </div>
 
-        <!-- SECTION 3: Regional KPI View (ENUO, HGAO, MYFO/MDY) -->
+        <!-- SECTION 3: Regional KPI View -->
         <div id="section-regional-kpi" class="dashboard-section hidden space-y-6">
-            
             <div class="sticky top-[68px] z-40 bg-slate-50 pt-1 pb-3 space-y-3">
                 <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-md flex flex-col sm:flex-row justify-between items-center gap-3">
                     <div class="flex items-center gap-2">
@@ -130,7 +121,6 @@
                             <option value="All">All Dates</option>
                         </select>
                     </div>
-
                     <div class="flex flex-wrap gap-2">
                         <button onclick="switchRegionalTab('ENUO', this)" id="reg-tab-enuo" class="reg-tab-btn px-4 py-2 text-xs font-black rounded-xl bg-blue-600 text-white shadow transition">ENUO</button>
                         <button onclick="switchRegionalTab('HGAO', this)" id="reg-tab-hgao" class="reg-tab-btn px-4 py-2 text-xs font-black rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300 transition">HGAO</button>
@@ -138,13 +128,11 @@
                     </div>
                 </div>
             </div>
-
             <div id="regional-kpi-container" class="space-y-6"></div>
         </div>
 
         <!-- SECTION 4: ONU Inspection View -->
         <div id="section-onu" class="dashboard-section hidden space-y-6">
-            
             <div class="sticky top-[68px] z-40 space-y-3 pb-2 bg-slate-50">
                 <div class="bg-indigo-600 shadow-md rounded-2xl p-3.5 flex flex-col md:flex-row justify-between items-center gap-3">
                     <div class="flex items-center space-x-2.5">
@@ -168,7 +156,6 @@
                         </div>
                     </div>
                 </div>
-
                 <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-md">
                     <div class="flex flex-wrap gap-2 justify-center items-center">
                         <span class="text-xs text-slate-400 uppercase font-black mr-2">Region Filter:</span>
@@ -216,7 +203,6 @@
 
             <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
                 <h3 class="text-base font-black text-slate-900">Inspection Parameters Failure Summary (Device-wise Matrix)</h3>
-                
                 <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
                     <div class="lg:col-span-7 overflow-x-auto rounded-xl border border-slate-300">
                         <table class="w-full text-left border-collapse border border-slate-300 text-xs">
@@ -241,7 +227,6 @@
                             </tbody>
                         </table>
                     </div>
-
                     <div class="lg:col-span-5 p-4 rounded-xl border border-slate-200 bg-slate-50/50">
                         <h4 class="text-xs font-black uppercase text-slate-700 mb-2 text-center">Parameter Failures Comparison Chart</h4>
                         <div class="relative h-64"><canvas id="paramBarChart"></canvas></div>
@@ -274,11 +259,8 @@
                     </div>
                 </div>
             </div>
-
             <div id="onu-dynamic-container" class="space-y-6"></div>
-
         </div>
-
     </main>
 
     <script>
@@ -308,29 +290,30 @@
 
         const VALID_REGIONS = ["ENUO", "HGAO", "MYFO", "MDY"];
 
-        // Smart Header Value Finder
-        function getValByHeader(rowObj, candidateKeys, fallbackIndex = -1) {
+        // Robust Value Finder by checking Header Keys and Raw Index Positions
+        function getVal(rowObj, headerCandidates, fallbackIndex) {
             if (!rowObj) return '';
-            const keys = Object.keys(rowObj);
-            for (let cand of candidateKeys) {
+            let rawArr = rowObj['_rawArray'] || [];
+            let headers = rowObj['_headers'] || [];
+
+            // 1. Try finding by header name match
+            for (let cand of headerCandidates) {
                 let target = cand.toLowerCase().trim();
-                for (let k of keys) {
-                    if (k.toLowerCase().trim() === target && rowObj[k] !== '' && rowObj[k] !== null && rowObj[k] !== undefined) {
-                        return rowObj[k];
+                for (let i = 0; i < headers.length; i++) {
+                    let h = String(headers[i]).toLowerCase().trim();
+                    if (h === target || h.includes(target)) {
+                        if (rawArr[i] !== undefined && rawArr[i] !== null && String(rawArr[i]).trim() !== '') {
+                            return rawArr[i];
+                        }
                     }
                 }
             }
-            for (let cand of candidateKeys) {
-                let target = cand.toLowerCase().trim();
-                for (let k of keys) {
-                    if (k.toLowerCase().includes(target) && rowObj[k] !== '' && rowObj[k] !== null && rowObj[k] !== undefined) {
-                        return rowObj[k];
-                    }
-                }
+
+            // 2. Fallback to raw index if valid
+            if (fallbackIndex >= 0 && rawArr[fallbackIndex] !== undefined && rawArr[fallbackIndex] !== null) {
+                return rawArr[fallbackIndex];
             }
-            if (fallbackIndex >= 0 && rowObj['_rawArray'] && rowObj['_rawArray'][fallbackIndex] !== undefined) {
-                return rowObj['_rawArray'][fallbackIndex];
-            }
+
             return '';
         }
 
@@ -409,13 +392,9 @@
                 if (sheetName) url += `&sheet=${encodeURIComponent(sheetName)}`;
                 const res = await fetch(url);
                 const text = await res.text();
-                if (!text.startsWith('/*O_o*/')) {
-                    console.warn(`[Sheet Fetch Warning] Invalid GViz response for ${sheetName || sheetId}`);
-                    return [];
-                }
+                if (!text.startsWith('/*O_o*/')) return [];
                 const json = JSON.parse(text.substring(47, text.length - 2));
                 
-                // Extract column labels from gviz cols metadata if row 0 is not header
                 const colLabels = (json.table.cols || []).map(c => (c && c.label) ? String(c.label).trim() : '');
                 const rows = json.table.rows.map(r => r.c ? r.c.map(cell => cell ? (cell.v !== null ? cell.v : '') : '') : []);
                 if (rows.length === 0) return [];
@@ -519,12 +498,12 @@
         function processStaffRows(rows) {
             let grouped = {};
             rows.forEach(row => {
-                let dateRaw = getValByHeader(row, ['Date', 'Time', 'Timestamp'], 0);
-                let name = String(getValByHeader(row, ['Name', 'Staff Name', 'Staff'], 1)).trim();
-                let device = String(getValByHeader(row, ['Device Name', 'Devices Name', 'Device'], 2) || '-').trim();
-                let jd = String(getValByHeader(row, ['Daily (JD)', 'JD', 'Daily'], 3) || '-').trim();
-                let qty = parseFloat(getValByHeader(row, ['Qty', 'Quantity', 'Total', 'Count'], 4)) || 0;
-                let mac = String(getValByHeader(row, ['MAC', 'Mac Address'], 5)).trim();
+                let dateRaw = getVal(row, ['Date', 'Time'], 0);
+                let name = String(getVal(row, ['Name', 'Staff Name'], 1)).trim();
+                let device = String(getVal(row, ['Device Name', 'Device'], 2) || '-').trim();
+                let jd = String(getVal(row, ['Daily (JD)', 'JD', 'Daily'], 3) || '-').trim();
+                let qty = parseFloat(getVal(row, ['Qty', 'Quantity', 'Total'], 4)) || 0;
+                let mac = String(getVal(row, ['MAC'], 5)).trim();
 
                 if (!name || !jd || name.toLowerCase() === 'name') return;
                 let dateStr = parseLocalDate(dateRaw);
@@ -580,7 +559,7 @@
         function buildInboundMonthData(rows) {
             let dataByWeek = getEmptyInboundMonthStructure();
             rows.forEach(r => {
-                let dateStr = parseLocalDate(getValByHeader(r, ['Date', 'Time'], 0));
+                let dateStr = parseLocalDate(getVal(r, ['Date', 'Time'], 0));
                 if (!dateStr) return;
                 let dayNum = parseInt(dateStr.split('-')[2]) || 1;
 
@@ -589,14 +568,14 @@
                 else if (dayNum >= 15 && dayNum <= 21) weekKey = "Week 3 (15 - 21)";
                 else if (dayNum >= 22) weekKey = "Week 4 (22 - End)";
 
-                let possibleRegion = String(getValByHeader(r, ['Regional', 'Region'], 1)).trim().toUpperCase();
+                let possibleRegion = String(getVal(r, ['Regional', 'Region'], 1)).trim().toUpperCase();
                 let region = VALID_REGIONS.find(v => possibleRegion.includes(v));
                 if (!region) return;
 
-                let device = String(getValByHeader(r, ['CPE Type', 'Device Name', 'Devices Name', 'Device'], 3) || 'ECJ').trim().toUpperCase();
+                let device = String(getVal(r, ['CPE Type', 'Device Name', 'Device'], 3) || 'ECJ').trim().toUpperCase();
                 if (device.toLowerCase().includes("name") || device === "-") device = "ECJ";
 
-                let qty = parseFloat(getValByHeader(r, ['Qty', 'Quantity', 'Total'], 4)) || 1;
+                let qty = parseFloat(getVal(r, ['Qty', 'Quantity', 'Total'], 4)) || 1;
 
                 let wkObj = dataByWeek[weekKey];
                 if (!wkObj) return;
@@ -726,14 +705,13 @@
             if(tableBody) tableBody.innerHTML = tableRowsHtml;
         }
 
-        // --- REGIONAL KPI LOGIC WITH SMART HEADER MAPPING & CONSOLE DEBUG ---
         function populateRegionalDateFilter() {
             let datesSet = new Set();
             Object.values(staffGroupedDataByMonth[activeStaffMonth] || {}).forEach(datesObj => {
                 Object.keys(datesObj).forEach(dt => datesSet.add(dt));
             });
             mdySheetData.forEach(r => {
-                let dt = parseLocalDate(getValByHeader(r, ['Date', 'Time'], 0));
+                let dt = parseLocalDate(getVal(r, ['Date'], 0));
                 if(dt) datesSet.add(dt);
             });
 
@@ -755,7 +733,7 @@
             let sourceRows = [];
 
             if (regionName === 'ENUO' || regionName === 'HGAO') {
-                const candidateTabs = [regionName, `${regionName} 26`, `${regionName}'26`, `${regionName}_26`, `${regionName} Nov`, `${regionName} Oct`];
+                const candidateTabs = [regionName, `${regionName} 26`, `${regionName}'26`, `${regionName}_26`];
                 for (let tab of candidateTabs) {
                     sourceRows = await fetchGoogleSheetData(STAFF_SHEET_ID, tab);
                     if (sourceRows.length > 0) {
@@ -769,40 +747,48 @@
             }
 
             if (sourceRows.length > 0) {
-                console.log(`[Regional KPI Debug] Sample Headers for ${regionName}:`, sourceRows[0]['_headers']);
-                console.log(`[Regional KPI Debug] Sample Row 1 for ${regionName}:`, sourceRows[0]);
-            } else {
-                console.warn(`[Regional KPI Debug] Zero rows returned for ${regionName}! Check tab names in Google Sheet.`);
+                console.log(`[Regional KPI Debug] Headers for ${regionName}:`, sourceRows[0]['_headers']);
+                console.log(`[Regional KPI Debug] First Row Data for ${regionName}:`, sourceRows[0]['_rawArray']);
             }
 
-            sourceRows.forEach(row => {
-                let dateRaw = getValByHeader(row, ['Date', 'Time', 'Timestamp'], 0);
+            sourceRows.forEach((row, index) => {
+                let dateRaw = getVal(row, ['Date', 'Time', 'Timestamp'], 0);
                 let dt = parseLocalDate(dateRaw);
                 if (!dt) return;
                 if (targetDate !== 'All' && dt !== targetDate) return;
 
-                let jd = String(getValByHeader(row, ['Daily (JD)', 'JD', 'Daily', 'Activity', 'Task'], 3)).trim().toLowerCase();
-                let qtyRaw = getValByHeader(row, ['Qty', 'Quantity', 'Total', 'Count', 'Unit'], 4);
-                let qty = parseFloat(qtyRaw);
-                let mac = String(getValByHeader(row, ['MAC', 'Mac Address'], 5)).trim();
+                // Let's check multiple possible column positions for Daily (JD) and Qty
+                let rawArr = row['_rawArray'] || [];
+                let jd = String(rawArr[3] || rawArr[2] || getVal(row, ['Daily (JD)', 'JD', 'Daily'], 3)).trim().toLowerCase();
+                let qtyRaw = rawArr[4] || rawArr[5] || getVal(row, ['Qty', 'Quantity', 'Total'], 4);
+                let qty = parseFloat(qtyRaw) || 0;
+                let mac = String(rawArr[5] || getVal(row, ['MAC'], 5)).trim();
 
-                if (!jd || jd === 'daily (jd)' || jd === 'jd') return;
+                // If index 3 is not JD, let's scan all elements in the row for cleaning/terminal/default
+                if (!jd.includes('clean') && !jd.includes('run') && !jd.includes('term') && !jd.includes('def')) {
+                    for (let cell of rawArr) {
+                        let cStr = String(cell).toLowerCase().trim();
+                        if (cStr === 'cleaning' || cStr === 'clean' || cStr === 'run' || cStr === 'terminal' || cStr === 'default') {
+                            jd = cStr;
+                            break;
+                        }
+                    }
+                }
 
                 if (!dateMap[dt]) dateMap[dt] = { cleaning: 0, terminal: 0, default: 0 };
 
-                // Determine quantity: if Qty is valid number use it; otherwise if MAC exists count as 1
-                let valToAdd = !isNaN(qty) && qty > 0 ? qty : ((mac !== '' && mac !== '#N/A') ? 1 : 0);
+                let valToAdd = qty > 0 ? qty : 1;
 
-                if (jd === 'cleaning' || jd === 'clean') {
+                if (jd.includes('clean')) {
                     dateMap[dt].cleaning += valToAdd;
-                } else if (jd === 'run' || jd === 'terminal' || jd === 'term') {
+                } else if (jd.includes('run') || jd.includes('term')) {
                     dateMap[dt].terminal += valToAdd;
-                } else if (jd === 'default') {
+                } else if (jd.includes('def')) {
                     dateMap[dt].default += valToAdd;
                 }
             });
 
-            console.log(`[Regional KPI Debug] Calculated Metrics for ${regionName}:`, dateMap);
+            console.log(`[Regional KPI Debug] Final Calculated Metrics for ${regionName}:`, dateMap);
             return dateMap;
         }
 
@@ -820,7 +806,6 @@
             let metricsByDate = await extractRegionalMetrics(activeRegionalTab, selectedDate);
             let sortedDates = Object.keys(metricsByDate).sort();
 
-            // Sync dropdown dates with actual loaded regional dates
             let select = document.getElementById('regional-date-filter');
             if (select && selectedDate === 'All' && sortedDates.length > 0) {
                 let existingOptions = Array.from(select.options).map(o => o.value);
@@ -843,7 +828,7 @@
             let sumGrandTotal = 0, sumGrandHc = 0;
 
             if(sortedDates.length === 0) {
-                tableRowsHtml = `<tr><td colspan="13" class="p-8 text-center text-slate-400">No records found for ${activeRegionalTab} on ${selectedDate} (Check Console F12 for details)</td></tr>`;
+                tableRowsHtml = `<tr><td colspan="13" class="p-8 text-center text-slate-400">No records found for ${activeRegionalTab} on ${selectedDate}</td></tr>`;
             } else {
                 sortedDates.forEach(dt => {
                     let m = metricsByDate[dt] || { cleaning: 0, terminal: 0, default: 0 };
@@ -1086,7 +1071,6 @@
                             <h3 class='text-lg font-black text-slate-950'>Week-by-Week Regional Comparison Dashboard (${activeInboundMonth})</h3>
                             <p class='text-xs text-slate-500 font-bold'>Period Performance Breakdown across Regions and CPE Types.</p>
                         </div>
-
                         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
                             <div class="p-5 rounded-xl border border-slate-200 bg-slate-50/50 space-y-4">
                                 <div>
@@ -1098,13 +1082,11 @@
                                     <div class="relative h-80"><canvas id="regionalMultiBarChart"></canvas></div>
                                 </div>
                             </div>
-
                             <div class="p-5 rounded-xl border border-slate-200 bg-slate-50/50 space-y-4">
                                 <h4 class="text-xs font-black uppercase text-slate-900 tracking-wider">OVERALL CPE-TYPE COMPARISON</h4>
                                 <div>${overallCpeBarsHtml}</div>
                             </div>
                         </div>
-
                         <div class="space-y-3 pt-4">
                             <h3 class="text-sm font-black uppercase text-slate-900">4-Week Regional Inbound Comparison Table (${activeInboundMonth})</h3>
                             <div class="overflow-x-auto rounded-xl border border-slate-300">
@@ -1152,12 +1134,7 @@
                             options: { 
                                 responsive: true, 
                                 maintainAspectRatio: false, 
-                                plugins: { 
-                                    legend: { 
-                                        position: 'bottom',
-                                        labels: { font: { weight: 'bold', size: 11 }, color: '#0f172a' }
-                                    } 
-                                },
+                                plugins: { legend: { position: 'bottom', labels: { font: { weight: 'bold', size: 11 }, color: '#0f172a' } } },
                                 scales: {
                                     x: { ticks: { font: { weight: 'bold' }, color: '#0f172a' } },
                                     y: { ticks: { font: { weight: 'bold' }, color: '#0f172a' } }
@@ -1299,7 +1276,6 @@
                         <h4 class="text-sm font-black text-slate-900 uppercase tracking-wide">CPE-TYPE COMPARISON (${activeInboundMonth} - ${weekKey})</h4>
                         <div>${cpeBarsHtml}</div>
                     </div>
-
                     <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
                         <h4 class="text-sm font-black text-slate-900 uppercase tracking-wide mb-2">REGIONAL COMPARISON (${activeInboundMonth} - ${weekKey})</h4>
                         <div class="w-full max-w-[280px] h-[180px] mx-auto flex justify-center items-center my-1">
@@ -1310,7 +1286,6 @@
                         </div>
                     </div>
                 </div>
-
                 <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm font-bold space-y-4">
                     <h3 class="text-base font-black text-slate-900">${activeInboundMonth} - ${weekKey} Detailed Inbound Report</h3>
                     <div class="overflow-x-auto rounded-xl border border-slate-300">
@@ -1350,12 +1325,7 @@
                         options: {
                             responsive: true,
                             maintainAspectRatio: false,
-                            plugins: { 
-                                legend: { 
-                                    position: 'bottom',
-                                    labels: { font: { weight: 'bold', size: 11 }, color: '#0f172a' }
-                                } 
-                            }
+                            plugins: { legend: { position: 'bottom', labels: { font: { weight: 'bold', size: 11 }, color: '#0f172a' } } }
                         }
                     });
                 }
@@ -1378,7 +1348,7 @@
 
         function getDeviceName(row) {
             let rawArr = row['_rawArray'] || [];
-            let devName = String(rawArr[28] || row['Devices Name'] || row['Device Name'] || row['Device'] || '').trim().toUpperCase();
+            let devName = String(rawArr[28] || getVal(row, ['Device Name', 'Device'], 28)).trim().toUpperCase();
             if (devName && !devName.toLowerCase().includes('name') && devName !== '-') {
                 return devName;
             }
@@ -1387,7 +1357,7 @@
 
         function getRowRegion(row) {
             let rawArr = row['_rawArray'] || [];
-            let oltHostname = String(rawArr[1] || row['olt_hostname'] || row['col_1'] || '').toUpperCase();
+            let oltHostname = String(rawArr[1] || getVal(row, ['olt_hostname'], 1)).toUpperCase();
             
             if (oltHostname.includes("ENUO")) return "ENUO";
             if (oltHostname.includes("MDY")) return "MDY";
@@ -1423,15 +1393,14 @@
 
             let filteredByPeriod = rawData;
             if (currentTestType === 'daily') {
-                let dates = rawData.map(r => parseLocalDate(r['_time'] || r['Date'] || r['col_0'])).filter(Boolean).sort();
+                let dates = rawData.map(r => parseLocalDate(getVal(r, ['Date'], 0))).filter(Boolean).sort();
                 let latestDate = dates[dates.length - 1];
                 if (latestDate) {
-                    filteredByPeriod = rawData.filter(r => parseLocalDate(r['_time'] || r['Date'] || r['col_0']) === latestDate);
+                    filteredByPeriod = rawData.filter(r => parseLocalDate(getVal(r, ['Date'], 0)) === latestDate);
                 }
             }
 
             let data = filteredByPeriod;
-
             if (currentOnuRegion !== 'All Region') {
                 data = data.filter(r => getRowRegion(r) === currentOnuRegion);
             }
@@ -1651,7 +1620,6 @@
             }, 50);
 
             let deviceTotals = {};
-
             data.forEach(r => {
                 let dev = getDeviceName(r);
                 if (!deviceTotals[dev]) {
@@ -1762,7 +1730,7 @@
 
             weekRanges.forEach((wk, idx) => {
                 let wkRows = rawData.filter(r => {
-                    let dateStr = parseLocalDate(r['_time'] || r['Date'] || r['col_0'] || '');
+                    let dateStr = parseLocalDate(getVal(r, ['Date'], 0));
                     if (!dateStr) return false;
                     let dayNum = parseInt(dateStr.split('-')[2]) || 0;
                     let matchesRegion = true;
@@ -1833,11 +1801,9 @@
                             <h3 class='text-lg font-black text-slate-950'>Week-by-Week Pass/Fail Rate Trends & Comparison (${currentTestType.toUpperCase()})</h3>
                         </div>
                     </div>
-
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                         ${weekTrendCardsHtml}
                     </div>
-
                     <div class="overflow-x-auto rounded-xl border border-slate-300 mt-4">
                         <table class="w-full text-left border-collapse border border-slate-300 text-xs">
                             <thead class="bg-slate-800 text-white uppercase font-black text-center">
@@ -1857,7 +1823,6 @@
                         </table>
                     </div>
                 </div>
-
                 <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-6 font-bold">
                     <div>
                         <h3 class='text-lg font-black text-slate-950'>Regional Inspection & Parameter Failure Breakdown</h3>
@@ -1866,7 +1831,6 @@
 
             targetRegions.forEach(regShort => {
                 let regRows = rawData.filter(r => getRowRegion(r) === regShort);
-
                 let regTotal = regRows.length;
                 let passed = regRows.filter(r => isStrictPass(r)).length;
                 let failed = regTotal - passed;
@@ -1896,48 +1860,17 @@
                                 <span class="text-rose-600">Failed: <strong>${failed.toLocaleString()}</strong> (${failRate}%)</span>
                             </div>
                         </div>
-
                         <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 text-xs">
-                            <div class="bg-white p-2.5 rounded-lg border border-slate-200 flex justify-between items-center">
-                                <span class="text-slate-500">RX:</span>
-                                <span class="px-2 py-0.5 bg-blue-50 text-blue-700 rounded font-black">${rxFail}</span>
-                            </div>
-                            <div class="bg-white p-2.5 rounded-lg border border-slate-200 flex justify-between items-center">
-                                <span class="text-slate-500">TX:</span>
-                                <span class="px-2 py-0.5 bg-indigo-50 text-indigo-700 rounded font-black">${txFail}</span>
-                            </div>
-                            <div class="bg-white p-2.5 rounded-lg border border-slate-200 flex justify-between items-center">
-                                <span class="text-slate-500">BIAS:</span>
-                                <span class="px-2 py-0.5 bg-purple-50 text-purple-700 rounded font-black">${biasFail}</span>
-                            </div>
-                            <div class="bg-white p-2.5 rounded-lg border border-slate-200 flex justify-between items-center">
-                                <span class="text-slate-500">VOLT:</span>
-                                <span class="px-2 py-0.5 bg-pink-50 text-pink-700 rounded font-black">${voltFail}</span>
-                            </div>
-                            <div class="bg-white p-2.5 rounded-lg border border-slate-200 flex justify-between items-center">
-                                <span class="text-slate-500">TEMP:</span>
-                                <span class="px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded font-black">${tempFail}</span>
-                            </div>
-                            <div class="bg-white p-2.5 rounded-lg border border-slate-200 flex justify-between items-center">
-                                <span class="text-slate-500">ONLINE:</span>
-                                <span class="px-2 py-0.5 bg-cyan-50 text-cyan-700 rounded font-black">${onlineFail}</span>
-                            </div>
-                            <div class="bg-white p-2.5 rounded-lg border border-slate-200 flex justify-between items-center">
-                                <span class="text-slate-500">OFFLINE:</span>
-                                <span class="px-2 py-0.5 bg-orange-50 text-orange-700 rounded font-black">${offlineFail}</span>
-                            </div>
-                            <div class="bg-white p-2.5 rounded-lg border border-slate-200 flex justify-between items-center">
-                                <span class="text-slate-500">BIP8:</span>
-                                <span class="px-2 py-0.5 bg-red-50 text-red-700 rounded font-black">${bip8Fail}</span>
-                            </div>
-                            <div class="bg-white p-2.5 rounded-lg border border-slate-200 flex justify-between items-center">
-                                <span class="text-slate-500">GASP:</span>
-                                <span class="px-2 py-0.5 bg-yellow-50 text-yellow-700 rounded font-black">${gaspFail}</span>
-                            </div>
-                            <div class="bg-white p-2.5 rounded-lg border border-slate-200 flex justify-between items-center">
-                                <span class="text-slate-500">LOS:</span>
-                                <span class="px-2 py-0.5 bg-violet-50 text-violet-700 rounded font-black">${losFail}</span>
-                            </div>
+                            <div class="bg-white p-2.5 rounded-lg border border-slate-200 flex justify-between items-center"><span class="text-slate-500">RX:</span><span class="px-2 py-0.5 bg-blue-50 text-blue-700 rounded font-black">${rxFail}</span></div>
+                            <div class="bg-white p-2.5 rounded-lg border border-slate-200 flex justify-between items-center"><span class="text-slate-500">TX:</span><span class="px-2 py-0.5 bg-indigo-50 text-indigo-700 rounded font-black">${txFail}</span></div>
+                            <div class="bg-white p-2.5 rounded-lg border border-slate-200 flex justify-between items-center"><span class="text-slate-500">BIAS:</span><span class="px-2 py-0.5 bg-purple-50 text-purple-700 rounded font-black">${biasFail}</span></div>
+                            <div class="bg-white p-2.5 rounded-lg border border-slate-200 flex justify-between items-center"><span class="text-slate-500">VOLT:</span><span class="px-2 py-0.5 bg-pink-50 text-pink-700 rounded font-black">${voltFail}</span></div>
+                            <div class="bg-white p-2.5 rounded-lg border border-slate-200 flex justify-between items-center"><span class="text-slate-500">TEMP:</span><span class="px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded font-black">${tempFail}</span></div>
+                            <div class="bg-white p-2.5 rounded-lg border border-slate-200 flex justify-between items-center"><span class="text-slate-500">ONLINE:</span><span class="px-2 py-0.5 bg-cyan-50 text-cyan-700 rounded font-black">${onlineFail}</span></div>
+                            <div class="bg-white p-2.5 rounded-lg border border-slate-200 flex justify-between items-center"><span class="text-slate-500">OFFLINE:</span><span class="px-2 py-0.5 bg-orange-50 text-orange-700 rounded font-black">${offlineFail}</span></div>
+                            <div class="bg-white p-2.5 rounded-lg border border-slate-200 flex justify-between items-center"><span class="text-slate-500">BIP8:</span><span class="px-2 py-0.5 bg-red-50 text-red-700 rounded font-black">${bip8Fail}</span></div>
+                            <div class="bg-white p-2.5 rounded-lg border border-slate-200 flex justify-between items-center"><span class="text-slate-500">GASP:</span><span class="px-2 py-0.5 bg-yellow-50 text-yellow-700 rounded font-black">${gaspFail}</span></div>
+                            <div class="bg-white p-2.5 rounded-lg border border-slate-200 flex justify-between items-center"><span class="text-slate-500">LOS:</span><span class="px-2 py-0.5 bg-violet-50 text-violet-700 rounded font-black">${losFail}</span></div>
                         </div>
                     </div>
                 `;
