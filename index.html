@@ -456,20 +456,20 @@
 
         async function loadAllData() {
             let octStaffRows = await fetchFlexibleSheet(STAFF_SHEET_ID, ["Oct 26", "Oct'26", "Oct"]);
-            let octMdyRows = await fetchFlexibleSheet(MDY_SHEET_ID, ["MDY", "MDY 26", "MDY'26", "Oct'26", "Oct 26"]);
+            let octMdyRows = await fetchFlexibleSheet(MDY_SHEET_ID, ["MDY", "MDY 26", "MDY'26", "Oct'26", "Oct 26", "Sheet1"]);
             staffGroupedDataByMonth["Oct'26"] = processStaffRows([...octStaffRows, ...octMdyRows]);
 
             let novStaffRows = await fetchFlexibleSheet(STAFF_SHEET_ID, ["Nov 26", "Nov'26", "Nov"]);
-            let novMdyRows = await fetchFlexibleSheet(MDY_SHEET_ID, ["MDY", "MDY 26", "MDY'26", "Nov'26", "Nov 26"]);
+            let novMdyRows = await fetchFlexibleSheet(MDY_SHEET_ID, ["MDY", "MDY 26", "MDY'26", "Nov'26", "Nov 26", "Sheet1"]);
             staffGroupedDataByMonth["Nov'26"] = processStaffRows([...novStaffRows, ...novMdyRows]);
 
             staffGroupedData = staffGroupedDataByMonth[activeStaffMonth] || {};
             renderStaffButtons();
 
-            let octInboundRows = await fetchFlexibleSheet(INBOUND_SHEET_ID, ["Oct'26", "Oct 26", "Oct"]);
+            let octInboundRows = await fetchFlexibleSheet(INBOUND_SHEET_ID, ["Oct'26", "Oct 26", "Oct", "Sheet1"]);
             inboundLiveDataByMonth["Oct'26"] = buildInboundMonthData(octInboundRows);
 
-            let novInboundRows = await fetchFlexibleSheet(INBOUND_SHEET_ID, ["Nov'26", "Nov 26", "Nov"]);
+            let novInboundRows = await fetchFlexibleSheet(INBOUND_SHEET_ID, ["Nov'26", "Nov 26", "Nov", "Sheet1"]);
             inboundLiveDataByMonth["Nov'26"] = buildInboundMonthData(novInboundRows);
 
             inboundLiveData = inboundLiveDataByMonth[activeInboundMonth] || getEmptyInboundMonthStructure();
@@ -479,9 +479,9 @@
             populateRegionalDateFilter();
             await renderRegionalKpiView();
 
-            onuData.firstTest = await fetchFlexibleSheet(ONU_SS_ID, ["First Test", "First"]);
-            onuData.secondTest = await fetchFlexibleSheet(ONU_SS_ID, ["Second Test", "Second"]);
-            onuData.exchangeTest = await fetchFlexibleSheet(ONU_SS_ID, ["Exchange", "Exchange Devices"]);
+            onuData.firstTest = await fetchFlexibleSheet(ONU_SS_ID, ["First Test", "First", "Sheet1"]);
+            onuData.secondTest = await fetchFlexibleSheet(ONU_SS_ID, ["Second Test", "Second", "Sheet1"]);
+            onuData.exchangeTest = await fetchFlexibleSheet(ONU_SS_ID, ["Exchange", "Exchange Devices", "Sheet1"]);
 
             let updatedEl = document.getElementById('last-updated');
             if(updatedEl) updatedEl.innerText = 'Synced: ' + new Date().toLocaleTimeString();
@@ -1162,7 +1162,24 @@
 
             let wData = inboundLiveData[weekKey];
             if (!wData || wData.rawRows.length === 0) {
-                if (stickyKpiContainer) stickyKpiContainer.innerHTML = '';
+                if (stickyKpiContainer) {
+                    stickyKpiContainer.innerHTML = `
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 font-bold">
+                            <div class="bg-white p-4 rounded-xl border-t-4 border-blue-600 shadow-sm">
+                                <p class="text-xs uppercase text-slate-500 font-bold">Total Inbound Quantity (${activeInboundMonth})</p>
+                                <h3 class="text-2xl font-black text-blue-900 mt-1">0</h3>
+                            </div>
+                            <div class="bg-white p-4 rounded-xl border-t-4 border-emerald-500 shadow-sm">
+                                <p class="text-xs uppercase text-slate-500 font-bold">Active Regions</p>
+                                <h3 class="text-2xl font-black text-emerald-700 mt-1">0</h3>
+                            </div>
+                            <div class="bg-white p-4 rounded-xl border-t-4 border-purple-600 shadow-sm">
+                                <p class="text-xs uppercase text-slate-500 font-bold">Device Categories</p>
+                                <h3 class="text-2xl font-black text-purple-900 mt-1">0</h3>
+                            </div>
+                        </div>
+                    `;
+                }
                 container.innerHTML = `
                     <div class='bg-white p-12 rounded-2xl text-center border border-slate-200 shadow-sm space-y-3'>
                         <h3 class='text-lg font-black text-slate-800'>No Inbound Data for ${activeInboundMonth} - ${weekKey}</h3>
@@ -1171,32 +1188,57 @@
                 return;
             }
 
-            let cpeTypesArr = Array.from(wData.cpeTypes).sort();
-            let regionsArr = Array.from(wData.activeRegions).filter(r => VALID_REGIONS.includes(r)).sort();
+            let filteredRows = wData.rawRows;
+            if (activeInboundReportRegion !== 'All Region') {
+                filteredRows = filteredRows.filter(r => r.region === activeInboundReportRegion);
+            }
+            if (activeInboundReportDate !== 'All') {
+                filteredRows = filteredRows.filter(r => r.date === activeInboundReportDate);
+            }
+
+            // Dynamically calculate summary stats based on filtered selection
+            let filteredTotalQty = 0;
+            let filteredRegions = new Set();
+            let filteredCpes = new Set();
+            let filteredCpeTotals = {};
+            let filteredRegionalTotals = {};
+
+            filteredRows.forEach(r => {
+                filteredTotalQty += r.qty;
+                filteredRegions.add(r.region);
+                filteredCpes.add(r.device);
+                filteredCpeTotals[r.device] = (filteredCpeTotals[r.device] || 0) + r.qty;
+                filteredRegionalTotals[r.region] = (filteredRegionalTotals[r.region] || 0) + r.qty;
+            });
 
             if (stickyKpiContainer) {
                 stickyKpiContainer.innerHTML = `
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-3 font-bold">
                         <div class="bg-white p-4 rounded-xl border-t-4 border-blue-600 shadow-sm">
                             <p class="text-xs uppercase text-slate-500 font-bold">Total Inbound Quantity (${activeInboundMonth})</p>
-                            <h3 class="text-2xl font-black text-blue-900 mt-1">${wData.totalQty.toLocaleString()}</h3>
+                            <h3 class="text-2xl font-black text-blue-900 mt-1">${filteredTotalQty.toLocaleString()}</h3>
                         </div>
                         <div class="bg-white p-4 rounded-xl border-t-4 border-emerald-500 shadow-sm">
                             <p class="text-xs uppercase text-slate-500 font-bold">Active Regions</p>
-                            <h3 class="text-2xl font-black text-emerald-700 mt-1">${regionsArr.length}</h3>
+                            <h3 class="text-2xl font-black text-emerald-700 mt-1">${filteredRegions.size}</h3>
                         </div>
                         <div class="bg-white p-4 rounded-xl border-t-4 border-purple-600 shadow-sm">
                             <p class="text-xs uppercase text-slate-500 font-bold">Device Categories</p>
-                            <h3 class="text-2xl font-black text-purple-900 mt-1">${cpeTypesArr.length}</h3>
+                            <h3 class="text-2xl font-black text-purple-900 mt-1">${filteredCpes.size}</h3>
                         </div>
                     </div>
                 `;
             }
 
+            let cpeTypesArr = Array.from(filteredCpes).sort();
+            if (cpeTypesArr.length === 0) cpeTypesArr = Array.from(wData.cpeTypes).sort();
+            let regionsArr = Array.from(filteredRegions).filter(r => VALID_REGIONS.includes(r)).sort();
+            if (regionsArr.length === 0) regionsArr = Array.from(wData.activeRegions).filter(r => VALID_REGIONS.includes(r)).sort();
+
             let cpeBarsHtml = "";
-            let maxCpe = Math.max(...Object.values(wData.cpeTotals), 100);
-            cpeTypesArr.forEach(cpe => {
-                let qty = wData.cpeTotals[cpe] || 0;
+            let maxCpe = Math.max(...Object.values(filteredCpeTotals), 100);
+            Object.keys(filteredCpeTotals).sort().forEach(cpe => {
+                let qty = filteredCpeTotals[cpe] || 0;
                 let pct = Math.min(100, Math.round((qty / maxCpe) * 100));
                 cpeBarsHtml += `
                     <div class="mb-3">
@@ -1212,9 +1254,9 @@
 
             let regBarsHtml = "";
             let regColors = { "ENUO": "#2563eb", "HGAO": "#f59e0b", "MDY": "#8b5cf6", "MYFO": "#10b981" };
-            regionsArr.forEach(reg => {
-                let qty = wData.regionalTotals[reg] || 0;
-                let pct = wData.totalQty > 0 ? Math.round((qty / wData.totalQty) * 100) : 0;
+            Object.keys(filteredRegionalTotals).sort().forEach(reg => {
+                let qty = filteredRegionalTotals[reg] || 0;
+                let pct = filteredTotalQty > 0 ? Math.round((qty / filteredTotalQty) * 100) : 0;
                 let hex = regColors[reg] || "#64748b";
                 regBarsHtml += `
                     <div class="mb-2">
@@ -1230,14 +1272,6 @@
                     </div>
                 `;
             });
-
-            let filteredRows = wData.rawRows;
-            if (activeInboundReportRegion !== 'All Region') {
-                filteredRows = filteredRows.filter(r => r.region === activeInboundReportRegion);
-            }
-            if (activeInboundReportDate !== 'All') {
-                filteredRows = filteredRows.filter(r => r.date === activeInboundReportDate);
-            }
 
             let availableDates = Array.from(new Set(wData.rawRows.map(r => r.date))).sort();
             let dateOptionsHtml = `<option value="All">All Dates</option>`;
@@ -1320,7 +1354,6 @@
                     </tr>`;
                 });
 
-                // Calculate Region Total 1HC KPI & Meet KPI for this Region Total row
                 let regAvg1HcVal = regTotalHc > 0 ? (regTotalQty / regTotalHc) : 0;
                 let regAvg1HcStr = regTotalHc > 0 ? regAvg1HcVal.toFixed(1) : "0.0";
                 let regTotalMeetBadge = "-";
@@ -1409,8 +1442,8 @@
                 let ctx = document.getElementById('inboundPieChart');
                 if (ctx) {
                     if (pieChartInstance) pieChartInstance.destroy();
-                    let regLabels = regionsArr;
-                    let regValues = regionsArr.map(r => wData.regionalTotals[r] || 0);
+                    let regLabels = Object.keys(filteredRegionalTotals).sort();
+                    let regValues = regLabels.map(r => filteredRegionalTotals[r] || 0);
                     pieChartInstance = new Chart(ctx, {
                         type: 'doughnut',
                         data: {
