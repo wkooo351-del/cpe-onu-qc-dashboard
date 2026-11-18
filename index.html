@@ -32,48 +32,53 @@
 
     <main class="max-w-7xl mx-auto space-y-6">
         
-        <!-- SECTION 1: Staff KPI View -->
+        <!-- SECTION 1: Staff KPI Pivot / Dashboard View -->
         <div id="section-hc" class="dashboard-section space-y-6">
             <div class="sticky top-[68px] z-40 bg-slate-50 pb-2 space-y-2">
-                <div class="bg-white p-3 rounded-2xl shadow-md border border-slate-200 flex flex-col sm:flex-row justify-between items-center gap-2">
-                    <div class="flex items-center gap-2">
-                        <label for="staff-month-select" class="text-xs text-slate-500 uppercase font-black">Month Filter:</label>
-                        <select id="staff-month-select" onchange="switchStaffMonth(this.value)" class="px-3 py-1.5 text-xs font-extrabold rounded-xl bg-slate-50 text-slate-900 border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer">
-                            <option value="Nov'26" selected>Nov'26</option>
-                            <option value="Oct'26">Oct'26</option>
-                        </select>
+                <div class="bg-white p-3 rounded-2xl shadow-md border border-slate-200 flex flex-col sm:flex-row justify-between items-center gap-3">
+                    <div class="flex items-center gap-3">
+                        <div class="flex items-center gap-2">
+                            <label for="staff-month-select" class="text-xs text-slate-500 uppercase font-black">Month:</label>
+                            <select id="staff-month-select" onchange="switchStaffMonth(this.value)" class="px-3 py-1.5 text-xs font-extrabold rounded-xl bg-slate-50 text-slate-900 border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer">
+                                <option value="Nov'26" selected>Nov'26</option>
+                                <option value="Oct'26">Oct'26</option>
+                            </select>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <label for="staff-date-filter" class="text-xs text-slate-500 uppercase font-black">Date:</label>
+                            <select id="staff-date-filter" onchange="renderStaffPivotReport()" class="px-3 py-1.5 text-xs font-extrabold rounded-xl bg-slate-50 text-slate-900 border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer">
+                                <option value="All">All Dates (Summary)</option>
+                            </select>
+                        </div>
                     </div>
                     <span id="staff-active-month-badge" class="text-xs px-3 py-1 bg-blue-50 text-blue-700 rounded-lg font-black border border-blue-200">Active: Nov'26</span>
-                </div>
-                <div class="bg-white p-3 rounded-2xl shadow-md border border-slate-200">
-                    <div id="staff-buttons-container" class="staff-grid-nav">
-                        <span class="text-xs text-slate-400 font-bold px-2">Loading Staff Members...</span>
-                    </div>
                 </div>
             </div>
 
             <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-4">
-                <div class="flex items-center space-x-3 border-b border-slate-100 pb-4">
-                    <span class="bg-blue-100 text-blue-600 p-3 rounded-xl font-bold">👤</span>
-                    <div>
-                        <h2 id="active-staff-name" class="text-xl font-extrabold text-slate-900">Select a Staff</h2>
-                        <p class="text-xs text-slate-400 font-bold">Performance & Daily Activities</p>
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-100 pb-4 gap-2">
+                    <div class="flex items-center space-x-3">
+                        <span class="bg-blue-100 text-blue-600 p-3 rounded-xl font-bold">📊</span>
+                        <div>
+                            <h2 class="text-xl font-extrabold text-slate-900">Staff KPI & Attendance Pivot Report</h2>
+                            <p class="text-xs text-slate-400 font-bold">Team KPI and Attendance summary from Daily Inbound KPI source</p>
+                        </div>
                     </div>
                 </div>
+
                 <div id="staff-alerts-container" class="space-y-2"></div>
-                <div class="overflow-x-auto rounded-xl border border-slate-300">
-                    <table class="w-full text-left border-collapse border border-slate-300">
+
+                <div class="overflow-x-auto rounded-xl border border-slate-300 shadow-sm">
+                    <table class="w-full text-left border-collapse border border-slate-300 text-sm">
                         <thead>
-                            <tr class="border-b border-slate-300 text-xs text-slate-700 uppercase tracking-wider bg-slate-200">
-                                <th class="py-3.5 px-6 text-center border border-slate-300">Date</th>
-                                <th class="py-3.5 px-6 text-center border border-slate-300">Device Name</th>
-                                <th class="py-3.5 px-6 text-center border border-slate-300">Daily (JD)</th>
-                                <th class="py-3.5 px-6 text-center border border-slate-300">Total</th>
-                                <th class="py-3.5 px-6 text-center border border-slate-300">Status</th>
+                            <tr class="border-b border-slate-300 text-xs text-slate-800 uppercase tracking-wider bg-slate-200">
+                                <th class="py-3 px-6 border border-slate-300 bg-slate-300 text-slate-900 font-black">Name</th>
+                                <th class="py-3 px-6 text-center border border-slate-300 bg-blue-50 text-blue-900 font-black">After 8:30 AM</th>
+                                <th class="py-3 px-6 text-center border border-slate-300 bg-emerald-50 text-emerald-900 font-black">KPI</th>
                             </tr>
                         </thead>
-                        <tbody id="staff-table-body" class="text-sm divide-y divide-slate-300">
-                            <tr><td colspan="5" class="py-6 text-center text-slate-400">Fetching live data...</td></tr>
+                        <tbody id="staff-table-body" class="font-bold divide-y divide-slate-300 text-slate-800">
+                            <tr><td colspan="3" class="py-6 text-center text-slate-400">Fetching live data...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -331,7 +336,26 @@
             if (badgeEl) badgeEl.innerText = `Active: ${monthKey}`;
 
             staffGroupedData = staffGroupedDataByMonth[monthKey] || {};
-            renderStaffButtons();
+            populateStaffDateFilter();
+            renderStaffPivotReport();
+        }
+
+        function populateStaffDateFilter() {
+            let datesSet = new Set();
+            Object.values(staffGroupedData).forEach(staffObj => {
+                Object.keys(staffObj.dates || {}).forEach(dt => datesSet.add(dt));
+            });
+            let sortedDates = Array.from(datesSet).sort();
+            let select = document.getElementById('staff-date-filter');
+            if(!select) return;
+            
+            let currentVal = select.value;
+            let html = `<option value="All">All Dates (Summary)</option>`;
+            sortedDates.forEach(dt => {
+                html += `<option value="${dt}">${dt}</option>`;
+            });
+            select.innerHTML = html;
+            if(sortedDates.includes(currentVal) || currentVal === 'All') select.value = currentVal;
         }
 
         function switchInboundMonth(monthKey) {
@@ -453,14 +477,15 @@
         }
 
         async function loadAllData() {
-            let octStaffRows = await fetchFlexibleSheet(STAFF_SHEET_ID, ["Oct 26", "Oct'26", "Oct"]);
-            staffGroupedDataByMonth["Oct'26"] = processStaffRows(octStaffRows);
+            let octStaffRows = await fetchFlexibleSheet(STAFF_SHEET_ID, ["Oct 26", "Oct'26", "Oct", "Team KPI and Attendence"]);
+            staffGroupedDataByMonth["Oct'26"] = processStaffPivotRows(octStaffRows);
 
-            let novStaffRows = await fetchFlexibleSheet(STAFF_SHEET_ID, ["Nov 26", "Nov'26", "Nov"]);
-            staffGroupedDataByMonth["Nov'26"] = processStaffRows(novStaffRows);
+            let novStaffRows = await fetchFlexibleSheet(STAFF_SHEET_ID, ["Nov 26", "Nov'26", "Nov", "Team KPI and Attendence"]);
+            staffGroupedDataByMonth["Nov'26"] = processStaffPivotRows(novStaffRows);
 
             staffGroupedData = staffGroupedDataByMonth[activeStaffMonth] || {};
-            renderStaffButtons();
+            populateStaffDateFilter();
+            renderStaffPivotReport();
 
             let octInboundRows = await fetchFlexibleSheet(INBOUND_SHEET_ID, ["Oct'26", "Oct 26", "Oct", "Sheet1"]);
             inboundLiveDataByMonth["Oct'26"] = buildInboundMonthData(octInboundRows);
@@ -483,26 +508,34 @@
             updateOnuDashboard();
         }
 
-        function processStaffRows(rows) {
-            let grouped = {};
+        function processStaffPivotRows(rows) {
+            let staffMap = {};
             rows.forEach(row => {
                 let dateRaw = getVal(row, ['Date', 'Time'], 0);
                 let name = String(getVal(row, ['Name', 'Staff Name'], 1)).trim();
-                let device = String(getVal(row, ['Device Name', 'Device'], 2) || '-').trim();
-                let jd = String(getVal(row, ['Daily (JD)', 'JD', 'Daily'], 3) || '-').trim();
-                let qty = parseFloat(getVal(row, ['Qty', 'Quantity', 'Total'], 4)) || 0;
-                let mac = String(getVal(row, ['MAC'], 5)).trim();
+                let timeStatusRaw = getVal(row, ['After 8:30 AM', '8:30 AM', 'Time Status'], 2);
+                let qty = parseFloat(getVal(row, ['KPI', 'Qty', 'Quantity', 'Total'], 3)) || 0;
+                let jd = String(getVal(row, ['Daily (JD)', 'JD', 'Daily'], 4) || '').trim().toLowerCase();
+                let mac = String(getVal(row, ['MAC', 'Mac Address'], 5)).trim();
 
-                if (!name || !jd || name.toLowerCase() === 'name') return;
+                if (!name || name.toLowerCase() === 'name' || name.toLowerCase() === 'grand total') return;
                 let dateStr = parseLocalDate(dateRaw);
                 if (!dateStr) return;
 
-                let jdLower = jd.toLowerCase().trim();
-                let addedValue = 0;
+                let timeVal = 1;
+                let tStr = String(timeStatusRaw).trim();
+                if (tStr === '0' || tStr.toLowerCase() === 'false' || tStr === 'Late') {
+                    timeVal = 0;
+                } else if (tStr === '1' || tStr.toLowerCase() === 'true' || tStr === 'On Time') {
+                    timeVal = 1;
+                } else {
+                    timeVal = 1;
+                }
 
-                if (jdLower === "leave") {
+                let addedValue = 0;
+                if (jd === "leave") {
                     addedValue = 0;
-                } else if (jdLower === "run" || jdLower === "default" || jdLower === "terminal" || jdLower === "use") {
+                } else if (jd === "run" || jd === "default" || jd === "terminal" || jd === "use" || jd === "cleaning") {
                     let cleanMac = mac ? mac.trim() : "";
                     let hasValidMac = (cleanMac !== "" && cleanMac !== "#N/A") ? 1 : 0;
                     if (hasValidMac === 0 && qty === 0) return;
@@ -511,28 +544,93 @@
                     addedValue = qty;
                 }
 
-                if (addedValue === 0 && jdLower !== "leave") return;
-
-                if (!grouped[name]) grouped[name] = {};
-                if (!grouped[name][dateStr]) {
-                    grouped[name][dateStr] = { isLeave: false, devices: {} };
+                if (!staffMap[name]) {
+                    staffMap[name] = { dates: {} };
                 }
-
-                if (jdLower === "leave") {
-                    grouped[name][dateStr].isLeave = true;
-                    return;
+                if (!staffMap[name].dates[dateStr]) {
+                    staffMap[name].dates[dateStr] = { timeVal: timeVal, kpi: 0 };
                 }
-
-                let devKey = device || '-';
-                if (!grouped[name][dateStr].devices[devKey]) {
-                    grouped[name][dateStr].devices[devKey] = {};
+                staffMap[name].dates[dateStr].timeVal = Math.min(staffMap[name].dates[dateStr].timeVal, timeVal);
+                if (jd !== "leave") {
+                    staffMap[name].dates[dateStr].kpi += addedValue;
                 }
-                if (!grouped[name][dateStr].devices[devKey][jd]) {
-                    grouped[name][dateStr].devices[devKey][jd] = 0;
-                }
-                grouped[name][dateStr].devices[devKey][jd] += addedValue;
             });
-            return grouped;
+            return staffMap;
+        }
+
+        function renderStaffPivotReport() {
+            let container = document.getElementById('staff-table-body');
+            let alertContainer = document.getElementById('staff-alerts-container');
+            if (!container) return;
+
+            let selectedDate = document.getElementById('staff-date-filter').value;
+            let staffNames = Object.keys(staffGroupedData).sort();
+
+            if (staffNames.length === 0) {
+                container.innerHTML = `<tr><td colspan="3" class="py-6 text-center text-slate-400">No staff KPI records found for ${activeStaffMonth}.</td></tr>`;
+                if(alertContainer) alertContainer.innerHTML = '';
+                return;
+            }
+
+            let tableHtml = "";
+            let grandTotalTime = 0;
+            let grandTotalKpi = 0;
+            let alertsHtml = "";
+
+            staffNames.forEach(name => {
+                let staffObj = staffGroupedData[name];
+                let datesObj = staffObj.dates || {};
+                let targetDates = selectedDate === 'All' ? Object.keys(datesObj) : [selectedDate];
+
+                let staffSumTime = 0;
+                let staffSumKpi = 0;
+                let activeDaysCount = 0;
+
+                targetDates.forEach(dt => {
+                    if (datesObj[dt]) {
+                        staffSumTime += datesObj[dt].timeVal;
+                        staffSumKpi += datesObj[dt].kpi;
+                        activeDaysCount++;
+                    }
+                });
+
+                let avgTime = activeDaysCount > 0 ? (staffSumTime >= activeDaysCount ? 1 : 0) : 1;
+                let finalKpi = staffSumKpi;
+
+                grandTotalTime += avgTime;
+                grandTotalKpi += finalKpi;
+
+                if (finalKpi < DAILY_TARGET) {
+                    alertsHtml += `<div class='bg-red-50 border-l-4 border-red-500 p-3 rounded-r-xl text-red-900 font-bold text-xs'>Target Alert: <strong>${name}</strong> KPI is ${finalKpi} (Below Daily Target ${DAILY_TARGET})</div>`;
+                }
+
+                let timeBadge = avgTime === 1 
+                    ? `<span class="text-slate-900 font-black">1</span>` 
+                    : `<span class="text-rose-600 font-black">0</span>`;
+
+                let kpiBadge = finalKpi < DAILY_TARGET 
+                    ? `<span class="text-rose-600 font-black">${finalKpi}</span>` 
+                    : `<span class="text-slate-900 font-black">${finalKpi}</span>`;
+
+                tableHtml += `
+                    <tr class="hover:bg-slate-50 border-b border-slate-200">
+                        <td class="py-3 px-6 border border-slate-300 font-bold text-slate-900">${name}</td>
+                        <td class="py-3 px-6 text-center border border-slate-300 bg-blue-50/20">${timeBadge}</td>
+                        <td class="py-3 px-6 text-center border border-slate-300 bg-emerald-50/20">${kpiBadge}</td>
+                    </tr>
+                `;
+            });
+
+            tableHtml += `
+                <tr class="bg-slate-200 font-black text-slate-900 text-sm">
+                    <td class="py-3.5 px-6 border border-slate-300 uppercase text-right">Grand Total</td>
+                    <td class="py-3.5 px-6 text-center border border-slate-300 text-blue-950 bg-blue-100">${grandTotalTime}</td>
+                    <td class="py-3.5 px-6 text-center border border-slate-300 text-emerald-950 bg-emerald-100">${grandTotalKpi.toLocaleString()}</td>
+                </tr>
+            `;
+
+            container.innerHTML = tableHtml;
+            if(alertContainer) alertContainer.innerHTML = alertsHtml;
         }
 
         function getEmptyInboundMonthStructure() {
@@ -556,7 +654,6 @@
                 else if (dayNum >= 15 && dayNum <= 21) weekKey = "Week 3 (15 - 21)";
                 else if (dayNum >= 22) weekKey = "Week 4 (22 - End)";
 
-                // Mapping Column B (Regional) exactly: ENUO, HGAO, MYFO
                 let possibleRegion = String(getVal(r, ['Regional', 'Region'], 1)).trim().toUpperCase();
                 let region = VALID_REGIONS.find(v => possibleRegion.includes(v));
                 if (!region) {
@@ -564,14 +661,10 @@
                     else region = "HGAO";
                 }
 
-                // Column D (CPE Type)[cite: 3]
                 let device = String(getVal(r, ['CPE Type', 'Device Name', 'Device'], 3) || 'FFO').trim().toUpperCase();
                 if (device.toLowerCase().includes("type") || device === "-") device = "FFO";
 
-                // Quantity / Mac calculation from Daily KPI or Mac Address[cite: 3]
-                let mac = String(getVal(r, ['Mac Address', 'MAC'], 6)).trim();
-                let qty = 1; // Each row represents a unit item based on Mac/CPE ID structure
-
+                let qty = 1;
                 let wkObj = dataByWeek[weekKey];
                 if (!wkObj) return;
 
@@ -585,119 +678,6 @@
                 wkObj.rawRows.push({ region, date: dateStr, device, qty });
             });
             return dataByWeek;
-        }
-
-        function renderStaffButtons() {
-            let staffList = Object.keys(staffGroupedData).sort();
-            let container = document.getElementById('staff-buttons-container');
-            if(!container) return;
-            container.innerHTML = "";
-
-            if (staffList.length === 0) {
-                container.innerHTML = `<span class="text-xs text-rose-500 font-bold px-2">No valid staff records found for ${activeStaffMonth}.</span>`;
-                let nameEl = document.getElementById('active-staff-name');
-                if(nameEl) nameEl.innerText = "No Staff Data";
-                let alertEl = document.getElementById('staff-alerts-container');
-                if(alertEl) alertEl.innerHTML = "";
-                let bodyEl = document.getElementById('staff-table-body');
-                if(bodyEl) bodyEl.innerHTML = `<tr><td colspan="5" class="py-6 text-center text-slate-400">No records available for ${activeStaffMonth}</td></tr>`;
-                return;
-            }
-
-            staffList.forEach((name, idx) => {
-                let btn = document.createElement('button');
-                btn.innerText = name;
-                btn.className = idx === 0 
-                    ? 'px-3 py-1.5 rounded-lg text-xs font-bold bg-blue-600 text-white shadow border border-blue-600' 
-                    : 'px-3 py-1.5 rounded-lg text-xs font-bold bg-white text-slate-800 hover:bg-slate-100 border border-slate-300';
-                btn.onclick = () => selectStaff(name, btn);
-                container.appendChild(btn);
-            });
-
-            if (staffList.length > 0) {
-                selectStaff(staffList[0], container.children[0]);
-            }
-        }
-
-        function selectStaff(name, btnElement) {
-            document.querySelectorAll('#staff-buttons-container button').forEach(b => {
-                b.className = 'px-3 py-1.5 rounded-lg text-xs font-bold bg-white text-slate-800 hover:bg-slate-100 border border-slate-300';
-            });
-            if (btnElement) {
-                btnElement.className = 'px-3 py-1.5 rounded-lg text-xs font-bold bg-blue-600 text-white shadow border border-blue-600';
-            }
-            
-            let nameEl = document.getElementById('active-staff-name');
-            if(nameEl) nameEl.innerText = name;
-
-            let sData = staffGroupedData[name] || {};
-            let sortedDates = Object.keys(sData).sort();
-            let alertsHtml = "", tableRowsHtml = "", grandTotal = 0;
-
-            sortedDates.forEach(dt => {
-                let dayObj = sData[dt];
-                let devices = dayObj.devices;
-                let isLeave = dayObj.isLeave;
-                let dayTotal = 0;
-
-                Object.keys(devices).forEach(dev => {
-                    Object.values(devices[dev]).forEach(val => { dayTotal += val; });
-                });
-
-                if (isLeave) {
-                    alertsHtml += `<div class='bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-xl text-amber-900 font-bold text-sm'>${name} is on Leave on ${dt} (Status: Leave)</div>`;
-                } else if (dayTotal < DAILY_TARGET) {
-                    alertsHtml += `<div class='bg-red-50 border-l-4 border-red-500 p-4 rounded-r-xl text-red-900 font-bold text-sm'>${name} No Meet Daily KPI. ${dt} (Total: ${dayTotal} / Target: ${DAILY_TARGET})</div>`;
-                }
-                if (!isLeave) grandTotal += dayTotal;
-
-                let statusBadge = isLeave 
-                    ? `<span class='px-2.5 py-1 bg-amber-100 text-amber-900 font-black rounded-lg text-xs'>Leave</span>`
-                    : (dayTotal >= DAILY_TARGET 
-                        ? `<span class='px-2.5 py-1 bg-emerald-100 text-emerald-900 font-black rounded-lg text-xs'>Pass (${dayTotal})</span>` 
-                        : `<span class='px-2.5 py-1 bg-red-100 text-red-800 font-black rounded-lg text-xs'>Fail (${dayTotal})</span>`);
-
-                let deviceKeys = Object.keys(devices).sort();
-                let totalRowsForDate = deviceKeys.reduce((acc, dev) => acc + Object.keys(devices[dev]).length, 0);
-                if (totalRowsForDate === 0 && isLeave) totalRowsForDate = 1;
-
-                let firstRow = true;
-                if (isLeave || totalRowsForDate === 0) {
-                    tableRowsHtml += `
-                        <tr class='hover:bg-slate-50'>
-                            <td class='p-3 text-center font-bold bg-slate-50/50 border border-slate-300'>${dt}</td>
-                            <td class='p-3 text-center font-bold text-amber-600 border border-slate-300'>Leave</td>
-                            <td class='p-3 text-center text-slate-500 border border-slate-300'>Annual / Medical Leave</td>
-                            <td class='p-3 text-center font-black border border-slate-300'>-</td>
-                            <td class='p-3 text-center border border-slate-300'>${statusBadge}</td>
-                        </tr>
-                    `;
-                } else {
-                    deviceKeys.forEach(dev => {
-                        let jdMap = devices[dev];
-                        Object.keys(jdMap).sort().forEach(jName => {
-                            let jVal = jdMap[jName];
-                            tableRowsHtml += `
-                                <tr class='hover:bg-slate-50'>
-                                    ${firstRow ? `<td rowspan='${totalRowsForDate}' class='p-3 text-center font-bold bg-slate-50/50 border border-slate-300 align-middle'>${dt}</td>` : ''}
-                                    <td class='p-3 text-center font-bold border border-slate-300'>${dev}</td>
-                                    <td class='p-2 text-center border border-slate-300 text-slate-800'>${jName} : <span class='font-black text-blue-700'>${jVal}</span></td>
-                                    ${firstRow ? `<td rowspan='${totalRowsForDate}' class='p-3 text-center font-black text-blue-950 bg-slate-50/50 border border-slate-300 align-middle'>${dayTotal}</td>` : ''}
-                                    ${firstRow ? `<td rowspan='${totalRowsForDate}' class='p-3 text-center bg-slate-50/50 border border-slate-300 align-middle'>${statusBadge}</td>` : ''}
-                                </tr>
-                            `;
-                            firstRow = false;
-                        });
-                    });
-                }
-            });
-
-            tableRowsHtml += `<tr class='bg-slate-200 font-black text-slate-900'><td colspan='3' class='p-3 text-right border border-slate-300'>Grand Total:</td><td colspan='2' class='p-3 text-center text-red-700 text-base border border-slate-300'>${grandTotal}</td></tr>`;
-
-            let alertContainer = document.getElementById('staff-alerts-container');
-            let tableBody = document.getElementById('staff-table-body');
-            if(alertContainer) alertContainer.innerHTML = alertsHtml;
-            if(tableBody) tableBody.innerHTML = tableRowsHtml;
         }
 
         function populateRegionalDateFilter() {
@@ -724,13 +704,9 @@
 
         async function extractRegionalMetrics(regionName, targetDate) {
             let dateMap = {};
-            let sourceRows = [];
-
-            // Fetch from Inbound Sheet for Regional KPI calculation using Column B (Regional) & Column E (Run/Tarfile)[cite: 3]
             let inboundRows = await fetchFlexibleSheet(INBOUND_SHEET_ID, [activeInboundMonth, "Nov'26", "Oct'26", "Sheet1"]);
             
             inboundRows.forEach(row => {
-                let rawArr = row['_rawArray'] || [];
                 let dateRaw = getVal(row, ['Date'], 0);
                 let dt = parseLocalDate(dateRaw);
                 if (!dt) return;
@@ -752,7 +728,7 @@
                 } else if (runTarfile.includes('default')) {
                     matchedType = 'default';
                 } else {
-                    matchedType = 'terminal'; // default bucket for active inbound items
+                    matchedType = 'terminal';
                 }
 
                 if (!dateMap[dt]) dateMap[dt] = { cleaning: 0, terminal: 0, default: 0 };
