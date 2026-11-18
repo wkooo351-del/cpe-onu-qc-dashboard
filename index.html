@@ -342,7 +342,7 @@
             renderInboundWeek(activeInboundWeek);
         }
 
-        function switchRegionalTab(regName, btn) {
+        async function switchRegionalTab(regName, btn) {
             activeRegionalTab = regName;
             document.querySelectorAll('.reg-tab-btn').forEach(b => {
                 b.className = 'reg-tab-btn px-4 py-2 text-xs font-black rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300 transition';
@@ -350,7 +350,7 @@
             if(btn) {
                 btn.className = 'reg-tab-btn px-4 py-2 text-xs font-black rounded-xl bg-blue-600 text-white shadow transition';
             }
-            renderRegionalKpiView();
+            await renderRegionalKpiView();
         }
 
         function switchTestType(type, btn) {
@@ -471,7 +471,7 @@
 
             mdySheetData = await fetchGoogleSheetData(MDY_SHEET_ID);
             populateRegionalDateFilter();
-            renderRegionalKpiView();
+            await renderRegionalKpiView();
 
             onuData.firstTest = await fetchGoogleSheetData(ONU_SS_ID, "First Test");
             onuData.secondTest = await fetchGoogleSheetData(ONU_SS_ID, "Second Test");
@@ -719,46 +719,49 @@
             if(sortedDates.includes(currentVal)) select.value = currentVal;
         }
 
-        function extractRegionalMetrics(regionName, targetDate) {
+        async function extractRegionalMetrics(regionName, targetDate) {
             let dateMap = {};
 
             if (regionName === 'ENUO' || regionName === 'HGAO') {
-                let sData = staffGroupedDataByMonth[activeStaffMonth] || {};
-                Object.keys(sData).forEach(staffName => {
-                    let datesObj = sData[staffName];
-                    Object.keys(datesObj).forEach(dt => {
-                        if(targetDate !== 'All' && dt !== targetDate) return;
-                        
-                        let dayObj = datesObj[dt];
-                        if(!dayObj.isLeave) {
-                            Object.keys(dayObj.devices).forEach(dev => {
-                                let jdMap = dayObj.devices[dev];
-                                Object.keys(jdMap).forEach(jd => {
-                                    let jdLower = jd.toLowerCase();
-                                    let val = jdMap[jd];
+                // Fetch directly from the respective Google Sheet tab named after the region (e.g. "ENUO" or "HGAO")
+                let regionRows = await fetchGoogleSheetData(STAFF_SHEET_ID, regionName);
+                if (regionRows.length === 0) {
+                    regionRows = await fetchGoogleSheetData(STAFF_SHEET_ID, regionName + " 26");
+                }
+                if (regionRows.length === 0) {
+                    regionRows = await fetchGoogleSheetData(STAFF_SHEET_ID, regionName + "'26");
+                }
 
-                                    // Strictly route based on Region column or explicit naming / matching tags if available in row data
-                                    let assignedReg = 'HGAO';
-                                    let staffUpper = staffName.toUpperCase();
-                                    if (staffUpper.includes('ENUO')) assignedReg = 'ENUO';
-                                    else if (staffUpper.includes('HGAO')) assignedReg = 'HGAO';
-                                    else {
-                                        // Fallback determination based on exact region split
-                                        let hash = 0;
-                                        for (let i = 0; i < staffName.length; i++) hash += staffName.charCodeAt(i);
-                                        assignedReg = (hash % 2 === 0) ? 'ENUO' : 'HGAO';
-                                    }
+                regionRows.forEach(row => {
+                    let dateRaw = row['Date'] || row['Time'] || row['col_0'] || '';
+                    let dt = parseLocalDate(dateRaw);
+                    if (!dt) return;
+                    if (targetDate !== 'All' && dt !== targetDate) return;
 
-                                    if (assignedReg === regionName) {
-                                        if(!dateMap[dt]) dateMap[dt] = { cleaning: 0, terminal: 0, default: 0 };
-                                        if(jdLower.includes('clean')) dateMap[dt].cleaning += val;
-                                        else if(jdLower.includes('term') || jdLower.includes('run')) dateMap[dt].terminal += val;
-                                        else if(jdLower.includes('default')) dateMap[dt].default += val;
-                                    }
-                                });
-                            });
-                        }
-                    });
+                    let jd = String(row['Daily (JD)'] || row['col_3'] || '').trim();
+                    let qty = parseFloat(row['Qty'] || row['Quantity'] || row['Total'] || row['col_4'] || 0) || 0;
+                    let mac = String(row['MAC'] || row['col_5'] || '').trim();
+                    let jdLower = jd.toLowerCase().trim();
+
+                    let addedValue = 0;
+                    if (jdLower === "leave") {
+                        addedValue = 0;
+                    } else if (jdLower === "run" || jdLower === "default" || jdLower === "terminal") {
+                        let cleanMac = mac ? mac.trim() : "";
+                        let hasValidMac = (cleanMac !== "" && cleanMac !== "#N/A") ? 1 : 0;
+                        if (hasValidMac === 0) return;
+                        addedValue = 1;
+                    } else {
+                        addedValue = qty;
+                    }
+
+                    if (addedValue === 0 && jdLower !== "leave") return;
+
+                    if (!dateMap[dt]) dateMap[dt] = { cleaning: 0, terminal: 0, default: 0 };
+
+                    if (jdLower.includes('clean')) dateMap[dt].cleaning += addedValue;
+                    else if (jdLower.includes('term') || jdLower.includes('run')) dateMap[dt].terminal += addedValue;
+                    else if (jdLower.includes('default')) dateMap[dt].default += addedValue;
                 });
             } else if (regionName === 'MYFO') {
                 mdySheetData.forEach(r => {
@@ -785,12 +788,12 @@
             renderRegionalKpiView();
         }
 
-        function renderRegionalKpiView() {
+        async function renderRegionalKpiView() {
             let container = document.getElementById('regional-kpi-container');
             if(!container) return;
 
             let selectedDate = document.getElementById('regional-date-filter').value;
-            let metricsByDate = extractRegionalMetrics(activeRegionalTab, selectedDate);
+            let metricsByDate = await extractRegionalMetrics(activeRegionalTab, selectedDate);
             let sortedDates = Object.keys(metricsByDate).sort();
 
             let badgeColor = activeRegionalTab === 'ENUO' ? 'bg-blue-600' : (activeRegionalTab === 'HGAO' ? 'bg-amber-500' : 'bg-emerald-600');
