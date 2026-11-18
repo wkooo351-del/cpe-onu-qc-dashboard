@@ -404,7 +404,7 @@
                     return obj;
                 });
             } catch (err) {
-                console.error("Fetch error:", err);
+                console.error("Fetch error for sheet:", sheetId, sheetName, err);
                 return [];
             }
         }
@@ -444,23 +444,29 @@
         }
 
         async function loadAllData() {
+            // Load Oct Staff
             let octStaffRows = await fetchGoogleSheetData(STAFF_SHEET_ID, "Oct 26");
+            if (octStaffRows.length === 0) octStaffRows = await fetchGoogleSheetData(STAFF_SHEET_ID, "Oct'26");
             if (octStaffRows.length === 0) octStaffRows = await fetchGoogleSheetData(STAFF_SHEET_ID);
             let octMdyRows = await fetchGoogleSheetData(MDY_SHEET_ID);
             staffGroupedDataByMonth["Oct'26"] = processStaffRows([...octStaffRows, ...octMdyRows]);
 
+            // Load Nov Staff
             let novStaffRows = await fetchGoogleSheetData(STAFF_SHEET_ID, "Nov 26");
             if (novStaffRows.length === 0) novStaffRows = await fetchGoogleSheetData(STAFF_SHEET_ID, "Nov'26");
+            if (novStaffRows.length === 0) novStaffRows = await fetchGoogleSheetData(STAFF_SHEET_ID);
             staffGroupedDataByMonth["Nov'26"] = processStaffRows(novStaffRows);
 
             staffGroupedData = staffGroupedDataByMonth[activeStaffMonth] || {};
             renderStaffButtons();
 
+            // Load Inbound Data
             let octInboundRows = await fetchGoogleSheetData(INBOUND_SHEET_ID, "Oct'26");
             if (octInboundRows.length === 0) octInboundRows = await fetchGoogleSheetData(INBOUND_SHEET_ID);
             inboundLiveDataByMonth["Oct'26"] = buildInboundMonthData(octInboundRows);
 
             let novInboundRows = await fetchGoogleSheetData(INBOUND_SHEET_ID, "Nov'26");
+            if (novInboundRows.length === 0) novInboundRows = await fetchGoogleSheetData(INBOUND_SHEET_ID);
             inboundLiveDataByMonth["Nov'26"] = buildInboundMonthData(novInboundRows);
 
             inboundLiveData = inboundLiveDataByMonth[activeInboundMonth] || getEmptyInboundMonthStructure();
@@ -477,7 +483,8 @@
                 onuData.exchangeTest = await fetchGoogleSheetData(ONU_SS_ID, "Exchange Devices");
             }
 
-            document.getElementById('last-updated').innerText = 'Synced: ' + new Date().toLocaleTimeString();
+            let updatedEl = document.getElementById('last-updated');
+            if(updatedEl) updatedEl.innerText = 'Synced: ' + new Date().toLocaleTimeString();
             updateOnuDashboard();
         }
 
@@ -581,13 +588,17 @@
         function renderStaffButtons() {
             let staffList = Object.keys(staffGroupedData).sort();
             let container = document.getElementById('staff-buttons-container');
+            if(!container) return;
             container.innerHTML = "";
 
             if (staffList.length === 0) {
                 container.innerHTML = `<span class="text-xs text-rose-500 font-bold px-2">No valid staff records found for ${activeStaffMonth}.</span>`;
-                document.getElementById('active-staff-name').innerText = "No Staff Data";
-                document.getElementById('staff-alerts-container').innerHTML = "";
-                document.getElementById('staff-table-body').innerHTML = `<tr><td colspan="5" class="py-6 text-center text-slate-400">No records available for ${activeStaffMonth}</td></tr>`;
+                let nameEl = document.getElementById('active-staff-name');
+                if(nameEl) nameEl.innerText = "No Staff Data";
+                let alertEl = document.getElementById('staff-alerts-container');
+                if(alertEl) alertEl.innerHTML = "";
+                let bodyEl = document.getElementById('staff-table-body');
+                if(bodyEl) bodyEl.innerHTML = `<tr><td colspan="5" class="py-6 text-center text-slate-400">No records available for ${activeStaffMonth}</td></tr>`;
                 return;
             }
 
@@ -614,7 +625,8 @@
                 btnElement.className = 'px-3 py-1.5 rounded-lg text-xs font-bold bg-blue-600 text-white shadow border border-blue-600';
             }
             
-            document.getElementById('active-staff-name').innerText = name;
+            let nameEl = document.getElementById('active-staff-name');
+            if(nameEl) nameEl.innerText = name;
 
             let sData = staffGroupedData[name] || {};
             let sortedDates = Object.keys(sData).sort();
@@ -680,8 +692,10 @@
 
             tableRowsHtml += `<tr class='bg-slate-200 font-black text-slate-900'><td colspan='3' class='p-3 text-right border border-slate-300'>Grand Total:</td><td colspan='2' class='p-3 text-center text-red-700 text-base border border-slate-300'>${grandTotal}</td></tr>`;
 
-            document.getElementById('staff-alerts-container').innerHTML = alertsHtml;
-            document.getElementById('staff-table-body').innerHTML = tableRowsHtml;
+            let alertContainer = document.getElementById('staff-alerts-container');
+            let tableBody = document.getElementById('staff-table-body');
+            if(alertContainer) alertContainer.innerHTML = alertsHtml;
+            if(tableBody) tableBody.innerHTML = tableRowsHtml;
         }
 
         // --- REGIONAL KPI LOGIC ---
@@ -1371,13 +1385,20 @@
             let passRate = total > 0 ? ((passed / total) * 100) : 0;
             let failRate = total > 0 ? ((failed / total) * 100) : 0;
 
-            document.getElementById('kpi-total').innerText = total.toLocaleString();
-            document.getElementById('kpi-passed').innerText = passed.toLocaleString();
-            document.getElementById('kpi-failed').innerText = failed.toLocaleString();
-            document.getElementById('kpi-pass-rate').innerText = passRate.toFixed(2) + '%';
-            document.getElementById('kpi-fail-rate').innerText = failRate.toFixed(2) + '%';
+            let totEl = document.getElementById('kpi-total');
+            let passEl = document.getElementById('kpi-passed');
+            let failEl = document.getElementById('kpi-failed');
+            let passRateEl = document.getElementById('kpi-pass-rate');
+            let failRateEl = document.getElementById('kpi-fail-rate');
 
-            document.getElementById('chart-comparison-title').innerText = `${testTitleText} - Pass vs Fail & Total Comparison`;
+            if(totEl) totEl.innerText = total.toLocaleString();
+            if(passEl) passEl.innerText = passed.toLocaleString();
+            if(failEl) failEl.innerText = failed.toLocaleString();
+            if(passRateEl) passRateEl.innerText = passRate.toFixed(2) + '%';
+            if(failRateEl) failRateEl.innerText = failRate.toFixed(2) + '%';
+
+            let chartTitleEl = document.getElementById('chart-comparison-title');
+            if(chartTitleEl) chartTitleEl.innerText = `${testTitleText} - Pass vs Fail & Total Comparison`;
 
             renderOnuCharts(data);
             renderSummaryTables(data);
@@ -1400,26 +1421,29 @@
             });
 
             if (oltChartInstance) oltChartInstance.destroy();
-            oltChartInstance = new Chart(document.getElementById('oltChart'), {
-                type: 'bar',
-                data: {
-                    labels: ['HGAO', 'ENUO', 'MDY'],
-                    datasets: [
-                        { label: 'Total Tested', data: totalArr, backgroundColor: '#2563EB', borderRadius: 4 },
-                        { label: 'Passed', data: passedArr, backgroundColor: '#10B981', borderRadius: 4 },
-                        { label: 'Failed', data: failedArr, backgroundColor: '#EF4444', borderRadius: 4 }
-                    ]
-                },
-                options: { 
-                    responsive: true, 
-                    maintainAspectRatio: false,
-                    plugins: { legend: { position: 'top', labels: { font: { weight: 'bold' }, color: '#0f172a' } } },
-                    scales: {
-                        x: { ticks: { font: { weight: 'bold' }, color: '#0f172a' } },
-                        y: { ticks: { font: { weight: 'bold' }, color: '#0f172a' } }
+            let oltCanvas = document.getElementById('oltChart');
+            if(oltCanvas) {
+                oltChartInstance = new Chart(oltCanvas, {
+                    type: 'bar',
+                    data: {
+                        labels: ['HGAO', 'ENUO', 'MDY'],
+                        datasets: [
+                            { label: 'Total Tested', data: totalArr, backgroundColor: '#2563EB', borderRadius: 4 },
+                            { label: 'Passed', data: passedArr, backgroundColor: '#10B981', borderRadius: 4 },
+                            { label: 'Failed', data: failedArr, backgroundColor: '#EF4444', borderRadius: 4 }
+                        ]
+                    },
+                    options: { 
+                        responsive: true, 
+                        maintainAspectRatio: false,
+                        plugins: { legend: { position: 'top', labels: { font: { weight: 'bold' }, color: '#0f172a' } } },
+                        scales: {
+                            x: { ticks: { font: { weight: 'bold' }, color: '#0f172a' } },
+                            y: { ticks: { font: { weight: 'bold' }, color: '#0f172a' } }
+                        }
                     }
-                }
-            });
+                });
+            }
 
             let rxFail = data.filter(r => checkParamFailIndex(r, 5)).length;
             let txFail = data.filter(r => checkParamFailIndex(r, 6)).length;
@@ -1433,21 +1457,24 @@
             let losFail = data.filter(r => checkParamFailIndex(r, 25)).length;
 
             if (failureChartInstance) failureChartInstance.destroy();
-            failureChartInstance = new Chart(document.getElementById('failureChart'), {
-                type: 'doughnut',
-                data: {
-                    labels: ['Rx', 'Tx', 'Bias', 'Volt', 'Temp', 'Online', 'Offline', 'BIP8', 'Gasp', 'LOS'],
-                    datasets: [{ 
-                        data: [rxFail, txFail, biasFail, voltFail, tempFail, onlineFail, offlineFail, bip8Fail, gaspFail, losFail], 
-                        backgroundColor: ['#3b82f6', '#6366f1', '#a855f7', '#ec4899', '#10b981', '#06b6d4', '#f97316', '#ef4444', '#eab308', '#8b5cf6'] 
-                    }]
-                },
-                options: { 
-                    responsive: true, 
-                    maintainAspectRatio: false, 
-                    plugins: { legend: { position: 'bottom', labels: { font: { weight: 'bold' }, size: 10, color: '#0f172a' } } } 
-                }
-            });
+            let failCanvas = document.getElementById('failureChart');
+            if(failCanvas) {
+                failureChartInstance = new Chart(failCanvas, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Rx', 'Tx', 'Bias', 'Volt', 'Temp', 'Online', 'Offline', 'BIP8', 'Gasp', 'LOS'],
+                        datasets: [{ 
+                            data: [rxFail, txFail, biasFail, voltFail, tempFail, onlineFail, offlineFail, bip8Fail, gaspFail, losFail], 
+                            backgroundColor: ['#3b82f6', '#6366f1', '#a855f7', '#ec4899', '#10b981', '#06b6d4', '#f97316', '#ef4444', '#eab308', '#8b5cf6'] 
+                        }]
+                    },
+                    options: { 
+                        responsive: true, 
+                        maintainAspectRatio: false, 
+                        plugins: { legend: { position: 'bottom', labels: { font: { weight: 'bold' }, size: 10, color: '#0f172a' } } } 
+                    }
+                });
+            }
         }
 
         function renderSummaryTables(data) {
@@ -1476,6 +1503,7 @@
             });
 
             let matrixTbody = document.getElementById('param-summary-tbody');
+            if(!matrixTbody) return;
             let matrixRowsHtml = "";
             let colTotals = { rx: 0, tx: 0, bias: 0, volt: 0, temp: 0, online: 0, offline: 0, bip8: 0, gasp: 0, los: 0, totalFail: 0 };
 
@@ -1580,6 +1608,7 @@
             });
 
             let modelTbody = document.getElementById('device-model-tbody');
+            if(!modelTbody) return;
             let modelRowsHtml = "";
             let grandTotalTested = 0, grandPassed = 0, grandFailed = 0;
             let chartLabels = [], chartPassedData = [], chartFailedData = [];
