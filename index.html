@@ -739,36 +739,35 @@
 
                     let jd = String(row['Daily (JD)'] || row['col_3'] || '').trim();
                     let qty = parseFloat(row['Qty'] || row['Quantity'] || row['Total'] || row['col_4'] || 0) || 0;
-                    let mac = String(row['MAC'] || row['col_5'] || '').trim();
                     let jdLower = jd.toLowerCase().trim();
 
                     if (!dateMap[dt]) dateMap[dt] = { cleaning: 0, terminal: 0, default: 0 };
 
-                    if (jdLower.includes('clean')) {
+                    // Exact match conditions to prevent incorrect grouping
+                    if (jdLower === 'cleaning' || jdLower === 'clean') {
                         dateMap[dt].cleaning += qty;
-                    } else if (jdLower.includes('term') || jdLower.includes('run')) {
+                    } else if (jdLower === 'run' || jdLower === 'terminal' || jdLower === 'term') {
                         dateMap[dt].terminal += qty;
-                    } else if (jdLower.includes('default')) {
+                    } else if (jdLower === 'default') {
                         dateMap[dt].default += qty;
                     }
                 });
             } else if (regionName === 'MYFO') {
-                // Fetching from MDY_SHEET_ID and processing both MYFO and MDY data
                 mdySheetData.forEach(r => {
                     let dt = parseLocalDate(r['Date'] || r['col_0']);
                     if(!dt) return;
                     if(targetDate !== 'All' && dt !== targetDate) return;
 
-                    let jd = String(r['Daily (JD)'] || r['col_3'] || '').toLowerCase();
+                    let jd = String(r['Daily (JD)'] || r['col_3'] || '').toLowerCase().trim();
                     let qty = parseFloat(r['Qty'] || r['Quantity'] || r['col_4'] || 1) || 1;
 
                     if (!dateMap[dt]) dateMap[dt] = { cleaning: 0, terminal: 0, default: 0 };
 
-                    if(jd.includes('clean')) {
+                    if (jd === 'cleaning' || jd === 'clean') {
                         dateMap[dt].cleaning += qty;
-                    } else if(jd.includes('term') || jd.includes('run')) {
+                    } else if (jd === 'run' || jd === 'terminal' || jd === 'term') {
                         dateMap[dt].terminal += qty;
-                    } else if(jd.includes('default')) {
+                    } else if (jd === 'default') {
                         dateMap[dt].default += qty;
                     }
                 });
