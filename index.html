@@ -824,10 +824,10 @@
             let sumCleaningTotal = 0, sumCleaningHc = 0;
             let sumTerminalTotal = 0, sumTerminalHc = 0;
             let sumDefaultTotal = 0, sumDefaultHc = 0;
-            let sumGrandTotal = 0, sumGrandHc = 0;
+            let sumGrandTotal = 0;
 
             if(sortedDates.length === 0) {
-                tableRowsHtml = `<tr><td colspan="15" class="p-8 text-center text-slate-400">No records found for ${activeRegionalTab} on ${selectedDate}</td></tr>`;
+                tableRowsHtml = `<tr><td colspan="14" class="p-8 text-center text-slate-400">No records found for ${activeRegionalTab} on ${selectedDate}</td></tr>`;
             } else {
                 sortedDates.forEach(dt => {
                     let m = metricsByDate[dt] || { cleaning: 0, terminal: 0, default: 0 };
@@ -846,12 +846,10 @@
                     let hcDef = regionalHcInputs[hcDefKey] !== undefined ? regionalHcInputs[hcDefKey] : 0;
                     let hcDaily = regionalHcInputs[hcDailyKey] !== undefined ? regionalHcInputs[hcDailyKey] : 0;
 
-                    let rowHc = hcClean + hcTerm + hcDef;
-
                     sumCleaningTotal += cleanTot; sumCleaningHc += hcClean;
                     sumTerminalTotal += termTot; sumTerminalHc += hcTerm;
                     sumDefaultTotal += defTot; sumDefaultHc += hcDef;
-                    sumGrandTotal += rowTot; sumGrandHc += hcDaily; // Accumulate Daily HC for summary
+                    sumGrandTotal += rowTot;
 
                     let kpiClean = hcClean > 0 ? (cleanTot / hcClean).toFixed(1) : "0.0";
                     let kpiTerm = hcTerm > 0 ? (termTot / hcTerm).toFixed(1) : "0.0";
@@ -1248,11 +1246,7 @@
             });
 
             let tableRowsHtml = "";
-            let grandTotalCpes = {};
             let activeTableRegions = activeInboundReportRegion === 'All Region' ? regionsArr : [activeInboundReportRegion];
-
-            let sumGrandTotalQty = 0;
-            let sumGrandTotalHc = 0;
 
             let dailyHcOptionsHtml = (currentVal) => {
                 let opts = `<option value="0" ${0 === currentVal ? 'selected' : ''}>0</option>`;
@@ -1276,6 +1270,8 @@
                 let sortedDates = Object.keys(dateMap).sort();
                 let badgeColor = regName === "ENUO" ? "bg-blue-600" : (regName === "HGAO" ? "bg-amber-500" : (regName === "MDY" ? "bg-purple-600" : "bg-emerald-600"));
                 let regSubtotal = {};
+                let regTotalHc = 0;
+                let regTotalQty = 0;
 
                 sortedDates.forEach((dt, idx) => {
                     let dayCpes = dateMap[dt];
@@ -1285,8 +1281,8 @@
                     let inboundHcKey = `inbound_${regName}_${dt}`;
                     let dailyHcVal = inboundDailyHcInputs[inboundHcKey] !== undefined ? inboundDailyHcInputs[inboundHcKey] : 0;
                     
-                    sumGrandTotalQty += dayTotal;
-                    sumGrandTotalHc += dailyHcVal;
+                    regTotalQty += dayTotal;
+                    regTotalHc += dailyHcVal;
 
                     let oneHcKpiVal = dailyHcVal > 0 ? (dayTotal / dailyHcVal) : 0;
                     let oneHcKpiStr = dailyHcVal > 0 ? oneHcKpiVal.toFixed(1) : "0.0";
@@ -1324,55 +1320,37 @@
                     </tr>`;
                 });
 
-                let regTotQty = 0;
-                tableRowsHtml += `<tr class="bg-slate-100/80 font-black border-t-2 border-b-2 border-slate-300">`;
+                // Calculate Region Total 1HC KPI & Meet KPI for this Region Total row
+                let regAvg1HcVal = regTotalHc > 0 ? (regTotalQty / regTotalHc) : 0;
+                let regAvg1HcStr = regTotalHc > 0 ? regAvg1HcVal.toFixed(1) : "0.0";
+                let regTotalMeetBadge = "-";
+                if (regTotalHc > 0) {
+                    if (regAvg1HcVal >= 50) {
+                        regTotalMeetBadge = `<span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 font-black rounded text-xs">YES</span>`;
+                    } else {
+                        regTotalMeetBadge = `<span class="px-2 py-0.5 bg-rose-100 text-rose-700 font-black rounded text-xs">NO</span>`;
+                    }
+                }
+
+                tableRowsHtml += `<tr class="bg-slate-100/90 font-black border-t-2 border-b-2 border-slate-300">`;
                 tableRowsHtml += `<td colspan="2" class="p-3 text-right text-xs uppercase text-slate-900">${regName} TOTAL:</td>`;
+                let calculatedRegTotQty = 0;
                 cpeTypesArr.forEach(cpe => {
                     let val = regSubtotal[cpe] || 0;
-                    regTotQty += val;
-                    grandTotalCpes[cpe] = (grandTotalCpes[cpe] || 0) + val;
+                    calculatedRegTotQty += val;
                     tableRowsHtml += `<td class="p-3 text-center border border-slate-200 text-blue-900">${val ? val : '-'}</td>`;
                 });
-                tableRowsHtml += `<td class="p-3 text-center text-base border border-slate-200 text-blue-950">${regTotQty.toLocaleString()}</td><td colspan="3" class="bg-slate-200 border border-slate-200"></td></tr>`;
+                tableRowsHtml += `
+                    <td class="p-3 text-center text-base border border-slate-200 text-blue-950">${calculatedRegTotQty.toLocaleString()}</td>
+                    <td class="p-3 text-center text-amber-950 bg-amber-100 border border-slate-200">${regTotalHc}</td>
+                    <td class="p-3 text-center text-blue-900 bg-blue-100 border border-slate-200">${regAvg1HcStr}</td>
+                    <td class="p-3 text-center bg-slate-200 border border-slate-200">${regTotalMeetBadge}</td>
+                </tr>`;
             });
 
             if (tableRowsHtml === "") {
                 tableRowsHtml = `<tr><td colspan="${cpeTypesArr.length + 6}" class="p-6 text-center text-slate-400">No records found for selected filter.</td></tr>`;
             }
-
-            // Calculate Grand Total 1HC KPI & Meet KPI for the footer summary row
-            let grandAvg1HcKpi = sumGrandTotalHc > 0 ? (sumGrandTotalQty / sumGrandTotalHc) : 0;
-            let grandAvg1HcKpiStr = sumGrandTotalHc > 0 ? grandAvg1HcKpi.toFixed(1) : "0.0";
-            
-            let grandMeetKpiBadge = "-";
-            if (sumGrandTotalHc > 0) {
-                if (grandAvg1HcKpi >= 50) {
-                    grandMeetKpiBadge = `<span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 font-black rounded text-xs">YES</span>`;
-                } else {
-                    grandMeetKpiBadge = `<span class="px-2 py-0.5 bg-rose-100 text-rose-700 font-black rounded text-xs">NO</span>`;
-                }
-            }
-
-            let overallFilteredTotal = 0;
-            cpeTypesArr.forEach(cpe => {
-                overallFilteredTotal += (grandTotalCpes[cpe] || 0);
-            });
-
-            let grandRowHtml = `
-                <tr class="bg-slate-900 text-white font-black text-sm">
-                    <td colspan="2" class="p-3.5 text-right uppercase tracking-wider border border-slate-700">GRAND TOTAL</td>
-            `;
-            cpeTypesArr.forEach(cpe => {
-                let val = grandTotalCpes[cpe] || 0;
-                grandRowHtml += `<td class="p-3.5 text-center text-emerald-400 border border-slate-700">${val ? val.toLocaleString() : '-'}</td>`;
-            });
-            grandRowHtml += `
-                    <td class="p-3.5 text-center text-amber-300 text-base border border-slate-700">${overallFilteredTotal.toLocaleString()}</td>
-                    <td class="p-3.5 text-center text-amber-200 bg-amber-950 border border-slate-700">${sumGrandTotalHc}</td>
-                    <td class="p-3.5 text-center text-blue-300 bg-blue-950 border border-slate-700">${grandAvg1HcKpiStr}</td>
-                    <td class="p-3.5 text-center bg-slate-800 border border-slate-700">${grandMeetKpiBadge}</td>
-                </tr>
-            `;
 
             container.innerHTML = `
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 font-bold">
@@ -1421,7 +1399,6 @@
                             </thead>
                             <tbody>
                                 ${tableRowsHtml}
-                                ${grandRowHtml}
                             </tbody>
                         </table>
                     </div>
