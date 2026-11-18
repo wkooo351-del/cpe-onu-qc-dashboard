@@ -119,7 +119,7 @@
             <div id="inbound-dynamic-container" class="space-y-6"></div>
         </div>
 
-        <!-- SECTION 3: Regional KPI View (ENUO, HGAO, MYFO) -->
+        <!-- SECTION 3: Regional KPI View (ENUO, HGAO, MYFO/MDY) -->
         <div id="section-regional-kpi" class="dashboard-section hidden space-y-6">
             
             <div class="sticky top-[68px] z-40 bg-slate-50 pt-1 pb-3 space-y-3">
@@ -134,7 +134,7 @@
                     <div class="flex flex-wrap gap-2">
                         <button onclick="switchRegionalTab('ENUO', this)" id="reg-tab-enuo" class="reg-tab-btn px-4 py-2 text-xs font-black rounded-xl bg-blue-600 text-white shadow transition">ENUO</button>
                         <button onclick="switchRegionalTab('HGAO', this)" id="reg-tab-hgao" class="reg-tab-btn px-4 py-2 text-xs font-black rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300 transition">HGAO</button>
-                        <button onclick="switchRegionalTab('MYFO', this)" id="reg-tab-myfo" class="reg-tab-btn px-4 py-2 text-xs font-black rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300 transition">MYFO</button>
+                        <button onclick="switchRegionalTab('MYFO', this)" id="reg-tab-myfo" class="reg-tab-btn px-4 py-2 text-xs font-black rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300 transition">MYFO / MDY</button>
                     </div>
                 </div>
             </div>
@@ -723,7 +723,6 @@
             let dateMap = {};
 
             if (regionName === 'ENUO' || regionName === 'HGAO') {
-                // Fetch directly from the respective Google Sheet tab named after the region
                 let regionRows = await fetchGoogleSheetData(STAFF_SHEET_ID, regionName);
                 if (regionRows.length === 0) {
                     regionRows = await fetchGoogleSheetData(STAFF_SHEET_ID, regionName + " 26");
@@ -743,39 +742,35 @@
                     let mac = String(row['MAC'] || row['col_5'] || '').trim();
                     let jdLower = jd.toLowerCase().trim();
 
-                    let addedValue = 0;
-                    if (jdLower === "leave") {
-                        addedValue = 0;
-                    } else if (jdLower === "run" || jdLower === "default" || jdLower === "terminal") {
-                        let cleanMac = mac ? mac.trim() : "";
-                        let hasValidMac = (cleanMac !== "" && cleanMac !== "#N/A") ? 1 : 0;
-                        if (hasValidMac === 0) return;
-                        addedValue = 1;
-                    } else {
-                        addedValue = qty;
-                    }
-
-                    if (addedValue === 0 && jdLower !== "leave") return;
-
                     if (!dateMap[dt]) dateMap[dt] = { cleaning: 0, terminal: 0, default: 0 };
 
-                    if (jdLower.includes('clean')) dateMap[dt].cleaning += addedValue;
-                    else if (jdLower.includes('term') || jdLower.includes('run')) dateMap[dt].terminal += addedValue;
-                    else if (jdLower.includes('default')) dateMap[dt].default += addedValue;
+                    if (jdLower.includes('clean')) {
+                        dateMap[dt].cleaning += qty;
+                    } else if (jdLower.includes('term') || jdLower.includes('run')) {
+                        dateMap[dt].terminal += qty;
+                    } else if (jdLower.includes('default')) {
+                        dateMap[dt].default += qty;
+                    }
                 });
             } else if (regionName === 'MYFO') {
+                // Fetching from MDY_SHEET_ID and processing both MYFO and MDY data
                 mdySheetData.forEach(r => {
                     let dt = parseLocalDate(r['Date'] || r['col_0']);
                     if(!dt) return;
                     if(targetDate !== 'All' && dt !== targetDate) return;
-                    if(!dateMap[dt]) dateMap[dt] = { cleaning: 0, terminal: 0, default: 0 };
 
                     let jd = String(r['Daily (JD)'] || r['col_3'] || '').toLowerCase();
                     let qty = parseFloat(r['Qty'] || r['Quantity'] || r['col_4'] || 1) || 1;
 
-                    if(jd.includes('clean')) dateMap[dt].cleaning += qty;
-                    else if(jd.includes('term') || jd.includes('run')) dateMap[dt].terminal += qty;
-                    else if(jd.includes('default')) dateMap[dt].default += qty;
+                    if (!dateMap[dt]) dateMap[dt] = { cleaning: 0, terminal: 0, default: 0 };
+
+                    if(jd.includes('clean')) {
+                        dateMap[dt].cleaning += qty;
+                    } else if(jd.includes('term') || jd.includes('run')) {
+                        dateMap[dt].terminal += qty;
+                    } else if(jd.includes('default')) {
+                        dateMap[dt].default += qty;
+                    }
                 });
             }
 
