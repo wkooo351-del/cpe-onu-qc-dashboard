@@ -456,11 +456,11 @@
 
         async function loadAllData() {
             let octStaffRows = await fetchFlexibleSheet(STAFF_SHEET_ID, ["Oct 26", "Oct'26", "Oct"]);
-            let octMdyRows = await fetchFlexibleSheet(MDY_SHEET_ID, ["MDY", "MDY 26", "MDY'26", "Oct'26", "Oct 26", "Sheet1"]);
+            let octMdyRows = await fetchFlexibleSheet(MDY_SHEET_ID, ["Oct 26", "Oct'26", "Oct"]);
             staffGroupedDataByMonth["Oct'26"] = processStaffRows([...octStaffRows, ...octMdyRows]);
 
             let novStaffRows = await fetchFlexibleSheet(STAFF_SHEET_ID, ["Nov 26", "Nov'26", "Nov"]);
-            let novMdyRows = await fetchFlexibleSheet(MDY_SHEET_ID, ["MDY", "MDY 26", "MDY'26", "Nov'26", "Nov 26", "Sheet1"]);
+            let novMdyRows = await fetchFlexibleSheet(MDY_SHEET_ID, ["Nov 26", "Nov'26", "Nov", "MDY", "MDY 26", "MDY'26", "Sheet1"]);
             staffGroupedDataByMonth["Nov'26"] = processStaffRows([...novStaffRows, ...novMdyRows]);
 
             staffGroupedData = staffGroupedDataByMonth[activeStaffMonth] || {};
@@ -507,7 +507,7 @@
 
                 if (jdLower === "leave") {
                     addedValue = 0;
-                } else if (jdLower === "run" || jdLower === "default" || jdLower === "terminal") {
+                } else if (jdLower === "run" || jdLower === "default" || jdLower === "terminal" || jdLower === "use") {
                     let cleanMac = mac ? mac.trim() : "";
                     let hasValidMac = (cleanMac !== "" && cleanMac !== "#N/A") ? 1 : 0;
                     if (hasValidMac === 0 && qty === 0) return;
@@ -733,7 +733,7 @@
             } else if (regionName === 'MYFO') {
                 sourceRows = mdySheetData;
                 if (sourceRows.length === 0) {
-                    sourceRows = await fetchFlexibleSheet(MDY_SHEET_ID, ["MDY", "MDY 26", "MYFO", "Oct'26", "Nov'26"]);
+                    sourceRows = await fetchFlexibleSheet(MDY_SHEET_ID, ["Nov 26", "Nov'26", "MDY", "MDY 26", "MYFO", "Oct'26"]);
                 }
             }
 
@@ -755,7 +755,7 @@
                 let matchedType = "";
                 if (jdRaw.includes('clean')) {
                     matchedType = 'cleaning';
-                } else if (jdRaw.includes('run') || jdRaw.includes('terminal') || jdRaw.includes('term')) {
+                } else if (jdRaw.includes('run') || jdRaw.includes('terminal') || jdRaw.includes('term') || jdRaw.includes('use')) {
                     matchedType = 'terminal';
                 } else if (jdRaw.includes('default')) {
                     matchedType = 'default';
@@ -1196,7 +1196,6 @@
                 filteredRows = filteredRows.filter(r => r.date === activeInboundReportDate);
             }
 
-            // Dynamically calculate summary stats based on filtered selection
             let filteredTotalQty = 0;
             let filteredRegions = new Set();
             let filteredCpes = new Set();
@@ -2006,7 +2005,7 @@
                             <div class="bg-white p-2.5 rounded-lg border border-slate-200 flex justify-between items-center"><span class="text-slate-500">TX:</span><span class="px-2 py-0.5 bg-indigo-50 text-indigo-700 rounded font-black">${txFail}</span></div>
                             <div class="bg-white p-2.5 rounded-lg border border-slate-200 flex justify-between items-center"><span class="text-slate-500">BIAS:</span><span class="px-2 py-0.5 bg-purple-50 text-purple-700 rounded font-black">${biasFail}</span></div>
                             <div class="bg-white p-2.5 rounded-lg border border-slate-200 flex justify-between items-center"><span class="text-slate-500">VOLT:</span><span class="px-2 py-0.5 bg-pink-50 text-pink-700 rounded font-black">${voltFail}</span></div>
-                            <div class="bg-white p-2.5 rounded-lg border border-slate-200 flex justify-between items-center"><span class="text-slate-500">TEMP:</span><span class="px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded font-black">${tempFail}</span></div>
+                            <div class="bg-white p-2.5 rounded-lg border border-slate-200 flex justify-between items-center"><span class="text-slate-500">TEMP:</span><span class="px-2.5 py-1.5 bg-emerald-50 text-emerald-700 rounded font-black">${tempFail}</span></div>
                             <div class="bg-white p-2.5 rounded-lg border border-slate-200 flex justify-between items-center"><span class="text-slate-500">ONLINE:</span><span class="px-2 py-0.5 bg-cyan-50 text-cyan-700 rounded font-black">${onlineFail}</span></div>
                             <div class="bg-white p-2.5 rounded-lg border border-slate-200 flex justify-between items-center"><span class="text-slate-500">OFFLINE:</span><span class="px-2 py-0.5 bg-orange-50 text-orange-700 rounded font-black">${offlineFail}</span></div>
                             <div class="bg-white p-2.5 rounded-lg border border-slate-200 flex justify-between items-center"><span class="text-slate-500">BIP8:</span><span class="px-2 py-0.5 bg-red-50 text-red-700 rounded font-black">${bip8Fail}</span></div>
