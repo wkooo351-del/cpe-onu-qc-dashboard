@@ -504,7 +504,7 @@
 
                 if (jdLower === "leave") {
                     addedValue = 0;
-                } else if (jdLower === "run" || jdLower === "default") {
+                } else if (jdLower === "run" || jdLower === "default" || jdLower === "terminal") {
                     let cleanMac = mac ? mac.trim() : "";
                     let hasValidMac = (cleanMac !== "" && cleanMac !== "#N/A") ? 1 : 0;
                     if (hasValidMac === 0) return;
@@ -728,11 +728,12 @@
                     let staffUpper = staffName.toUpperCase();
                     let isMatch = false;
 
-                    if (regionName === 'ENUO') {
+                    // Corrected mapping: ENUO checks HGAO name/hash and vice versa, or swap accordingly based on user report
+                    if (regionName === 'HGAO') {
                         if (staffUpper.includes('ENUO') || (!staffUpper.includes('HGAO') && staffListBelongsToRegion(staffName, 'ENUO'))) {
                             isMatch = true;
                         }
-                    } else if (regionName === 'HGAO') {
+                    } else if (regionName === 'ENUO') {
                         if (staffUpper.includes('HGAO') || (!staffUpper.includes('ENUO') && staffListBelongsToRegion(staffName, 'HGAO'))) {
                             isMatch = true;
                         }
@@ -753,8 +754,8 @@
                                     let jdLower = jd.toLowerCase();
                                     let val = jdMap[jd];
                                     if(jdLower.includes('clean')) dateMap[dt].cleaning += val;
-                                    else if(jdLower.includes('term')) dateMap[dt].terminal += val;
-                                    else if(jdLower.includes('default') || jdLower.includes('run')) dateMap[dt].default += val;
+                                    else if(jdLower.includes('term') || jdLower.includes('run')) dateMap[dt].terminal += val;
+                                    else if(jdLower.includes('default')) dateMap[dt].default += val;
                                 });
                             });
                         }
@@ -771,8 +772,8 @@
                     let qty = parseFloat(r['Qty'] || r['Quantity'] || r['col_4'] || 1) || 1;
 
                     if(jd.includes('clean')) dateMap[dt].cleaning += qty;
-                    else if(jd.includes('term')) dateMap[dt].terminal += qty;
-                    else if(jd.includes('default') || jd.includes('run')) dateMap[dt].default += qty;
+                    else if(jd.includes('term') || jd.includes('run')) dateMap[dt].terminal += qty;
+                    else if(jd.includes('default')) dateMap[dt].default += qty;
                 });
             }
 
@@ -839,7 +840,7 @@
 
                     let optionsHtml = (currentVal) => {
                         let opts = "";
-                        for(let i=0; i<=10; i++) {
+                        for(let i=0; i<=5; i++) {
                             let val1 = i;
                             opts += `<option value="${val1}" ${val1 === currentVal ? 'selected' : ''}>${val1}</option>`;
                             let val2 = i + 0.5;
@@ -906,7 +907,7 @@
                                 <tr>
                                     <th rowspan="2" class="p-3 border border-slate-600 align-middle">Date</th>
                                     <th colspan="3" class="p-2 border border-slate-600 bg-blue-900">Cleaning</th>
-                                    <th colspan="3" class="p-2 border border-slate-600 bg-indigo-900">Terminal</th>
+                                    <th colspan="3" class="p-2 border border-slate-600 bg-indigo-900">Terminal (Run)</th>
                                     <th colspan="3" class="p-2 border border-slate-600 bg-purple-900">Default</th>
                                     <th colspan="3" class="p-2 border border-slate-600 bg-slate-900">Total Count</th>
                                 </tr>
