@@ -84,12 +84,14 @@
         <div id="section-inbound" class="dashboard-section hidden space-y-6">
             <div class="sticky top-[68px] z-40 bg-slate-50 pt-1 pb-3 space-y-3">
                 <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-md space-y-2.5">
-                    <div class="flex flex-wrap gap-2 justify-center items-center pb-2 border-b border-slate-100">
-                        <label for="inbound-month-select" class="text-xs text-slate-500 uppercase font-black">Month Filter:</label>
-                        <select id="inbound-month-select" onchange="switchInboundMonth(this.value)" class="px-3 py-1.5 text-xs font-extrabold rounded-xl bg-slate-50 text-slate-900 border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer">
-                            <option value="Nov'26" selected>Nov'26</option>
-                            <option value="Oct'26">Oct'26</option>
-                        </select>
+                    <div class="flex flex-wrap gap-2 justify-between items-center pb-2 border-b border-slate-100 px-2">
+                        <div class="flex items-center gap-2">
+                            <label for="inbound-month-select" class="text-xs text-slate-500 uppercase font-black">Month Filter:</label>
+                            <select id="inbound-month-select" onchange="switchInboundMonth(this.value)" class="px-3 py-1.5 text-xs font-extrabold rounded-xl bg-slate-50 text-slate-900 border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer">
+                                <option value="Nov'26" selected>Nov'26</option>
+                                <option value="Oct'26">Oct'26</option>
+                            </select>
+                        </div>
                     </div>
                     <div class="flex flex-wrap gap-2 justify-center">
                         <button onclick="renderInboundWeek('Week 1 (1 - 7)', this)" class="inbound-wk-btn px-4 py-2 text-sm font-bold rounded-xl bg-blue-600 text-white shadow">Week 1 (1 - 7)</button>
@@ -271,6 +273,8 @@
         let inboundLiveData = {};
         let activeInboundMonth = "Nov'26";
         let activeInboundWeek = 'Week 1 (1 - 7)';
+        let activeInboundReportRegion = 'All Region';
+        let activeInboundReportDate = 'All';
 
         let mdySheetData = [];
         let activeRegionalTab = 'ENUO';
@@ -732,20 +736,16 @@
 
             sourceRows.forEach(row => {
                 let rawArr = row['_rawArray'] || [];
-                
-                // Column A (Index 0): Date
                 let dateRaw = rawArr[0];
                 let dt = parseLocalDate(dateRaw);
                 if (!dt) return;
                 if (targetDate !== 'All' && dt !== targetDate) return;
 
-                // Column L (Index 11): Region filter (For ENUO / HGAO tabs which may contain mixed regions)
                 if (regionName === 'ENUO' || regionName === 'HGAO') {
                     let rowRegion = String(rawArr[11] || '').trim().toUpperCase();
-                    if (rowRegion !== regionName) return; // Exact match on Column L
+                    if (rowRegion !== regionName) return;
                 }
 
-                // Column D (Index 3): Daily JD (Cleaning, Terminal (Run), Default)
                 let jdRaw = String(rawArr[3] || '').trim().toLowerCase();
                 if (!jdRaw) return;
 
@@ -761,7 +761,6 @@
 
                 if (!dateMap[dt]) dateMap[dt] = { cleaning: 0, terminal: 0, default: 0 };
 
-                // Column E (Index 4): Qty, Column F (Index 5): Mac
                 let qtyRaw = rawArr[4];
                 let mac = String(rawArr[5] || '').trim();
                 let qty = parseFloat(qtyRaw);
@@ -1139,19 +1138,20 @@
             let regionsArr = Array.from(wData.activeRegions).filter(r => VALID_REGIONS.includes(r)).sort();
 
             if (stickyKpiContainer) {
+                // Different Accent Colors for Summary Cards: Blue (Total), Emerald (Regions), Purple (Categories)
                 stickyKpiContainer.innerHTML = `
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-3 font-bold">
-                        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                        <div class="bg-white p-4 rounded-xl border-t-4 border-blue-600 shadow-sm">
                             <p class="text-xs uppercase text-slate-500 font-bold">Total Inbound Quantity (${activeInboundMonth})</p>
-                            <h3 class="text-2xl font-black text-slate-900 mt-1">${wData.totalQty.toLocaleString()}</h3>
+                            <h3 class="text-2xl font-black text-blue-900 mt-1">${wData.totalQty.toLocaleString()}</h3>
                         </div>
-                        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                        <div class="bg-white p-4 rounded-xl border-t-4 border-emerald-500 shadow-sm">
                             <p class="text-xs uppercase text-slate-500 font-bold">Active Regions</p>
-                            <h3 class="text-2xl font-black text-slate-900 mt-1">${regionsArr.length}</h3>
+                            <h3 class="text-2xl font-black text-emerald-700 mt-1">${regionsArr.length}</h3>
                         </div>
-                        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                        <div class="bg-white p-4 rounded-xl border-t-4 border-purple-600 shadow-sm">
                             <p class="text-xs uppercase text-slate-500 font-bold">Device Categories</p>
-                            <h3 class="text-2xl font-black text-slate-900 mt-1">${cpeTypesArr.length}</h3>
+                            <h3 class="text-2xl font-black text-purple-900 mt-1">${cpeTypesArr.length}</h3>
                         </div>
                     </div>
                 `;
@@ -1195,11 +1195,30 @@
                 `;
             });
 
+            // Filter rawRows based on active region tab & date filter
+            let filteredRows = wData.rawRows;
+            if (activeInboundReportRegion !== 'All Region') {
+                filteredRows = filteredRows.filter(r => r.region === activeInboundReportRegion);
+            }
+            if (activeInboundReportDate !== 'All') {
+                filteredRows = filteredRows.filter(r => r.date === activeInboundReportDate);
+            }
+
+            // Get available dates for the dropdown filter
+            let availableDates = Array.from(new Set(wData.rawRows.map(r => r.date))).sort();
+            let dateOptionsHtml = `<option value="All">All Dates</option>`;
+            availableDates.forEach(dt => {
+                dateOptionsHtml += `<option value="${dt}" ${activeInboundReportDate === dt ? 'selected' : ''}>${dt}</option>`;
+            });
+
             let tableRowsHtml = "";
             let grandTotalCpes = {};
+            let activeTableRegions = activeInboundReportRegion === 'All Region' ? regionsArr : [activeInboundReportRegion];
 
-            regionsArr.forEach(regName => {
-                let regRows = wData.rawRows.filter(r => r.region === regName);
+            activeTableRegions.forEach(regName => {
+                let regRows = filteredRows.filter(r => r.region === regName);
+                if (regRows.length === 0) return;
+
                 let dateMap = {};
                 regRows.forEach(r => {
                     if (!dateMap[r.date]) dateMap[r.date] = {};
@@ -1241,12 +1260,18 @@
                 tableRowsHtml += `<td class="p-3 text-center text-base border border-slate-200 text-blue-950">${regTotQty.toLocaleString()}</td></tr>`;
             });
 
+            if (tableRowsHtml === "") {
+                tableRowsHtml = `<tr><td colspan="${cpeTypesArr.length + 3}" class="p-6 text-center text-slate-400">No records found for selected filter.</td></tr>`;
+            }
+
             let grandRowHtml = `<tr class="bg-slate-900 text-white font-black text-sm"><td colspan="2" class="p-3.5 text-right uppercase tracking-wider">GRAND TOTAL</td>`;
+            let overallFilteredTotal = 0;
             cpeTypesArr.forEach(cpe => {
                 let val = grandTotalCpes[cpe] || 0;
+                overallFilteredTotal += val;
                 grandRowHtml += `<td class="p-3.5 text-center text-emerald-400">${val ? val.toLocaleString() : '-'}</td>`;
             });
-            grandRowHtml += `<td class="p-3.5 text-center text-amber-300 text-base">${wData.totalQty.toLocaleString()}</td></tr>`;
+            grandRowHtml += `<td class="p-3.5 text-center text-amber-300 text-base">${overallFilteredTotal.toLocaleString()}</td></tr>`;
 
             container.innerHTML = `
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 font-bold">
@@ -1265,7 +1290,22 @@
                     </div>
                 </div>
                 <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm font-bold space-y-4">
-                    <h3 class="text-base font-black text-slate-900">${activeInboundMonth} - ${weekKey} Detailed Inbound Report</h3>
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 border-b border-slate-100 pb-4">
+                        <h3 class="text-base font-black text-slate-900">${activeInboundMonth} - ${weekKey} Detailed Inbound Report</h3>
+                        
+                        <!-- Region & Date Filter Controls for Detailed Report -->
+                        <div class="flex flex-wrap items-center gap-2">
+                            <div class="flex items-center gap-1 bg-slate-50 p-1 rounded-xl border border-slate-200">
+                                <button onclick="setInboundReportRegion('All Region', this)" class="inbound-rep-reg px-3 py-1 rounded-lg text-xs font-black transition ${activeInboundReportRegion === 'All Region' ? 'bg-indigo-600 text-white shadow' : 'bg-white text-slate-700 hover:bg-slate-100'}">All</button>
+                                <button onclick="setInboundReportRegion('ENUO', this)" class="inbound-rep-reg px-3 py-1 rounded-lg text-xs font-black transition ${activeInboundReportRegion === 'ENUO' ? 'bg-indigo-600 text-white shadow' : 'bg-white text-slate-700 hover:bg-slate-100'}">ENUO</button>
+                                <button onclick="setInboundReportRegion('HGAO', this)" class="inbound-rep-reg px-3 py-1 rounded-lg text-xs font-black transition ${activeInboundReportRegion === 'HGAO' ? 'bg-indigo-600 text-white shadow' : 'bg-white text-slate-700 hover:bg-slate-100'}">HGAO</button>
+                                <button onclick="setInboundReportRegion('MDY', this)" class="inbound-rep-reg px-3 py-1 rounded-lg text-xs font-black transition ${activeInboundReportRegion === 'MDY' ? 'bg-indigo-600 text-white shadow' : 'bg-white text-slate-700 hover:bg-slate-100'}">MDY</button>
+                            </div>
+                            <select onchange="setInboundReportDate(this.value)" class="px-3 py-1.5 text-xs font-extrabold rounded-xl bg-slate-50 text-slate-900 border border-slate-300 focus:outline-none cursor-pointer">
+                                ${dateOptionsHtml}
+                            </select>
+                        </div>
+                    </div>
                     <div class="overflow-x-auto rounded-xl border border-slate-300">
                         <table class="w-full text-left border-collapse border border-slate-300 text-sm">
                             <thead class="bg-slate-800 text-white uppercase text-xs font-black">
@@ -1308,6 +1348,16 @@
                     });
                 }
             }, 100);
+        }
+
+        function setInboundReportRegion(reg, btn) {
+            activeInboundReportRegion = reg;
+            renderInboundWeek(activeInboundWeek);
+        }
+
+        function setInboundReportDate(dt) {
+            activeInboundReportDate = dt;
+            renderInboundWeek(activeInboundWeek);
         }
 
         function isStrictPass(row) {
@@ -1476,7 +1526,7 @@
                     options: { 
                         responsive: true, 
                         maintainAspectRatio: false, 
-                        plugins: { legend: { position: 'bottom', labels: { font: { weight: 'bold', size: 10 }, color: '#0f172a' } } } 
+                        plugins: { legend: { position: 'bottom', labels: { font: { weight: 'bold' }, size: 10, color: '#0f172a' } } } 
                     }
                 });
             }
