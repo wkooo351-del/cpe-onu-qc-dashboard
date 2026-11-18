@@ -732,34 +732,35 @@
                 }
 
                 regionRows.forEach(row => {
-                    let dateRaw = row['Date'] || row['Time'] || row['col_0'] || '';
+                    // Utilizing strict column index parsing to match pivot table layout
+                    let rawArr = row['_rawArray'] || [];
+                    let dateRaw = rawArr[0] || row['Date'] || row['Time'] || '';
                     let dt = parseLocalDate(dateRaw);
                     if (!dt) return;
                     if (targetDate !== 'All' && dt !== targetDate) return;
 
-                    let jd = String(row['Daily (JD)'] || row['col_3'] || '').trim();
-                    let qty = parseFloat(row['Qty'] || row['Quantity'] || row['Total'] || row['col_4'] || 0) || 0;
-                    let jdLower = jd.toLowerCase().trim();
+                    let jd = String(rawArr[3] || row['Daily (JD)'] || '').trim().toLowerCase();
+                    let qty = parseFloat(rawArr[4] || row['Qty'] || row['Quantity'] || row['Total'] || 0) || 0;
 
                     if (!dateMap[dt]) dateMap[dt] = { cleaning: 0, terminal: 0, default: 0 };
 
-                    // Exact match conditions to prevent incorrect grouping
-                    if (jdLower === 'cleaning' || jdLower === 'clean') {
+                    if (jd === 'cleaning' || jd === 'clean') {
                         dateMap[dt].cleaning += qty;
-                    } else if (jdLower === 'run' || jdLower === 'terminal' || jdLower === 'term') {
+                    } else if (jd === 'run' || jd === 'terminal' || jd === 'term') {
                         dateMap[dt].terminal += qty;
-                    } else if (jdLower === 'default') {
+                    } else if (jd === 'default') {
                         dateMap[dt].default += qty;
                     }
                 });
             } else if (regionName === 'MYFO') {
                 mdySheetData.forEach(r => {
-                    let dt = parseLocalDate(r['Date'] || r['col_0']);
+                    let rawArr = r['_rawArray'] || [];
+                    let dt = parseLocalDate(rawArr[0] || r['Date'] || r['col_0']);
                     if(!dt) return;
                     if(targetDate !== 'All' && dt !== targetDate) return;
 
-                    let jd = String(r['Daily (JD)'] || r['col_3'] || '').toLowerCase().trim();
-                    let qty = parseFloat(r['Qty'] || r['Quantity'] || r['col_4'] || 1) || 1;
+                    let jd = String(rawArr[3] || r['Daily (JD)'] || r['col_3'] || '').toLowerCase().trim();
+                    let qty = parseFloat(rawArr[4] || r['Qty'] || r['Quantity'] || r['col_4'] || 1) || 1;
 
                     if (!dateMap[dt]) dateMap[dt] = { cleaning: 0, terminal: 0, default: 0 };
 
