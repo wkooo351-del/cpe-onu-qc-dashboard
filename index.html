@@ -279,7 +279,7 @@
         let mdySheetData = [];
         let activeRegionalTab = 'ENUO';
         let regionalHcInputs = JSON.parse(localStorage.getItem('regionalHcInputs') || '{}');
-        let inboundDailyHcInputs = JSON.parse(localStorage.getItem('inboundDailyHcInputs') || '{}'); // Storage for Inbound Daily HC
+        let inboundDailyHcInputs = JSON.parse(localStorage.getItem('inboundDailyHcInputs') || '{}');
 
         let onuData = { firstTest: [], secondTest: [], exchangeTest: [] };
         let oltChartInstance = null, failureChartInstance = null, pieChartInstance = null, multiBarChartInstance = null, deviceModelChartInstance = null, paramBarChartInstance = null;
@@ -412,6 +412,14 @@
             }
         }
 
+        async function fetchFlexibleSheet(sheetId, candidateNames) {
+            for (let name of candidateNames) {
+                let rows = await fetchGoogleSheetData(sheetId, name);
+                if (rows.length > 0) return rows;
+            }
+            return await fetchGoogleSheetData(sheetId);
+        }
+
         function parseLocalDate(dateRaw) {
             if (!dateRaw && dateRaw !== 0) return "";
             let str = String(dateRaw).trim();
@@ -447,41 +455,33 @@
         }
 
         async function loadAllData() {
-            let octStaffRows = await fetchGoogleSheetData(STAFF_SHEET_ID, "Oct 26");
-            if (octStaffRows.length === 0) octStaffRows = await fetchGoogleSheetData(STAFF_SHEET_ID, "Oct'26");
-            if (octStaffRows.length === 0) octStaffRows = await fetchGoogleSheetData(STAFF_SHEET_ID);
-            let octMdyRows = await fetchGoogleSheetData(MDY_SHEET_ID);
+            let octStaffRows = await fetchFlexibleSheet(STAFF_SHEET_ID, ["Oct 26", "Oct'26", "Oct"]);
+            let octMdyRows = await fetchFlexibleSheet(MDY_SHEET_ID, ["MDY", "MDY 26", "MDY'26", "Oct'26", "Oct 26"]);
             staffGroupedDataByMonth["Oct'26"] = processStaffRows([...octStaffRows, ...octMdyRows]);
 
-            let novStaffRows = await fetchGoogleSheetData(STAFF_SHEET_ID, "Nov 26");
-            if (novStaffRows.length === 0) novStaffRows = await fetchGoogleSheetData(STAFF_SHEET_ID, "Nov'26");
-            if (novStaffRows.length === 0) novStaffRows = await fetchGoogleSheetData(STAFF_SHEET_ID);
-            staffGroupedDataByMonth["Nov'26"] = processStaffRows(novStaffRows);
+            let novStaffRows = await fetchFlexibleSheet(STAFF_SHEET_ID, ["Nov 26", "Nov'26", "Nov"]);
+            let novMdyRows = await fetchFlexibleSheet(MDY_SHEET_ID, ["MDY", "MDY 26", "MDY'26", "Nov'26", "Nov 26"]);
+            staffGroupedDataByMonth["Nov'26"] = processStaffRows([...novStaffRows, ...novMdyRows]);
 
             staffGroupedData = staffGroupedDataByMonth[activeStaffMonth] || {};
             renderStaffButtons();
 
-            let octInboundRows = await fetchGoogleSheetData(INBOUND_SHEET_ID, "Oct'26");
-            if (octInboundRows.length === 0) octInboundRows = await fetchGoogleSheetData(INBOUND_SHEET_ID);
+            let octInboundRows = await fetchFlexibleSheet(INBOUND_SHEET_ID, ["Oct'26", "Oct 26", "Oct"]);
             inboundLiveDataByMonth["Oct'26"] = buildInboundMonthData(octInboundRows);
 
-            let novInboundRows = await fetchGoogleSheetData(INBOUND_SHEET_ID, "Nov'26");
-            if (novInboundRows.length === 0) novInboundRows = await fetchGoogleSheetData(INBOUND_SHEET_ID);
+            let novInboundRows = await fetchFlexibleSheet(INBOUND_SHEET_ID, ["Nov'26", "Nov 26", "Nov"]);
             inboundLiveDataByMonth["Nov'26"] = buildInboundMonthData(novInboundRows);
 
             inboundLiveData = inboundLiveDataByMonth[activeInboundMonth] || getEmptyInboundMonthStructure();
             renderInboundWeek(activeInboundWeek);
 
-            mdySheetData = octMdyRows;
+            mdySheetData = [...octMdyRows, ...novMdyRows];
             populateRegionalDateFilter();
             await renderRegionalKpiView();
 
-            onuData.firstTest = await fetchGoogleSheetData(ONU_SS_ID, "First Test");
-            onuData.secondTest = await fetchGoogleSheetData(ONU_SS_ID, "Second Test");
-            onuData.exchangeTest = await fetchGoogleSheetData(ONU_SS_ID, "Exchange");
-            if (onuData.exchangeTest.length === 0) {
-                onuData.exchangeTest = await fetchGoogleSheetData(ONU_SS_ID, "Exchange Devices");
-            }
+            onuData.firstTest = await fetchFlexibleSheet(ONU_SS_ID, ["First Test", "First"]);
+            onuData.secondTest = await fetchFlexibleSheet(ONU_SS_ID, ["Second Test", "Second"]);
+            onuData.exchangeTest = await fetchFlexibleSheet(ONU_SS_ID, ["Exchange", "Exchange Devices"]);
 
             let updatedEl = document.getElementById('last-updated');
             if(updatedEl) updatedEl.innerText = 'Synced: ' + new Date().toLocaleTimeString();
@@ -563,7 +563,10 @@
 
                 let possibleRegion = String(getVal(r, ['Regional', 'Region'], 11)).trim().toUpperCase();
                 let region = VALID_REGIONS.find(v => possibleRegion.includes(v));
-                if (!region) return;
+                if (!region) {
+                    if (possibleRegion.includes("MANDALAY") || possibleRegion.includes("MDY")) region = "MDY";
+                    else region = "HGAO";
+                }
 
                 let device = String(getVal(r, ['CPE Type', 'Device Name', 'Device'], 3) || 'ECJ').trim().toUpperCase();
                 if (device.toLowerCase().includes("name") || device === "-") device = "ECJ";
@@ -726,13 +729,12 @@
             let sourceRows = [];
 
             if (regionName === 'ENUO' || regionName === 'HGAO') {
-                const candidateTabs = [regionName, `${regionName} 26`, `${regionName}'26`, `${regionName}_26`, "Nov'26", "Oct'26"];
-                for (let tab of candidateTabs) {
-                    sourceRows = await fetchGoogleSheetData(STAFF_SHEET_ID, tab);
-                    if (sourceRows.length > 0) break;
-                }
+                sourceRows = await fetchFlexibleSheet(STAFF_SHEET_ID, [regionName, `${regionName} 26`, `${regionName}'26`, "Nov'26", "Oct'26"]);
             } else if (regionName === 'MYFO') {
                 sourceRows = mdySheetData;
+                if (sourceRows.length === 0) {
+                    sourceRows = await fetchFlexibleSheet(MDY_SHEET_ID, ["MDY", "MDY 26", "MYFO", "Oct'26", "Nov'26"]);
+                }
             }
 
             sourceRows.forEach(row => {
@@ -849,12 +851,11 @@
                     sumCleaningTotal += cleanTot; sumCleaningHc += hcClean;
                     sumTerminalTotal += termTot; sumTerminalHc += hcTerm;
                     sumDefaultTotal += defTot; sumDefaultHc += hcDef;
-                    sumGrandTotal += rowTot; sumGrandHc += rowHc;
+                    sumGrandTotal += rowTot; sumGrandHc += hcDaily; // Accumulate Daily HC for summary
 
                     let kpiClean = hcClean > 0 ? (cleanTot / hcClean).toFixed(1) : "0.0";
                     let kpiTerm = hcTerm > 0 ? (termTot / hcTerm).toFixed(1) : "0.0";
                     let kpiDef = hcDef > 0 ? (defTot / hcDef).toFixed(1) : "0.0";
-                    let kpiRowTotal = rowHc > 0 ? (rowTot / rowHc).toFixed(1) : "0.0";
 
                     let oneHcKpiVal = hcDaily > 0 ? (rowTot / hcDaily) : 0;
                     let oneHcKpiStr = hcDaily > 0 ? oneHcKpiVal.toFixed(1) : "0.0";
@@ -1250,6 +1251,9 @@
             let grandTotalCpes = {};
             let activeTableRegions = activeInboundReportRegion === 'All Region' ? regionsArr : [activeInboundReportRegion];
 
+            let sumGrandTotalQty = 0;
+            let sumGrandTotalHc = 0;
+
             let dailyHcOptionsHtml = (currentVal) => {
                 let opts = `<option value="0" ${0 === currentVal ? 'selected' : ''}>0</option>`;
                 for(let i=1; i<=20; i++) {
@@ -1280,6 +1284,10 @@
 
                     let inboundHcKey = `inbound_${regName}_${dt}`;
                     let dailyHcVal = inboundDailyHcInputs[inboundHcKey] !== undefined ? inboundDailyHcInputs[inboundHcKey] : 0;
+                    
+                    sumGrandTotalQty += dayTotal;
+                    sumGrandTotalHc += dailyHcVal;
+
                     let oneHcKpiVal = dailyHcVal > 0 ? (dayTotal / dailyHcVal) : 0;
                     let oneHcKpiStr = dailyHcVal > 0 ? oneHcKpiVal.toFixed(1) : "0.0";
 
@@ -1332,14 +1340,39 @@
                 tableRowsHtml = `<tr><td colspan="${cpeTypesArr.length + 6}" class="p-6 text-center text-slate-400">No records found for selected filter.</td></tr>`;
             }
 
-            let grandRowHtml = `<tr class="bg-slate-900 text-white font-black text-sm"><td colspan="2" class="p-3.5 text-right uppercase tracking-wider">GRAND TOTAL</td>`;
+            // Calculate Grand Total 1HC KPI & Meet KPI for the footer summary row
+            let grandAvg1HcKpi = sumGrandTotalHc > 0 ? (sumGrandTotalQty / sumGrandTotalHc) : 0;
+            let grandAvg1HcKpiStr = sumGrandTotalHc > 0 ? grandAvg1HcKpi.toFixed(1) : "0.0";
+            
+            let grandMeetKpiBadge = "-";
+            if (sumGrandTotalHc > 0) {
+                if (grandAvg1HcKpi >= 50) {
+                    grandMeetKpiBadge = `<span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 font-black rounded text-xs">YES</span>`;
+                } else {
+                    grandMeetKpiBadge = `<span class="px-2 py-0.5 bg-rose-100 text-rose-700 font-black rounded text-xs">NO</span>`;
+                }
+            }
+
             let overallFilteredTotal = 0;
             cpeTypesArr.forEach(cpe => {
-                let val = grandTotalCpes[cpe] || 0;
-                overallFilteredTotal += val;
-                grandRowHtml += `<td class="p-3.5 text-center text-emerald-400">${val ? val.toLocaleString() : '-'}</td>`;
+                overallFilteredTotal += (grandTotalCpes[cpe] || 0);
             });
-            grandRowHtml += `<td class="p-3.5 text-center text-amber-300 text-base">${overallFilteredTotal.toLocaleString()}</td><td colspan="3" class="bg-slate-900"></td></tr>`;
+
+            let grandRowHtml = `
+                <tr class="bg-slate-900 text-white font-black text-sm">
+                    <td colspan="2" class="p-3.5 text-right uppercase tracking-wider border border-slate-700">GRAND TOTAL</td>
+            `;
+            cpeTypesArr.forEach(cpe => {
+                let val = grandTotalCpes[cpe] || 0;
+                grandRowHtml += `<td class="p-3.5 text-center text-emerald-400 border border-slate-700">${val ? val.toLocaleString() : '-'}</td>`;
+            });
+            grandRowHtml += `
+                    <td class="p-3.5 text-center text-amber-300 text-base border border-slate-700">${overallFilteredTotal.toLocaleString()}</td>
+                    <td class="p-3.5 text-center text-amber-200 bg-amber-950 border border-slate-700">${sumGrandTotalHc}</td>
+                    <td class="p-3.5 text-center text-blue-300 bg-blue-950 border border-slate-700">${grandAvg1HcKpiStr}</td>
+                    <td class="p-3.5 text-center bg-slate-800 border border-slate-700">${grandMeetKpiBadge}</td>
+                </tr>
+            `;
 
             container.innerHTML = `
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 font-bold">
@@ -1458,12 +1491,12 @@
             let oltHostname = String(rawArr[1] || getVal(row, ['olt_hostname'], 1)).toUpperCase();
             
             if (oltHostname.includes("ENUO")) return "ENUO";
-            if (oltHostname.includes("MDY")) return "MDY";
+            if (oltHostname.includes("MDY") || oltHostname.includes("MANDALAY")) return "MDY";
             if (oltHostname.includes("HGAO")) return "HGAO";
 
             let fullText = rawArr.join(' ').toUpperCase();
             if (fullText.includes("ENUO")) return "ENUO";
-            if (fullText.includes("MDY")) return "MDY";
+            if (fullText.includes("MDY") || fullText.includes("MANDALAY")) return "MDY";
             if (fullText.includes("HGAO")) return "HGAO";
 
             return "HGAO";
