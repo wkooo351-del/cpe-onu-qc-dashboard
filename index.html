@@ -728,12 +728,12 @@
                     let staffUpper = staffName.toUpperCase();
                     let isMatch = false;
 
-                    // Corrected mapping: ENUO checks HGAO name/hash and vice versa, or swap accordingly based on user report
-                    if (regionName === 'HGAO') {
+                    // Strictly mapping ENUO and HGAO based on staff names explicitly containing ENUO or HGAO tags
+                    if (regionName === 'ENUO') {
                         if (staffUpper.includes('ENUO') || (!staffUpper.includes('HGAO') && staffListBelongsToRegion(staffName, 'ENUO'))) {
                             isMatch = true;
                         }
-                    } else if (regionName === 'ENUO') {
+                    } else if (regionName === 'HGAO') {
                         if (staffUpper.includes('HGAO') || (!staffUpper.includes('ENUO') && staffListBelongsToRegion(staffName, 'HGAO'))) {
                             isMatch = true;
                         }
@@ -781,6 +781,9 @@
         }
 
         function staffListBelongsToRegion(name, reg) {
+            let upper = name.toUpperCase();
+            if (upper.includes('ENUO')) return reg === 'ENUO';
+            if (upper.includes('HGAO')) return reg === 'HGAO';
             let hash = 0;
             for (let i = 0; i < name.length; i++) hash += name.charCodeAt(i);
             if (reg === 'ENUO') return hash % 2 === 0;
