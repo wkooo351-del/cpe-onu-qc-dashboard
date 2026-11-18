@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Daily KPI & CPE-ONU Operations Dashboard</title>
+    <title>Unified ISP Operations Dashboard</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
@@ -41,8 +41,19 @@
         <!-- SECTION 1: Staff KPI View -->
         <div id="section-hc" class="dashboard-section space-y-6">
             
-            <!-- STICKY FREEZE CONTAINER FOR STAFF NAMES -->
-            <div class="sticky top-[68px] z-40 bg-slate-50 pb-2">
+            <!-- STICKY FREEZE CONTAINER FOR STAFF MONTH FILTER & NAMES -->
+            <div class="sticky top-[68px] z-40 bg-slate-50 pb-2 space-y-2">
+                <div class="bg-white p-3 rounded-2xl shadow-md border border-slate-200 flex flex-col sm:flex-row justify-between items-center gap-2">
+                    <div class="flex items-center gap-2">
+                        <label for="staff-month-select" class="text-xs text-slate-500 uppercase font-black">Month Filter:</label>
+                        <select id="staff-month-select" onchange="switchStaffMonth(this.value)" class="px-3 py-1.5 text-xs font-extrabold rounded-xl bg-slate-50 text-slate-900 border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer">
+                            <option value="Nov'26" selected>Nov'26</option>
+                            <option value="Oct'26">Oct'26</option>
+                        </select>
+                    </div>
+                    <span id="staff-active-month-badge" class="text-xs px-3 py-1 bg-blue-50 text-blue-700 rounded-lg font-black border border-blue-200">Active: Nov'26</span>
+                </div>
+
                 <div class="bg-white p-3 rounded-2xl shadow-md border border-slate-200">
                     <div id="staff-buttons-container" class="staff-grid-nav">
                         <span class="text-xs text-slate-400 font-bold px-2">Loading Staff Members...</span>
@@ -265,11 +276,15 @@
         const MDY_SHEET_ID = "1XrjpVgSeu1lDpyNNyuJdjYji8MxnoQWuo3bwwPWAs9Q";
         const DAILY_TARGET = 150;
 
+        let staffGroupedDataByMonth = {};
         let staffGroupedData = {};
+        let activeStaffMonth = "Nov'26";
+
         let inboundLiveDataByMonth = {};
         let inboundLiveData = {};
         let activeInboundMonth = "Nov'26";
         let activeInboundWeek = 'Week 1 (1 - 7)';
+
         let onuData = { firstTest: [], secondTest: [], exchangeTest: [] };
         let oltChartInstance = null, failureChartInstance = null, pieChartInstance = null, multiBarChartInstance = null, deviceModelChartInstance = null, paramBarChartInstance = null;
         let currentTestType = 'first';
@@ -285,6 +300,19 @@
                 document.getElementById(id).className = 'px-3 py-1.5 text-xs font-bold rounded-md text-slate-200 hover:text-white transition';
             });
             btn.className = 'px-3 py-1.5 text-xs font-bold rounded-md bg-blue-600 text-white transition shadow';
+        }
+
+        function switchStaffMonth(monthKey) {
+            activeStaffMonth = monthKey;
+            let selectEl = document.getElementById('staff-month-select');
+            if (selectEl && selectEl.value !== monthKey) {
+                selectEl.value = monthKey;
+            }
+            let badgeEl = document.getElementById('staff-active-month-badge');
+            if (badgeEl) badgeEl.innerText = `Active: ${monthKey}`;
+
+            staffGroupedData = staffGroupedDataByMonth[monthKey] || {};
+            renderStaffButtons();
         }
 
         function switchInboundMonth(monthKey) {
@@ -388,14 +416,20 @@
         }
 
         async function loadAllData() {
-            let rows1 = await fetchGoogleSheetData(STAFF_SHEET_ID, "Oct 26");
-            if (rows1.length === 0) rows1 = await fetchGoogleSheetData(STAFF_SHEET_ID);
-            processStaffRows(rows1);
+            // Staff Data Loading for Oct'26 & Nov'26
+            let octStaffRows = await fetchGoogleSheetData(STAFF_SHEET_ID, "Oct 26");
+            if (octStaffRows.length === 0) octStaffRows = await fetchGoogleSheetData(STAFF_SHEET_ID);
+            let octMdyRows = await fetchGoogleSheetData(MDY_SHEET_ID);
+            staffGroupedDataByMonth["Oct'26"] = processStaffRows([...octStaffRows, ...octMdyRows]);
 
-            let rows2 = await fetchGoogleSheetData(MDY_SHEET_ID);
-            processStaffRows(rows2);
+            let novStaffRows = await fetchGoogleSheetData(STAFF_SHEET_ID, "Nov 26");
+            if (novStaffRows.length === 0) novStaffRows = await fetchGoogleSheetData(STAFF_SHEET_ID, "Nov'26");
+            staffGroupedDataByMonth["Nov'26"] = processStaffRows(novStaffRows);
+
+            staffGroupedData = staffGroupedDataByMonth[activeStaffMonth] || {};
             renderStaffButtons();
 
+            // Inbound Data Loading
             let octInboundRows = await fetchGoogleSheetData(INBOUND_SHEET_ID, "Oct'26");
             if (octInboundRows.length === 0) octInboundRows = await fetchGoogleSheetData(INBOUND_SHEET_ID);
             inboundLiveDataByMonth["Oct'26"] = buildInboundMonthData(octInboundRows);
@@ -406,6 +440,7 @@
             inboundLiveData = inboundLiveDataByMonth[activeInboundMonth] || getEmptyInboundMonthStructure();
             renderInboundWeek(activeInboundWeek);
 
+            // ONU Inspection Data Loading
             onuData.firstTest = await fetchGoogleSheetData(ONU_SS_ID, "First Test");
             onuData.secondTest = await fetchGoogleSheetData(ONU_SS_ID, "Second Test");
             onuData.exchangeTest = await fetchGoogleSheetData(ONU_SS_ID, "Exchange");
@@ -418,6 +453,7 @@
         }
 
         function processStaffRows(rows) {
+            let grouped = {};
             rows.forEach(row => {
                 let dateRaw = row['Date'] || row['Time'] || row['col_0'] || '';
                 let name = String(row['Name'] || row['Staff Name'] || row['col_1'] || '').trim();
@@ -446,25 +482,26 @@
 
                 if (addedValue === 0 && jdLower !== "leave") return;
 
-                if (!staffGroupedData[name]) staffGroupedData[name] = {};
-                if (!staffGroupedData[name][dateStr]) {
-                    staffGroupedData[name][dateStr] = { isLeave: false, devices: {} };
+                if (!grouped[name]) grouped[name] = {};
+                if (!grouped[name][dateStr]) {
+                    grouped[name][dateStr] = { isLeave: false, devices: {} };
                 }
 
                 if (jdLower === "leave") {
-                    staffGroupedData[name][dateStr].isLeave = true;
+                    grouped[name][dateStr].isLeave = true;
                     return;
                 }
 
                 let devKey = device || '-';
-                if (!staffGroupedData[name][dateStr].devices[devKey]) {
-                    staffGroupedData[name][dateStr].devices[devKey] = {};
+                if (!grouped[name][dateStr].devices[devKey]) {
+                    grouped[name][dateStr].devices[devKey] = {};
                 }
-                if (!staffGroupedData[name][dateStr].devices[devKey][jd]) {
-                    staffGroupedData[name][dateStr].devices[devKey][jd] = 0;
+                if (!grouped[name][dateStr].devices[devKey][jd]) {
+                    grouped[name][dateStr].devices[devKey][jd] = 0;
                 }
-                staffGroupedData[name][dateStr].devices[devKey][jd] += addedValue;
+                grouped[name][dateStr].devices[devKey][jd] += addedValue;
             });
+            return grouped;
         }
 
         function getEmptyInboundMonthStructure() {
@@ -520,7 +557,10 @@
             container.innerHTML = "";
 
             if (staffList.length === 0) {
-                container.innerHTML = `<span class="text-xs text-rose-500 font-bold px-2">No valid staff records found.</span>`;
+                container.innerHTML = `<span class="text-xs text-rose-500 font-bold px-2">No valid staff records found for ${activeStaffMonth}.</span>`;
+                document.getElementById('active-staff-name').innerText = "No Staff Data";
+                document.getElementById('staff-alerts-container').innerHTML = "";
+                document.getElementById('staff-table-body').innerHTML = `<tr><td colspan="5" class="py-6 text-center text-slate-400">No records available for ${activeStaffMonth}</td></tr>`;
                 return;
             }
 
