@@ -723,7 +723,7 @@
             let dateMap = {};
 
             if (regionName === 'ENUO' || regionName === 'HGAO') {
-                // Fetch directly from the respective Google Sheet tab named after the region (e.g. "ENUO" or "HGAO")
+                // Fetch directly from the respective Google Sheet tab named after the region
                 let regionRows = await fetchGoogleSheetData(STAFF_SHEET_ID, regionName);
                 if (regionRows.length === 0) {
                     regionRows = await fetchGoogleSheetData(STAFF_SHEET_ID, regionName + " 26");
