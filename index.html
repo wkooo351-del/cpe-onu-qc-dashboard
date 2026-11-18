@@ -9,14 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #f8fafc; font-weight: 700; }
-        .staff-grid-nav { 
-            display: flex; 
-            flex-wrap: wrap; 
-            gap: 4px; 
-            align-items: center; 
-            justify-content: center;
-            padding: 2px;
-        }
+        .staff-grid-nav { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; justify-content: center; padding: 2px; }
     </style>
 </head>
 <body class="text-slate-900 font-bold p-4 sm:p-6">
@@ -290,13 +283,12 @@
 
         const VALID_REGIONS = ["ENUO", "HGAO", "MYFO", "MDY"];
 
-        // Robust Value Finder by checking Header Keys and Raw Index Positions
+        // Robust Value Finder
         function getVal(rowObj, headerCandidates, fallbackIndex) {
             if (!rowObj) return '';
             let rawArr = rowObj['_rawArray'] || [];
             let headers = rowObj['_headers'] || [];
 
-            // 1. Try finding by header name match
             for (let cand of headerCandidates) {
                 let target = cand.toLowerCase().trim();
                 for (let i = 0; i < headers.length; i++) {
@@ -308,12 +300,9 @@
                     }
                 }
             }
-
-            // 2. Fallback to raw index if valid
             if (fallbackIndex >= 0 && rawArr[fallbackIndex] !== undefined && rawArr[fallbackIndex] !== null) {
                 return rawArr[fallbackIndex];
             }
-
             return '';
         }
 
@@ -736,59 +725,47 @@
                 const candidateTabs = [regionName, `${regionName} 26`, `${regionName}'26`, `${regionName}_26`];
                 for (let tab of candidateTabs) {
                     sourceRows = await fetchGoogleSheetData(STAFF_SHEET_ID, tab);
-                    if (sourceRows.length > 0) {
-                        console.log(`[Regional KPI Debug] Loaded ${sourceRows.length} rows from tab: "${tab}"`);
-                        break;
-                    }
+                    if (sourceRows.length > 0) break;
                 }
             } else if (regionName === 'MYFO') {
                 sourceRows = mdySheetData;
-                console.log(`[Regional KPI Debug] Loaded ${sourceRows.length} rows from MDY/MYFO sheet`);
             }
 
-            if (sourceRows.length > 0) {
-                console.log(`[Regional KPI Debug] Headers for ${regionName}:`, sourceRows[0]['_headers']);
-                console.log(`[Regional KPI Debug] First Row Data for ${regionName}:`, sourceRows[0]['_rawArray']);
-            }
-
-            sourceRows.forEach((row, index) => {
+            sourceRows.forEach(row => {
+                let rawArr = row['_rawArray'] || [];
                 let dateRaw = getVal(row, ['Date', 'Time', 'Timestamp'], 0);
                 let dt = parseLocalDate(dateRaw);
                 if (!dt) return;
                 if (targetDate !== 'All' && dt !== targetDate) return;
 
-                // Let's check multiple possible column positions for Daily (JD) and Qty
-                let rawArr = row['_rawArray'] || [];
-                let jd = String(rawArr[3] || rawArr[2] || getVal(row, ['Daily (JD)', 'JD', 'Daily'], 3)).trim().toLowerCase();
-                let qtyRaw = rawArr[4] || rawArr[5] || getVal(row, ['Qty', 'Quantity', 'Total'], 4);
-                let qty = parseFloat(qtyRaw) || 0;
-                let mac = String(rawArr[5] || getVal(row, ['MAC'], 5)).trim();
-
-                // If index 3 is not JD, let's scan all elements in the row for cleaning/terminal/default
-                if (!jd.includes('clean') && !jd.includes('run') && !jd.includes('term') && !jd.includes('def')) {
-                    for (let cell of rawArr) {
-                        let cStr = String(cell).toLowerCase().trim();
-                        if (cStr === 'cleaning' || cStr === 'clean' || cStr === 'run' || cStr === 'terminal' || cStr === 'default') {
-                            jd = cStr;
-                            break;
-                        }
+                // Smart Keyword Scan across all cells in the row to find Cleaning, Terminal/Run, or Default
+                let matchedType = "";
+                for (let cell of rawArr) {
+                    let cStr = String(cell).toLowerCase().trim();
+                    if (cStr === 'cleaning' || cStr === 'clean') {
+                        matchedType = 'cleaning';
+                        break;
+                    } else if (cStr === 'run' || cStr === 'terminal' || cStr === 'term') {
+                        matchedType = 'terminal';
+                        break;
+                    } else if (cStr === 'default') {
+                        matchedType = 'default';
+                        break;
                     }
                 }
 
+                if (!matchedType) return;
+
                 if (!dateMap[dt]) dateMap[dt] = { cleaning: 0, terminal: 0, default: 0 };
 
-                let valToAdd = qty > 0 ? qty : 1;
+                // Extract quantity if available, otherwise default to 1 unit per row occurrence
+                let qtyRaw = rawArr[4] || rawArr[3] || 1;
+                let qty = parseFloat(qtyRaw);
+                let valToAdd = (!isNaN(qty) && qty > 0 && qty < 1000) ? qty : 1;
 
-                if (jd.includes('clean')) {
-                    dateMap[dt].cleaning += valToAdd;
-                } else if (jd.includes('run') || jd.includes('term')) {
-                    dateMap[dt].terminal += valToAdd;
-                } else if (jd.includes('def')) {
-                    dateMap[dt].default += valToAdd;
-                }
+                dateMap[dt][matchedType] += valToAdd;
             });
 
-            console.log(`[Regional KPI Debug] Final Calculated Metrics for ${regionName}:`, dateMap);
             return dateMap;
         }
 
@@ -918,7 +895,6 @@
                             <p class="text-xs text-slate-500 font-bold">Daily performance tracking, Head Count & Productivity KPI calculation.</p>
                         </div>
                     </div>
-
                     <div class="overflow-x-auto rounded-xl border border-slate-300 shadow-sm">
                         <table class="w-full text-left border-collapse border border-slate-300 text-xs">
                             <thead class="bg-slate-800 text-white uppercase font-black text-center">
@@ -933,15 +909,12 @@
                                     <th class="p-2 border border-slate-600 bg-blue-800">Total</th>
                                     <th class="p-2 border border-slate-600 bg-blue-800">HC</th>
                                     <th class="p-2 border border-slate-600 bg-blue-800">KPI</th>
-                                    
                                     <th class="p-2 border border-slate-600 bg-indigo-800">Total</th>
                                     <th class="p-2 border border-slate-600 bg-indigo-800">HC</th>
                                     <th class="p-2 border border-slate-600 bg-indigo-800">KPI</th>
-                                    
                                     <th class="p-2 border border-slate-600 bg-purple-800">Total</th>
                                     <th class="p-2 border border-slate-600 bg-purple-800">HC</th>
                                     <th class="p-2 border border-slate-600 bg-purple-800">KPI</th>
-                                    
                                     <th class="p-2 border border-slate-600 bg-slate-800">Total</th>
                                     <th class="p-2 border border-slate-600 bg-slate-800">HC</th>
                                     <th class="p-2 border border-slate-600 bg-slate-800">KPI</th>
@@ -954,15 +927,12 @@
                                     <td class="p-3 border border-slate-300 text-blue-950">${sumCleaningTotal}</td>
                                     <td class="p-3 border border-slate-300 text-slate-800">${sumCleaningHc}</td>
                                     <td class="p-3 border border-slate-300 text-blue-700">${overallKpiCleaning}</td>
-
                                     <td class="p-3 border border-slate-300 text-indigo-950">${sumTerminalTotal}</td>
                                     <td class="p-3 border border-slate-300 text-slate-800">${sumTerminalHc}</td>
                                     <td class="p-3 border border-slate-300 text-indigo-700">${overallKpiTerminal}</td>
-
                                     <td class="p-3 border border-slate-300 text-purple-950">${sumDefaultTotal}</td>
                                     <td class="p-3 border border-slate-300 text-slate-800">${sumDefaultHc}</td>
                                     <td class="p-3 border border-slate-300 text-purple-700">${overallKpiDefault}</td>
-
                                     <td class="p-3 border border-slate-300 text-slate-950 bg-slate-300">${sumGrandTotal}</td>
                                     <td class="p-3 border border-slate-300 text-slate-900 bg-slate-300">${sumGrandHc}</td>
                                     <td class="p-3 border border-slate-300 text-emerald-800 bg-slate-300 text-sm">${overallKpiGrand}</td>
