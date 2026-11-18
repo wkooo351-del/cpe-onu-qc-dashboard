@@ -157,7 +157,7 @@
                         <button onclick="switchOnuRegion('All Region', this)" class="onu-region-btn px-3 py-1.5 text-xs font-bold rounded-xl bg-indigo-600 text-white shadow transition">All Region</button>
                         <button onclick="switchOnuRegion('HGAO', this)" class="onu-region-btn px-3 py-1.5 text-xs font-bold rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300 transition">HGAO</button>
                         <button onclick="switchOnuRegion('ENUO', this)" class="onu-region-btn px-3 py-1.5 text-xs font-bold rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300 transition">ENUO</button>
-                        <button onclick="switchOnuRegion('MDY', this)" class="onu-region-btn px-3 py-1.5 text-xs font-bold rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300 transition">MDY</button>
+                        <button onclick="switchOnuRegion('MYFO', this)" class="onu-region-btn px-3 py-1.5 text-xs font-bold rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300 transition">MYFO / MDY</button>
                     </div>
                 </div>
             </div>
@@ -262,7 +262,6 @@
         const STAFF_SHEET_ID = "14WOHloWhGuQOc95PrRUsYWAHT6PTCC6EL2pY18uglVs";
         const INBOUND_SHEET_ID = "1PK1Bz7gRg8x3L8IOr7Xx8ntMADaznWWhYyEjchzuM6M";
         const ONU_SS_ID = "1EHtzUxAO1EuB_CxejyqBFiAjOsZQX4meYZqDcIRx9po";
-        const MDY_SHEET_ID = "1XrjpVgSeu1lDpyNNyuJdjYji8MxnoQWuo3bwwPWAs9Q";
         const DAILY_TARGET = 150;
 
         let staffGroupedDataByMonth = {};
@@ -276,7 +275,6 @@
         let activeInboundReportRegion = 'All Region';
         let activeInboundReportDate = 'All';
 
-        let mdySheetData = [];
         let activeRegionalTab = 'ENUO';
         let regionalHcInputs = JSON.parse(localStorage.getItem('regionalHcInputs') || '{}');
         let inboundDailyHcInputs = JSON.parse(localStorage.getItem('inboundDailyHcInputs') || '{}');
@@ -286,7 +284,7 @@
         let currentTestType = 'first';
         let currentOnuRegion = 'All Region';
 
-        const VALID_REGIONS = ["ENUO", "HGAO", "MYFO", "MDY"];
+        const VALID_REGIONS = ["ENUO", "HGAO", "MYFO"];
 
         function getVal(rowObj, headerCandidates, fallbackIndex) {
             if (!rowObj) return '';
@@ -456,12 +454,10 @@
 
         async function loadAllData() {
             let octStaffRows = await fetchFlexibleSheet(STAFF_SHEET_ID, ["Oct 26", "Oct'26", "Oct"]);
-            let octMdyRows = await fetchFlexibleSheet(MDY_SHEET_ID, ["Oct 26", "Oct'26", "Oct"]);
-            staffGroupedDataByMonth["Oct'26"] = processStaffRows([...octStaffRows, ...octMdyRows]);
+            staffGroupedDataByMonth["Oct'26"] = processStaffRows(octStaffRows);
 
             let novStaffRows = await fetchFlexibleSheet(STAFF_SHEET_ID, ["Nov 26", "Nov'26", "Nov"]);
-            let novMdyRows = await fetchFlexibleSheet(MDY_SHEET_ID, ["Nov 26", "Nov'26", "Nov", "MDY", "MDY 26", "MDY'26", "Sheet1"]);
-            staffGroupedDataByMonth["Nov'26"] = processStaffRows([...novStaffRows, ...novMdyRows]);
+            staffGroupedDataByMonth["Nov'26"] = processStaffRows(novStaffRows);
 
             staffGroupedData = staffGroupedDataByMonth[activeStaffMonth] || {};
             renderStaffButtons();
@@ -475,7 +471,6 @@
             inboundLiveData = inboundLiveDataByMonth[activeInboundMonth] || getEmptyInboundMonthStructure();
             renderInboundWeek(activeInboundWeek);
 
-            mdySheetData = [...octMdyRows, ...novMdyRows];
             populateRegionalDateFilter();
             await renderRegionalKpiView();
 
@@ -552,7 +547,7 @@
         function buildInboundMonthData(rows) {
             let dataByWeek = getEmptyInboundMonthStructure();
             rows.forEach(r => {
-                let dateStr = parseLocalDate(getVal(r, ['Date', 'Time'], 0));
+                let dateStr = parseLocalDate(getVal(r, ['Date'], 0));
                 if (!dateStr) return;
                 let dayNum = parseInt(dateStr.split('-')[2]) || 1;
 
@@ -561,17 +556,21 @@
                 else if (dayNum >= 15 && dayNum <= 21) weekKey = "Week 3 (15 - 21)";
                 else if (dayNum >= 22) weekKey = "Week 4 (22 - End)";
 
-                let possibleRegion = String(getVal(r, ['Regional', 'Region'], 11)).trim().toUpperCase();
+                // Mapping Column B (Regional) exactly: ENUO, HGAO, MYFO
+                let possibleRegion = String(getVal(r, ['Regional', 'Region'], 1)).trim().toUpperCase();
                 let region = VALID_REGIONS.find(v => possibleRegion.includes(v));
                 if (!region) {
-                    if (possibleRegion.includes("MANDALAY") || possibleRegion.includes("MDY")) region = "MDY";
+                    if (possibleRegion.includes("MANDALAY") || possibleRegion.includes("MDY")) region = "MYFO";
                     else region = "HGAO";
                 }
 
-                let device = String(getVal(r, ['CPE Type', 'Device Name', 'Device'], 3) || 'ECJ').trim().toUpperCase();
-                if (device.toLowerCase().includes("name") || device === "-") device = "ECJ";
+                // Column D (CPE Type)[cite: 3]
+                let device = String(getVal(r, ['CPE Type', 'Device Name', 'Device'], 3) || 'FFO').trim().toUpperCase();
+                if (device.toLowerCase().includes("type") || device === "-") device = "FFO";
 
-                let qty = parseFloat(getVal(r, ['Qty', 'Quantity', 'Total'], 4)) || 1;
+                // Quantity / Mac calculation from Daily KPI or Mac Address[cite: 3]
+                let mac = String(getVal(r, ['Mac Address', 'MAC'], 6)).trim();
+                let qty = 1; // Each row represents a unit item based on Mac/CPE ID structure
 
                 let wkObj = dataByWeek[weekKey];
                 if (!wkObj) return;
@@ -703,13 +702,12 @@
 
         function populateRegionalDateFilter() {
             let datesSet = new Set();
-            Object.values(staffGroupedDataByMonth[activeStaffMonth] || {}).forEach(datesObj => {
-                Object.keys(datesObj).forEach(dt => datesSet.add(dt));
-            });
-            mdySheetData.forEach(r => {
-                let dt = parseLocalDate(r['_rawArray'][0] || getVal(r, ['Date'], 0));
-                if(dt) datesSet.add(dt);
-            });
+            let currentMonthWData = inboundLiveDataByMonth[activeInboundMonth];
+            if (currentMonthWData) {
+                Object.values(currentMonthWData).forEach(wk => {
+                    (wk.rawRows || []).forEach(r => { if(r.date) datesSet.add(r.date); });
+                });
+            }
 
             let sortedDates = Array.from(datesSet).sort();
             let select = document.getElementById('regional-date-filter');
@@ -728,56 +726,37 @@
             let dateMap = {};
             let sourceRows = [];
 
-            if (regionName === 'ENUO' || regionName === 'HGAO') {
-                sourceRows = await fetchFlexibleSheet(STAFF_SHEET_ID, [regionName, `${regionName} 26`, `${regionName}'26`, "Nov'26", "Oct'26"]);
-            } else if (regionName === 'MYFO') {
-                sourceRows = mdySheetData;
-                if (sourceRows.length === 0) {
-                    sourceRows = await fetchFlexibleSheet(MDY_SHEET_ID, ["Nov 26", "Nov'26", "MDY", "MDY 26", "MYFO", "Oct'26"]);
-                }
-            }
-
-            sourceRows.forEach(row => {
+            // Fetch from Inbound Sheet for Regional KPI calculation using Column B (Regional) & Column E (Run/Tarfile)[cite: 3]
+            let inboundRows = await fetchFlexibleSheet(INBOUND_SHEET_ID, [activeInboundMonth, "Nov'26", "Oct'26", "Sheet1"]);
+            
+            inboundRows.forEach(row => {
                 let rawArr = row['_rawArray'] || [];
-                let dateRaw = rawArr[0];
+                let dateRaw = getVal(row, ['Date'], 0);
                 let dt = parseLocalDate(dateRaw);
                 if (!dt) return;
                 if (targetDate !== 'All' && dt !== targetDate) return;
 
-                if (regionName === 'ENUO' || regionName === 'HGAO') {
-                    let rowRegion = String(rawArr[11] || '').trim().toUpperCase();
+                let rowRegion = String(getVal(row, ['Regional', 'Region'], 1)).trim().toUpperCase();
+                if (regionName === 'MYFO') {
+                    if (rowRegion !== 'MYFO' && !rowRegion.includes('MDY') && !rowRegion.includes('MANDALAY')) return;
+                } else {
                     if (rowRegion !== regionName) return;
                 }
 
-                let jdRaw = String(rawArr[3] || '').trim().toLowerCase();
-                if (!jdRaw) return;
-
+                let runTarfile = String(getVal(row, ['Run/ Tarfile', 'Daily KPI', 'Run'], 4)).trim().toLowerCase();
                 let matchedType = "";
-                if (jdRaw.includes('clean')) {
+                if (runTarfile.includes('clean')) {
                     matchedType = 'cleaning';
-                } else if (jdRaw.includes('run') || jdRaw.includes('terminal') || jdRaw.includes('term') || jdRaw.includes('use')) {
+                } else if (runTarfile.includes('run') || runTarfile.includes('terminal') || runTarfile.includes('term') || runTarfile.includes('use') || runTarfile.includes('reprovision')) {
                     matchedType = 'terminal';
-                } else if (jdRaw.includes('default')) {
+                } else if (runTarfile.includes('default')) {
                     matchedType = 'default';
+                } else {
+                    matchedType = 'terminal'; // default bucket for active inbound items
                 }
-                if (!matchedType) return;
 
                 if (!dateMap[dt]) dateMap[dt] = { cleaning: 0, terminal: 0, default: 0 };
-
-                let qtyRaw = rawArr[4];
-                let mac = String(rawArr[5] || '').trim();
-                let qty = parseFloat(qtyRaw);
-
-                let valToAdd = 0;
-                if (!isNaN(qty) && qty > 0 && qty < 1000) {
-                    valToAdd = qty;
-                } else if (mac !== '' && mac !== '#N/A') {
-                    valToAdd = 1;
-                } else {
-                    valToAdd = 1;
-                }
-
-                dateMap[dt][matchedType] += valToAdd;
+                dateMap[dt][matchedType] += 1;
             });
 
             return dateMap;
@@ -804,19 +783,6 @@
             let selectedDate = document.getElementById('regional-date-filter').value;
             let metricsByDate = await extractRegionalMetrics(activeRegionalTab, selectedDate);
             let sortedDates = Object.keys(metricsByDate).sort();
-
-            let select = document.getElementById('regional-date-filter');
-            if (select && selectedDate === 'All' && sortedDates.length > 0) {
-                let existingOptions = Array.from(select.options).map(o => o.value);
-                sortedDates.forEach(d => {
-                    if (!existingOptions.includes(d)) {
-                        let opt = document.createElement('option');
-                        opt.value = d;
-                        opt.innerText = d;
-                        select.appendChild(opt);
-                    }
-                });
-            }
 
             let badgeColor = activeRegionalTab === 'ENUO' ? 'bg-blue-600' : (activeRegionalTab === 'HGAO' ? 'bg-amber-500' : 'bg-emerald-600');
 
@@ -1005,9 +971,9 @@
             if (weekKey === 'week-comparison') {
                 if (stickyKpiContainer) stickyKpiContainer.innerHTML = '';
                 let allCpeTotals = {};
-                let allRegionalTotals = { "ENUO": 0, "HGAO": 0, "MYFO": 0, "MDY": 0 };
+                let allRegionalTotals = { "ENUO": 0, "HGAO": 0, "MYFO": 0 };
                 let weekKeys = ["Week 1 (1 - 7)", "Week 2 (8 - 14)", "Week 3 (15 - 21)", "Week 4 (22 - End)"];
-                let regWeeksData = { "ENUO": [0,0,0,0], "HGAO": [0,0,0,0], "MYFO": [0,0,0,0], "MDY": [0,0,0,0] };
+                let regWeeksData = { "ENUO": [0,0,0,0], "HGAO": [0,0,0,0], "MYFO": [0,0,0,0] };
 
                 weekKeys.forEach((wk, wkIdx) => {
                     let wData = inboundLiveData[wk];
@@ -1043,7 +1009,7 @@
 
                 let maxReg = Math.max(...Object.values(allRegionalTotals), 100);
                 let overallRegBarsHtml = "";
-                let regColors = { "ENUO": "#2563eb", "HGAO": "#f59e0b", "MYFO": "#10b981", "MDY": "#8b5cf6" };
+                let regColors = { "ENUO": "#2563eb", "HGAO": "#f59e0b", "MYFO": "#10b981" };
                 VALID_REGIONS.forEach(reg => {
                     let qty = allRegionalTotals[reg] || 0;
                     let pct = Math.min(100, Math.round((qty / maxReg) * 100));
@@ -1068,7 +1034,7 @@
 
                 VALID_REGIONS.forEach(reg => {
                     let wkVals = regWeeksData[reg];
-                    let badgeColor = reg === "ENUO" ? "bg-blue-600" : (reg === "HGAO" ? "bg-amber-500" : (reg === "MDY" ? "bg-purple-600" : "bg-emerald-600"));
+                    let badgeColor = reg === "ENUO" ? "bg-blue-600" : (reg === "HGAO" ? "bg-amber-500" : "bg-emerald-600");
                     tableHtml += `<tr class="hover:bg-slate-50 border-b border-slate-200">`;
                     tableHtml += `<td class="p-3 text-center border border-slate-200"><span class="px-3 py-1.5 rounded-lg text-xs font-black text-white ${badgeColor}">${reg}</span></td>`;
                     
@@ -1141,7 +1107,6 @@
                                 datasets: [
                                     { label: 'ENUO', data: regWeeksData["ENUO"], backgroundColor: '#2563eb', borderRadius: 4 },
                                     { label: 'HGAO', data: regWeeksData["HGAO"], backgroundColor: '#f59e0b', borderRadius: 4 },
-                                    { label: 'MDY', data: regWeeksData["MDY"], backgroundColor: '#8b5cf6', borderRadius: 4 },
                                     { label: 'MYFO', data: regWeeksData["MYFO"], backgroundColor: '#10b981', borderRadius: 4 }
                                 ]
                             },
@@ -1252,7 +1217,7 @@
             });
 
             let regBarsHtml = "";
-            let regColors = { "ENUO": "#2563eb", "HGAO": "#f59e0b", "MDY": "#8b5cf6", "MYFO": "#10b981" };
+            let regColors = { "ENUO": "#2563eb", "HGAO": "#f59e0b", "MYFO": "#10b981" };
             Object.keys(filteredRegionalTotals).sort().forEach(reg => {
                 let qty = filteredRegionalTotals[reg] || 0;
                 let pct = filteredTotalQty > 0 ? Math.round((qty / filteredTotalQty) * 100) : 0;
@@ -1301,7 +1266,7 @@
                 });
 
                 let sortedDates = Object.keys(dateMap).sort();
-                let badgeColor = regName === "ENUO" ? "bg-blue-600" : (regName === "HGAO" ? "bg-amber-500" : (regName === "MDY" ? "bg-purple-600" : "bg-emerald-600"));
+                let badgeColor = regName === "ENUO" ? "bg-blue-600" : (regName === "HGAO" ? "bg-amber-500" : "bg-emerald-600");
                 let regSubtotal = {};
                 let regTotalHc = 0;
                 let regTotalQty = 0;
@@ -1409,7 +1374,7 @@
                                 <button onclick="setInboundReportRegion('All Region', this)" class="inbound-rep-reg px-3 py-1 rounded-lg text-xs font-black transition ${activeInboundReportRegion === 'All Region' ? 'bg-indigo-600 text-white shadow' : 'bg-white text-slate-700 hover:bg-slate-100'}">All</button>
                                 <button onclick="setInboundReportRegion('ENUO', this)" class="inbound-rep-reg px-3 py-1 rounded-lg text-xs font-black transition ${activeInboundReportRegion === 'ENUO' ? 'bg-indigo-600 text-white shadow' : 'bg-white text-slate-700 hover:bg-slate-100'}">ENUO</button>
                                 <button onclick="setInboundReportRegion('HGAO', this)" class="inbound-rep-reg px-3 py-1 rounded-lg text-xs font-black transition ${activeInboundReportRegion === 'HGAO' ? 'bg-indigo-600 text-white shadow' : 'bg-white text-slate-700 hover:bg-slate-100'}">HGAO</button>
-                                <button onclick="setInboundReportRegion('MDY', this)" class="inbound-rep-reg px-3 py-1 rounded-lg text-xs font-black transition ${activeInboundReportRegion === 'MDY' ? 'bg-indigo-600 text-white shadow' : 'bg-white text-slate-700 hover:bg-slate-100'}">MDY</button>
+                                <button onclick="setInboundReportRegion('MYFO', this)" class="inbound-rep-reg px-3 py-1 rounded-lg text-xs font-black transition ${activeInboundReportRegion === 'MYFO' ? 'bg-indigo-600 text-white shadow' : 'bg-white text-slate-700 hover:bg-slate-100'}">MYFO</button>
                             </div>
                             <select onchange="setInboundReportDate(this.value)" class="px-3 py-1.5 text-xs font-extrabold rounded-xl bg-slate-50 text-slate-900 border border-slate-300 focus:outline-none cursor-pointer">
                                 ${dateOptionsHtml}
@@ -1449,7 +1414,7 @@
                             labels: regLabels,
                             datasets: [{
                                 data: regValues,
-                                backgroundColor: ['#2563eb', '#f59e0b', '#8b5cf6', '#10b981']
+                                backgroundColor: ['#2563eb', '#f59e0b', '#10b981', '#8b5cf6']
                             }]
                         },
                         options: {
@@ -1500,12 +1465,12 @@
             let oltHostname = String(rawArr[1] || getVal(row, ['olt_hostname'], 1)).toUpperCase();
             
             if (oltHostname.includes("ENUO")) return "ENUO";
-            if (oltHostname.includes("MDY") || oltHostname.includes("MANDALAY")) return "MDY";
+            if (oltHostname.includes("MDY") || oltHostname.includes("MANDALAY") || oltHostname.includes("MYFO")) return "MYFO";
             if (oltHostname.includes("HGAO")) return "HGAO";
 
             let fullText = rawArr.join(' ').toUpperCase();
             if (fullText.includes("ENUO")) return "ENUO";
-            if (fullText.includes("MDY") || fullText.includes("MANDALAY")) return "MDY";
+            if (fullText.includes("MDY") || fullText.includes("MANDALAY") || fullText.includes("MYFO")) return "MYFO";
             if (fullText.includes("HGAO")) return "HGAO";
 
             return "HGAO";
@@ -1573,7 +1538,7 @@
         }
 
         function renderOnuCharts(data) {
-            let regions = ['HGAO', 'ENUO', 'MDY'];
+            let regions = ['HGAO', 'ENUO', 'MYFO'];
             let totalArr = [], passedArr = [], failedArr = [];
 
             regions.forEach(reg => {
@@ -1593,7 +1558,7 @@
                 oltChartInstance = new Chart(oltCanvas, {
                     type: 'bar',
                     data: {
-                        labels: ['HGAO', 'ENUO', 'MDY'],
+                        labels: ['HGAO', 'ENUO', 'MYFO'],
                         datasets: [
                             { label: 'Total Tested', data: totalArr, backgroundColor: '#2563EB', borderRadius: 4 },
                             { label: 'Passed', data: passedArr, backgroundColor: '#10B981', borderRadius: 4 },
@@ -1852,7 +1817,7 @@
             let container = document.getElementById('onu-dynamic-container');
             if (!container) return;
 
-            let targetRegions = ['HGAO', 'ENUO', 'MDY'];
+            let targetRegions = ['HGAO', 'ENUO', 'MYFO'];
             if (currentOnuRegion !== 'All Region') {
                 targetRegions = [currentOnuRegion];
             }
@@ -1988,7 +1953,7 @@
                 let gaspFail = regRows.filter(r => checkParamFailIndex(r, 23)).length;
                 let losFail = regRows.filter(r => checkParamFailIndex(r, 25)).length;
 
-                let badgeColor = regShort === 'HGAO' ? 'bg-amber-500' : (regShort === 'ENUO' ? 'bg-blue-600' : (regShort === 'MDY' ? 'bg-purple-600' : 'bg-emerald-600'));
+                let badgeColor = regShort === 'HGAO' ? 'bg-amber-500' : (regShort === 'ENUO' ? 'bg-blue-600' : 'bg-emerald-600');
 
                 html += `
                     <div class="p-5 rounded-xl border border-slate-200 bg-slate-50/50 space-y-4">
@@ -2005,7 +1970,7 @@
                             <div class="bg-white p-2.5 rounded-lg border border-slate-200 flex justify-between items-center"><span class="text-slate-500">TX:</span><span class="px-2 py-0.5 bg-indigo-50 text-indigo-700 rounded font-black">${txFail}</span></div>
                             <div class="bg-white p-2.5 rounded-lg border border-slate-200 flex justify-between items-center"><span class="text-slate-500">BIAS:</span><span class="px-2 py-0.5 bg-purple-50 text-purple-700 rounded font-black">${biasFail}</span></div>
                             <div class="bg-white p-2.5 rounded-lg border border-slate-200 flex justify-between items-center"><span class="text-slate-500">VOLT:</span><span class="px-2 py-0.5 bg-pink-50 text-pink-700 rounded font-black">${voltFail}</span></div>
-                            <div class="bg-white p-2.5 rounded-lg border border-slate-200 flex justify-between items-center"><span class="text-slate-500">TEMP:</span><span class="px-2.5 py-1.5 bg-emerald-50 text-emerald-700 rounded font-black">${tempFail}</span></div>
+                            <div class="bg-white p-2.5 rounded-lg border border-slate-200 flex justify-between items-center"><span class="text-slate-500">TEMP:</span><span class="px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded font-black">${tempFail}</span></div>
                             <div class="bg-white p-2.5 rounded-lg border border-slate-200 flex justify-between items-center"><span class="text-slate-500">ONLINE:</span><span class="px-2 py-0.5 bg-cyan-50 text-cyan-700 rounded font-black">${onlineFail}</span></div>
                             <div class="bg-white p-2.5 rounded-lg border border-slate-200 flex justify-between items-center"><span class="text-slate-500">OFFLINE:</span><span class="px-2 py-0.5 bg-orange-50 text-orange-700 rounded font-black">${offlineFail}</span></div>
                             <div class="bg-white p-2.5 rounded-lg border border-slate-200 flex justify-between items-center"><span class="text-slate-500">BIP8:</span><span class="px-2 py-0.5 bg-red-50 text-red-700 rounded font-black">${bip8Fail}</span></div>
