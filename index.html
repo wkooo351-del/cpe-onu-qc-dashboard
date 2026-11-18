@@ -279,6 +279,7 @@
         let mdySheetData = [];
         let activeRegionalTab = 'ENUO';
         let regionalHcInputs = JSON.parse(localStorage.getItem('regionalHcInputs') || '{}');
+        let inboundDailyHcInputs = JSON.parse(localStorage.getItem('inboundDailyHcInputs') || '{}'); // Storage for Inbound Daily HC
 
         let onuData = { firstTest: [], secondTest: [], exchangeTest: [] };
         let oltChartInstance = null, failureChartInstance = null, pieChartInstance = null, multiBarChartInstance = null, deviceModelChartInstance = null, paramBarChartInstance = null;
@@ -787,6 +788,13 @@
             renderRegionalKpiView();
         }
 
+        function handleInboundDailyHcChange(regName, dt, val) {
+            let key = `inbound_${regName}_${dt}`;
+            inboundDailyHcInputs[key] = parseFloat(val) || 0;
+            localStorage.setItem('inboundDailyHcInputs', JSON.stringify(inboundDailyHcInputs));
+            renderInboundWeek(activeInboundWeek);
+        }
+
         async function renderRegionalKpiView() {
             let container = document.getElementById('regional-kpi-container');
             if(!container) return;
@@ -829,12 +837,12 @@
                     let hcCleanKey = `${activeRegionalTab}_${dt}_cleaning`;
                     let hcTermKey = `${activeRegionalTab}_${dt}_terminal`;
                     let hcDefKey = `${activeRegionalTab}_${dt}_default`;
-                    let hcDailyKey = `${activeRegionalTab}_${dt}_daily`; // New Daily HC key
+                    let hcDailyKey = `${activeRegionalTab}_${dt}_daily`;
 
                     let hcClean = regionalHcInputs[hcCleanKey] !== undefined ? regionalHcInputs[hcCleanKey] : 0;
                     let hcTerm = regionalHcInputs[hcTermKey] !== undefined ? regionalHcInputs[hcTermKey] : 0;
                     let hcDef = regionalHcInputs[hcDefKey] !== undefined ? regionalHcInputs[hcDefKey] : 0;
-                    let hcDaily = regionalHcInputs[hcDailyKey] !== undefined ? regionalHcInputs[hcDailyKey] : 0; // Manual Daily HC
+                    let hcDaily = regionalHcInputs[hcDailyKey] !== undefined ? regionalHcInputs[hcDailyKey] : 0;
 
                     let rowHc = hcClean + hcTerm + hcDef;
 
@@ -848,11 +856,9 @@
                     let kpiDef = hcDef > 0 ? (defTot / hcDef).toFixed(1) : "0.0";
                     let kpiRowTotal = rowHc > 0 ? (rowTot / rowHc).toFixed(1) : "0.0";
 
-                    // 1HC KPI = Daily total (rowTot) divided by Daily HC (hcDaily)
                     let oneHcKpiVal = hcDaily > 0 ? (rowTot / hcDaily) : 0;
                     let oneHcKpiStr = hcDaily > 0 ? oneHcKpiVal.toFixed(1) : "0.0";
 
-                    // Meet KPI: > 50 (or >= 50) is YES (Green), otherwise NO (Red)
                     let meetKpiBadge = "-";
                     if (hcDaily > 0) {
                         if (oneHcKpiVal >= 50) {
@@ -875,7 +881,6 @@
                         return opts;
                     };
 
-                    // Daily HC options from 0.5 up to 10 with 0.5 step
                     let dailyHcOptionsHtml = (currentVal) => {
                         let opts = `<option value="0" ${0 === currentVal ? 'selected' : ''}>0</option>`;
                         for(let i=1; i<=20; i++) {
@@ -910,15 +915,12 @@
                             </td>
                             <td class="p-3 border border-slate-300 font-black text-purple-700">${kpiDef}</td>
                             <td class="p-3 border border-slate-300 font-black text-slate-900 bg-slate-100">${rowTot}</td>
-                            <!-- Daily HC (Manual select 0.5 to 10) -->
                             <td class="p-2 border border-slate-300 bg-amber-50/30">
                                 <select onchange="handleHcChange('${activeRegionalTab}', '${dt}', 'daily', this.value)" class="w-20 p-1 text-center font-black text-amber-900 rounded border border-amber-300 bg-white cursor-pointer focus:ring-2 focus:ring-amber-500">
                                     ${dailyHcOptionsHtml(hcDaily)}
                                 </select>
                             </td>
-                            <!-- 1HC KPI -->
                             <td class="p-3 border border-slate-300 font-black text-blue-800 bg-blue-50/30">${oneHcKpiStr}</td>
-                            <!-- Meet KPI (YES/NO) -->
                             <td class="p-3 border border-slate-300 font-black bg-slate-50">${meetKpiBadge}</td>
                         </tr>
                     `;
@@ -1248,6 +1250,15 @@
             let grandTotalCpes = {};
             let activeTableRegions = activeInboundReportRegion === 'All Region' ? regionsArr : [activeInboundReportRegion];
 
+            let dailyHcOptionsHtml = (currentVal) => {
+                let opts = `<option value="0" ${0 === currentVal ? 'selected' : ''}>0</option>`;
+                for(let i=1; i<=20; i++) {
+                    let val = i * 0.5;
+                    opts += `<option value="${val}" ${val === currentVal ? 'selected' : ''}>${val}</option>`;
+                }
+                return opts;
+            };
+
             activeTableRegions.forEach(regName => {
                 let regRows = filteredRows.filter(r => r.region === regName);
                 if (regRows.length === 0) return;
@@ -1267,6 +1278,20 @@
                     let dayTotal = 0;
                     Object.values(dayCpes).forEach(v => dayTotal += v);
 
+                    let inboundHcKey = `inbound_${regName}_${dt}`;
+                    let dailyHcVal = inboundDailyHcInputs[inboundHcKey] !== undefined ? inboundDailyHcInputs[inboundHcKey] : 0;
+                    let oneHcKpiVal = dailyHcVal > 0 ? (dayTotal / dailyHcVal) : 0;
+                    let oneHcKpiStr = dailyHcVal > 0 ? oneHcKpiVal.toFixed(1) : "0.0";
+
+                    let meetKpiBadge = "-";
+                    if (dailyHcVal > 0) {
+                        if (oneHcKpiVal >= 50) {
+                            meetKpiBadge = `<span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 font-black rounded text-xs">YES</span>`;
+                        } else {
+                            meetKpiBadge = `<span class="px-2 py-0.5 bg-rose-100 text-rose-700 font-black rounded text-xs">NO</span>`;
+                        }
+                    }
+
                     tableRowsHtml += `<tr class="hover:bg-slate-50 border-b border-slate-200">`;
                     if (idx === 0) {
                         tableRowsHtml += `<td rowspan="${sortedDates.length}" class="p-3 text-center align-middle bg-slate-50/50 border border-slate-200"><span class="px-3 py-1.5 rounded-lg text-xs font-black text-white ${badgeColor}">${regName}</span></td>`;
@@ -1278,7 +1303,17 @@
                         if (val) regSubtotal[cpe] = (regSubtotal[cpe] || 0) + val;
                         tableRowsHtml += `<td class="p-3 text-center font-black border border-slate-200 ${val ? 'text-slate-900' : 'text-slate-400'}">${val ? val : '-'}</td>`;
                     });
-                    tableRowsHtml += `<td class="p-3 text-center font-black text-slate-900 bg-slate-50/50 border border-slate-200">${dayTotal}</td></tr>`;
+                    
+                    tableRowsHtml += `
+                        <td class="p-3 text-center font-black text-slate-900 bg-slate-50/50 border border-slate-200">${dayTotal}</td>
+                        <td class="p-2 text-center border border-slate-200 bg-amber-50/30">
+                            <select onchange="handleInboundDailyHcChange('${regName}', '${dt}', this.value)" class="w-20 p-1 text-center font-black text-amber-900 rounded border border-amber-300 bg-white cursor-pointer focus:ring-2 focus:ring-amber-500 text-xs">
+                                ${dailyHcOptionsHtml(dailyHcVal)}
+                            </select>
+                        </td>
+                        <td class="p-3 text-center font-black text-blue-800 bg-blue-50/30 border border-slate-200">${oneHcKpiStr}</td>
+                        <td class="p-3 text-center font-black bg-slate-50 border border-slate-200">${meetKpiBadge}</td>
+                    </tr>`;
                 });
 
                 let regTotQty = 0;
@@ -1290,11 +1325,11 @@
                     grandTotalCpes[cpe] = (grandTotalCpes[cpe] || 0) + val;
                     tableRowsHtml += `<td class="p-3 text-center border border-slate-200 text-blue-900">${val ? val : '-'}</td>`;
                 });
-                tableRowsHtml += `<td class="p-3 text-center text-base border border-slate-200 text-blue-950">${regTotQty.toLocaleString()}</td></tr>`;
+                tableRowsHtml += `<td class="p-3 text-center text-base border border-slate-200 text-blue-950">${regTotQty.toLocaleString()}</td><td colspan="3" class="bg-slate-200 border border-slate-200"></td></tr>`;
             });
 
             if (tableRowsHtml === "") {
-                tableRowsHtml = `<tr><td colspan="${cpeTypesArr.length + 3}" class="p-6 text-center text-slate-400">No records found for selected filter.</td></tr>`;
+                tableRowsHtml = `<tr><td colspan="${cpeTypesArr.length + 6}" class="p-6 text-center text-slate-400">No records found for selected filter.</td></tr>`;
             }
 
             let grandRowHtml = `<tr class="bg-slate-900 text-white font-black text-sm"><td colspan="2" class="p-3.5 text-right uppercase tracking-wider">GRAND TOTAL</td>`;
@@ -1304,7 +1339,7 @@
                 overallFilteredTotal += val;
                 grandRowHtml += `<td class="p-3.5 text-center text-emerald-400">${val ? val.toLocaleString() : '-'}</td>`;
             });
-            grandRowHtml += `<td class="p-3.5 text-center text-amber-300 text-base">${overallFilteredTotal.toLocaleString()}</td></tr>`;
+            grandRowHtml += `<td class="p-3.5 text-center text-amber-300 text-base">${overallFilteredTotal.toLocaleString()}</td><td colspan="3" class="bg-slate-900"></td></tr>`;
 
             container.innerHTML = `
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 font-bold">
@@ -1346,6 +1381,9 @@
                                     <th class="p-3 text-center border border-slate-600">DATE</th>
                                     ${cpeTypesArr.map(c => `<th class="p-3 text-center border border-slate-600">${c}</th>`).join('')}
                                     <th class="p-3 text-center bg-slate-900 border border-slate-600">DAILY TOTAL</th>
+                                    <th class="p-3 text-center bg-amber-900 border border-slate-600">DAILY HC</th>
+                                    <th class="p-3 text-center bg-blue-950 border border-slate-600">1HC KPI</th>
+                                    <th class="p-3 text-center bg-emerald-950 border border-slate-600">MEET KPI</th>
                                 </tr>
                             </thead>
                             <tbody>
