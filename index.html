@@ -42,7 +42,6 @@
         <!-- SECTION 1: Staff KPI View -->
         <div id="section-hc" class="dashboard-section space-y-6">
             
-            <!-- STICKY FREEZE CONTAINER FOR STAFF MONTH FILTER & NAMES -->
             <div class="sticky top-[68px] z-40 bg-slate-50 pb-2 space-y-2">
                 <div class="bg-white p-3 rounded-2xl shadow-md border border-slate-200 flex flex-col sm:flex-row justify-between items-center gap-2">
                     <div class="flex items-center gap-2">
@@ -95,7 +94,6 @@
         <!-- SECTION 2: Inbound Regional KPI View -->
         <div id="section-inbound" class="dashboard-section hidden space-y-6">
             
-            <!-- Sticky Freeze Header for Inbound Month Filter, Week Tabs & Summary Cards -->
             <div class="sticky top-[68px] z-40 bg-slate-50 pt-1 pb-3 space-y-3">
                 <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-md space-y-2.5">
                     <div class="flex flex-wrap gap-2 justify-center items-center pb-2 border-b border-slate-100">
@@ -124,7 +122,6 @@
         <!-- SECTION 3: Regional KPI View (ENUO, HGAO, MYFO) -->
         <div id="section-regional-kpi" class="dashboard-section hidden space-y-6">
             
-            <!-- Sticky Header for Regional Sub-Tabs & Date Filter -->
             <div class="sticky top-[68px] z-40 bg-slate-50 pt-1 pb-3 space-y-3">
                 <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-md flex flex-col sm:flex-row justify-between items-center gap-3">
                     <div class="flex items-center gap-2">
@@ -142,14 +139,12 @@
                 </div>
             </div>
 
-            <!-- Regional Dynamic Content Container -->
             <div id="regional-kpi-container" class="space-y-6"></div>
         </div>
 
         <!-- SECTION 4: ONU Inspection View -->
         <div id="section-onu" class="dashboard-section hidden space-y-6">
             
-            <!-- Sticky Filter Header Section -->
             <div class="sticky top-[68px] z-40 space-y-3 pb-2 bg-slate-50">
                 <div class="bg-indigo-600 shadow-md rounded-2xl p-3.5 flex flex-col md:flex-row justify-between items-center gap-3">
                     <div class="flex items-center space-x-2.5">
@@ -185,7 +180,6 @@
                 </div>
             </div>
 
-            <!-- Top 5 KPI Cards -->
             <div class="grid grid-cols-2 sm:grid-cols-5 gap-4">
                 <div class="bg-white p-5 rounded-xl shadow-sm border-t-4 border-slate-400">
                     <p class="text-xs font-bold text-slate-500 uppercase">TOTAL TESTED</p>
@@ -305,14 +299,14 @@
 
         let mdySheetData = [];
         let activeRegionalTab = 'ENUO';
-        let regionalHcInputs = {}; // Store HC inputs per region & date & metric
+        let regionalHcInputs = {};
 
         let onuData = { firstTest: [], secondTest: [], exchangeTest: [] };
         let oltChartInstance = null, failureChartInstance = null, pieChartInstance = null, multiBarChartInstance = null, deviceModelChartInstance = null, paramBarChartInstance = null;
         let currentTestType = 'first';
         let currentOnuRegion = 'All Region';
 
-        const VALID_REGIONS = ["ENUO", "HGAO", "MYFO"];
+        const VALID_REGIONS = ["ENUO", "HGAO", "MYFO", "MDY"];
 
         function switchMasterTab(sectionId, btn) {
             document.querySelectorAll('.dashboard-section').forEach(el => el.classList.add('hidden'));
@@ -693,11 +687,9 @@
         // --- REGIONAL KPI LOGIC ---
         function populateRegionalDateFilter() {
             let datesSet = new Set();
-            // From Staff data (ENUO & HGAO)
             Object.values(staffGroupedDataByMonth[activeStaffMonth] || {}).forEach(datesObj => {
                 Object.keys(datesObj).forEach(dt => datesSet.add(dt));
             });
-            // From MYFO (MDY sheet)
             mdySheetData.forEach(r => {
                 let dt = parseLocalDate(r['Date'] || r['col_0']);
                 if(dt) datesSet.add(dt);
@@ -717,10 +709,9 @@
         }
 
         function extractRegionalMetrics(regionName, targetDate) {
-            let dateMap = {}; // dt -> { cleaning: X, terminal: X, default: X }
+            let dateMap = {};
 
             if (regionName === 'ENUO' || regionName === 'HGAO') {
-                // Pull from staffGroupedDataByMonth[activeStaffMonth]
                 let sData = staffGroupedDataByMonth[activeStaffMonth] || {};
                 Object.keys(sData).forEach(staffName => {
                     let datesObj = sData[staffName];
@@ -744,7 +735,6 @@
                     });
                 });
             } else if (regionName === 'MYFO') {
-                // Pull from mdySheetData
                 mdySheetData.forEach(r => {
                     let dt = parseLocalDate(r['Date'] || r['col_0']);
                     if(!dt) return;
@@ -814,7 +804,6 @@
                     let kpiDef = hcDef > 0 ? (defTot / hcDef).toFixed(1) : "0.0";
                     let kpiRowTotal = rowHc > 0 ? (rowTot / rowHc).toFixed(1) : "0.0";
 
-                    // Build 0-20 Options for HC
                     let optionsHtml = (currentVal) => {
                         let opts = "";
                         for(let i=0; i<=20; i++) {
@@ -827,7 +816,6 @@
                         <tr class="hover:bg-slate-50 border-b border-slate-200 text-center font-bold text-slate-800">
                             <td class="p-3 border border-slate-300 bg-slate-50/50 font-black">${dt}</td>
                             
-                            <!-- Cleaning -->
                             <td class="p-3 border border-slate-300 font-black text-blue-900 bg-blue-50/20">${cleanTot}</td>
                             <td class="p-2 border border-slate-300">
                                 <select onchange="handleHcChange('${activeRegionalTab}', '${dt}', 'cleaning', this.value)" class="w-16 p-1 text-center font-bold rounded border border-slate-300 bg-white cursor-pointer focus:ring-2 focus:ring-blue-500">
@@ -836,16 +824,14 @@
                             </td>
                             <td class="p-3 border border-slate-300 font-black text-blue-700">${kpiClean}</td>
 
-                            <!-- Terminal -->
                             <td class="p-3 border border-slate-300 font-black text-indigo-900 bg-indigo-50/20">${termTot}</td>
                             <td class="p-2 border border-slate-300">
-                                <select onchange="handleHcChange('${activeRegionalTab}', '${dt}', 'terminal', this.value)" class="w-16 p-1 text-center font-bold rounded border border-slate-300 bg-white cursor-pointer focus:ring-2 focus:ring-indigo-500">
+                                <select onchange="handleHcChange('${activeRegionalTab}', '${dt}', 'terminal', this.value)" class="w-16 p-1 text-center font-bold rounded border border-slate-300 bg-white cursor-pointer focus:ring-2 focus:ring-blue-500">
                                     ${optionsHtml(hcTerm)}
                                 </select>
                             </td>
                             <td class="p-3 border border-slate-300 font-black text-indigo-700">${kpiTerm}</td>
 
-                            <!-- Default -->
                             <td class="p-3 border border-slate-300 font-black text-purple-900 bg-purple-50/20">${defTot}</td>
                             <td class="p-2 border border-slate-300">
                                 <select onchange="handleHcChange('${activeRegionalTab}', '${dt}', 'default', this.value)" class="w-16 p-1 text-center font-bold rounded border border-slate-300 bg-white cursor-pointer focus:ring-2 focus:ring-blue-500">
@@ -854,7 +840,6 @@
                             </td>
                             <td class="p-3 border border-slate-300 font-black text-purple-700">${kpiDef}</td>
 
-                            <!-- Total Count -->
                             <td class="p-3 border border-slate-300 font-black text-slate-900 bg-slate-100">${rowTot}</td>
                             <td class="p-3 border border-slate-300 font-black text-slate-800 bg-slate-100">${rowHc}</td>
                             <td class="p-3 border border-slate-300 font-black text-emerald-700 bg-slate-100">${kpiRowTotal}</td>
@@ -1314,4 +1299,571 @@
             let paramIndices = [5, 6, 7, 8, 9, 17, 19, 21, 23, 25];
             for (let idx of paramIndices) {
                 let val = String(rawArr[idx] || '').trim().toLowerCase();
-                if (val === 'fail' || val.includes('fail') || val === 'f' || val === 'no
+                if (val === 'fail' || val.includes('fail') || val === 'f' || val === 'no' || val === '0') return false;
+            }
+            return true;
+        }
+
+        function getDeviceName(row) {
+            let rawArr = row['_rawArray'] || [];
+            let devName = String(rawArr[28] || row['Devices Name'] || row['Device Name'] || row['Device'] || '').trim().toUpperCase();
+            if (devName && !devName.toLowerCase().includes('name') && devName !== '-') {
+                return devName;
+            }
+            return 'FFO';
+        }
+
+        function getRowRegion(row) {
+            let rawArr = row['_rawArray'] || [];
+            let oltHostname = String(rawArr[1] || row['olt_hostname'] || row['col_1'] || '').toUpperCase();
+            
+            if (oltHostname.includes("ENUO")) return "ENUO";
+            if (oltHostname.includes("MDY")) return "MDY";
+            if (oltHostname.includes("HGAO")) return "HGAO";
+
+            let fullText = rawArr.join(' ').toUpperCase();
+            if (fullText.includes("ENUO")) return "ENUO";
+            if (fullText.includes("MDY")) return "MDY";
+            if (fullText.includes("HGAO")) return "HGAO";
+
+            return "HGAO";
+        }
+
+        function checkParamFailIndex(row, colIndex) {
+            let rawArr = row['_rawArray'] || [];
+            let val = String(rawArr[colIndex] || '').trim().toLowerCase();
+            return (val === 'fail' || val === 'f' || val === 'no' || val === '0' || val.includes('fail'));
+        }
+
+        function updateOnuDashboard() {
+            let rawData = [];
+            let testTitleText = "First Test";
+            if (currentTestType === 'first' || currentTestType === 'daily' || currentTestType === 'monthly') {
+                rawData = onuData.firstTest;
+                testTitleText = "First Test";
+            } else if (currentTestType === 'second') {
+                rawData = onuData.secondTest;
+                testTitleText = "Second Test";
+            } else if (currentTestType === 'exchange') {
+                rawData = onuData.exchangeTest;
+                testTitleText = "Exchange Devices";
+            }
+
+            let filteredByPeriod = rawData;
+            if (currentTestType === 'daily') {
+                let dates = rawData.map(r => parseLocalDate(r['_time'] || r['Date'] || r['col_0'])).filter(Boolean).sort();
+                let latestDate = dates[dates.length - 1];
+                if (latestDate) {
+                    filteredByPeriod = rawData.filter(r => parseLocalDate(r['_time'] || r['Date'] || r['col_0']) === latestDate);
+                }
+            }
+
+            let data = filteredByPeriod;
+
+            if (currentOnuRegion !== 'All Region') {
+                data = data.filter(r => getRowRegion(r) === currentOnuRegion);
+            }
+
+            let total = data.length;
+            let passed = data.filter(r => isStrictPass(r)).length;
+            let failed = total - passed;
+
+            let passRate = total > 0 ? ((passed / total) * 100) : 0;
+            let failRate = total > 0 ? ((failed / total) * 100) : 0;
+
+            document.getElementById('kpi-total').innerText = total.toLocaleString();
+            document.getElementById('kpi-passed').innerText = passed.toLocaleString();
+            document.getElementById('kpi-failed').innerText = failed.toLocaleString();
+            document.getElementById('kpi-pass-rate').innerText = passRate.toFixed(2) + '%';
+            document.getElementById('kpi-fail-rate').innerText = failRate.toFixed(2) + '%';
+
+            document.getElementById('chart-comparison-title').innerText = `${testTitleText} - Pass vs Fail & Total Comparison`;
+
+            renderOnuCharts(data);
+            renderSummaryTables(data);
+            renderOnuRegionalBreakdown(filteredByPeriod);
+        }
+
+        function renderOnuCharts(data) {
+            let regions = ['HGAO', 'ENUO', 'MDY'];
+            let totalArr = [], passedArr = [], failedArr = [];
+
+            regions.forEach(reg => {
+                let rData = data.filter(r => getRowRegion(r) === reg);
+                let tot = rData.length;
+                let pas = rData.filter(r => isStrictPass(r)).length;
+                let fai = tot - pas;
+
+                totalArr.push(tot);
+                passedArr.push(pas);
+                failedArr.push(fai);
+            });
+
+            if (oltChartInstance) oltChartInstance.destroy();
+            oltChartInstance = new Chart(document.getElementById('oltChart'), {
+                type: 'bar',
+                data: {
+                    labels: ['HGAO', 'ENUO', 'MDY'],
+                    datasets: [
+                        { label: 'Total Tested', data: totalArr, backgroundColor: '#2563EB', borderRadius: 4 },
+                        { label: 'Passed', data: passedArr, backgroundColor: '#10B981', borderRadius: 4 },
+                        { label: 'Failed', data: failedArr, backgroundColor: '#EF4444', borderRadius: 4 }
+                    ]
+                },
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'top', labels: { font: { weight: 'bold' }, color: '#0f172a' } } },
+                    scales: {
+                        x: { ticks: { font: { weight: 'bold' }, color: '#0f172a' } },
+                        y: { ticks: { font: { weight: 'bold' }, color: '#0f172a' } }
+                    }
+                }
+            });
+
+            let rxFail = data.filter(r => checkParamFailIndex(r, 5)).length;
+            let txFail = data.filter(r => checkParamFailIndex(r, 6)).length;
+            let biasFail = data.filter(r => checkParamFailIndex(r, 7)).length;
+            let voltFail = data.filter(r => checkParamFailIndex(r, 8)).length;
+            let tempFail = data.filter(r => checkParamFailIndex(r, 9)).length;
+            let onlineFail = data.filter(r => checkParamFailIndex(r, 17)).length;
+            let offlineFail = data.filter(r => checkParamFailIndex(r, 19)).length;
+            let bip8Fail = data.filter(r => checkParamFailIndex(r, 21)).length;
+            let gaspFail = data.filter(r => checkParamFailIndex(r, 23)).length;
+            let losFail = data.filter(r => checkParamFailIndex(r, 25)).length;
+
+            if (failureChartInstance) failureChartInstance.destroy();
+            failureChartInstance = new Chart(document.getElementById('failureChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['Rx', 'Tx', 'Bias', 'Volt', 'Temp', 'Online', 'Offline', 'BIP8', 'Gasp', 'LOS'],
+                    datasets: [{ 
+                        data: [rxFail, txFail, biasFail, voltFail, tempFail, onlineFail, offlineFail, bip8Fail, gaspFail, losFail], 
+                        backgroundColor: ['#3b82f6', '#6366f1', '#a855f7', '#ec4899', '#10b981', '#06b6d4', '#f97316', '#ef4444', '#eab308', '#8b5cf6'] 
+                    }]
+                },
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    plugins: { legend: { position: 'bottom', labels: { font: { weight: 'bold' }, size: 10, color: '#0f172a' } } } 
+                }
+            });
+        }
+
+        function renderSummaryTables(data) {
+            let deviceStats = {};
+
+            data.forEach(r => {
+                if (!isStrictPass(r)) {
+                    let dev = getDeviceName(r);
+                    if (!deviceStats[dev]) {
+                        deviceStats[dev] = { rx: 0, tx: 0, bias: 0, volt: 0, temp: 0, online: 0, offline: 0, bip8: 0, gasp: 0, los: 0, totalFail: 0 };
+                    }
+
+                    if (checkParamFailIndex(r, 5)) deviceStats[dev].rx++;
+                    if (checkParamFailIndex(r, 6)) deviceStats[dev].tx++;
+                    if (checkParamFailIndex(r, 7)) deviceStats[dev].bias++;
+                    if (checkParamFailIndex(r, 8)) deviceStats[dev].volt++;
+                    if (checkParamFailIndex(r, 9)) deviceStats[dev].temp++;
+                    if (checkParamFailIndex(r, 17)) deviceStats[dev].online++;
+                    if (checkParamFailIndex(r, 19)) deviceStats[dev].offline++;
+                    if (checkParamFailIndex(r, 21)) deviceStats[dev].bip8++;
+                    if (checkParamFailIndex(r, 23)) deviceStats[dev].gasp++;
+                    if (checkParamFailIndex(r, 25)) deviceStats[dev].los++;
+
+                    deviceStats[dev].totalFail++;
+                }
+            });
+
+            let matrixTbody = document.getElementById('param-summary-tbody');
+            let matrixRowsHtml = "";
+            let colTotals = { rx: 0, tx: 0, bias: 0, volt: 0, temp: 0, online: 0, offline: 0, bip8: 0, gasp: 0, los: 0, totalFail: 0 };
+
+            let activeDevicesWithFailures = Object.keys(deviceStats).filter(d => deviceStats[d].totalFail > 0).sort();
+
+            if (activeDevicesWithFailures.length === 0) {
+                matrixRowsHtml = `<tr><td colspan="12" class="p-4 text-center text-emerald-600 font-bold">No parameter failures recorded for selected filter.</td></tr>`;
+            } else {
+                activeDevicesWithFailures.forEach(dev => {
+                    let stat = deviceStats[dev];
+
+                    colTotals.rx += stat.rx;
+                    colTotals.tx += stat.tx;
+                    colTotals.bias += stat.bias;
+                    colTotals.volt += stat.volt;
+                    colTotals.temp += stat.temp;
+                    colTotals.online += stat.online;
+                    colTotals.offline += stat.offline;
+                    colTotals.bip8 += stat.bip8;
+                    colTotals.gasp += stat.gasp;
+                    colTotals.los += stat.los;
+                    colTotals.totalFail += stat.totalFail;
+
+                    matrixRowsHtml += `
+                        <tr class="hover:bg-slate-50 border-b border-slate-200">
+                            <td class="p-2 border border-slate-200 font-black bg-slate-100 text-slate-900">${dev}</td>
+                            <td class="p-2 border border-slate-200 text-center font-bold text-blue-700 bg-blue-50/40">${stat.rx > 0 ? stat.rx.toLocaleString() : '-'}</td>
+                            <td class="p-2 border border-slate-200 text-center font-bold text-indigo-700 bg-indigo-50/40">${stat.tx > 0 ? stat.tx.toLocaleString() : '-'}</td>
+                            <td class="p-2 border border-slate-200 text-center font-bold text-purple-700 bg-purple-50/40">${stat.bias > 0 ? stat.bias.toLocaleString() : '-'}</td>
+                            <td class="p-2 border border-slate-200 text-center font-bold text-pink-700 bg-pink-50/40">${stat.volt > 0 ? stat.volt.toLocaleString() : '-'}</td>
+                            <td class="p-2 border border-slate-200 text-center font-bold text-emerald-700 bg-emerald-50/40">${stat.temp > 0 ? stat.temp.toLocaleString() : '-'}</td>
+                            <td class="p-2 border border-slate-200 text-center font-bold text-cyan-700 bg-cyan-50/40">${stat.online > 0 ? stat.online.toLocaleString() : '-'}</td>
+                            <td class="p-2 border border-slate-200 text-center font-bold text-orange-700 bg-orange-50/40">${stat.offline > 0 ? stat.offline.toLocaleString() : '-'}</td>
+                            <td class="p-2 border border-slate-200 text-center font-bold text-red-700 bg-red-50/40">${stat.bip8 > 0 ? stat.bip8.toLocaleString() : '-'}</td>
+                            <td class="p-2 border border-slate-200 text-center font-bold text-yellow-700 bg-yellow-50/40">${stat.gasp > 0 ? stat.gasp.toLocaleString() : '-'}</td>
+                            <td class="p-2 border border-slate-200 text-center font-bold text-violet-700 bg-violet-50/40">${stat.los > 0 ? stat.los.toLocaleString() : '-'}</td>
+                            <td class="p-2 border border-slate-200 text-center font-black text-rose-600 bg-slate-100">${stat.totalFail.toLocaleString()}</td>
+                        </tr>
+                    `;
+                });
+
+                matrixRowsHtml += `
+                    <tr class="bg-slate-200 font-black text-slate-900 border-t-2 border-slate-300">
+                        <td class="p-2.5 border border-slate-300 uppercase">Total</td>
+                        <td class="p-2.5 border border-slate-300 text-center text-blue-900 bg-blue-100">${colTotals.rx.toLocaleString()}</td>
+                        <td class="p-2.5 border border-slate-300 text-center text-indigo-900 bg-indigo-100">${colTotals.tx.toLocaleString()}</td>
+                        <td class="p-2.5 border border-slate-300 text-center text-purple-900 bg-purple-100">${colTotals.bias.toLocaleString()}</td>
+                        <td class="p-2.5 border border-slate-300 text-center text-pink-900 bg-pink-100">${colTotals.volt.toLocaleString()}</td>
+                        <td class="p-2.5 border border-slate-300 text-center text-emerald-900 bg-emerald-100">${colTotals.temp.toLocaleString()}</td>
+                        <td class="p-2.5 border border-slate-300 text-center text-cyan-900 bg-cyan-100">${colTotals.online.toLocaleString()}</td>
+                        <td class="p-2.5 border border-slate-300 text-center text-orange-900 bg-orange-100">${colTotals.offline.toLocaleString()}</td>
+                        <td class="p-2.5 border border-slate-300 text-center text-red-900 bg-red-100">${colTotals.bip8.toLocaleString()}</td>
+                        <td class="p-2.5 border border-slate-300 text-center text-yellow-900 bg-yellow-100">${colTotals.gasp.toLocaleString()}</td>
+                        <td class="p-2.5 border border-slate-300 text-center text-violet-900 bg-violet-100">${colTotals.los.toLocaleString()}</td>
+                        <td class="p-2.5 border border-slate-300 text-center text-rose-700 text-sm bg-slate-300">${colTotals.totalFail.toLocaleString()}</td>
+                    </tr>
+                `;
+            }
+            matrixTbody.innerHTML = matrixRowsHtml;
+
+            setTimeout(() => {
+                let ctxParam = document.getElementById('paramBarChart');
+                if (ctxParam) {
+                    if (paramBarChartInstance) paramBarChartInstance.destroy();
+                    paramBarChartInstance = new Chart(ctxParam, {
+                        type: 'bar',
+                        data: {
+                            labels: ['Rx', 'Tx', 'Bias', 'Volt', 'Temp', 'Online', 'Offline', 'BIP8', 'Gasp', 'LOS'],
+                            datasets: [{
+                                label: 'Failure Count',
+                                data: [colTotals.rx, colTotals.tx, colTotals.bias, colTotals.volt, colTotals.temp, colTotals.online, colTotals.offline, colTotals.bip8, colTotals.gasp, colTotals.los],
+                                backgroundColor: ['#3b82f6', '#6366f1', '#a855f7', '#ec4899', '#10b981', '#06b6d4', '#f97316', '#ef4444', '#eab308', '#8b5cf6'],
+                                borderRadius: 4
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: { legend: { display: false } },
+                            scales: {
+                                x: { ticks: { font: { weight: 'bold', size: 9 }, color: '#0f172a' } },
+                                y: { ticks: { font: { weight: 'bold' }, color: '#0f172a' } }
+                            }
+                        }
+                    });
+                }
+            }, 50);
+
+            let deviceTotals = {};
+
+            data.forEach(r => {
+                let dev = getDeviceName(r);
+                if (!deviceTotals[dev]) {
+                    deviceTotals[dev] = { total: 0, passed: 0, failed: 0 };
+                }
+                deviceTotals[dev].total += 1;
+                if (isStrictPass(r)) {
+                    deviceTotals[dev].passed += 1;
+                } else {
+                    deviceTotals[dev].failed += 1;
+                }
+            });
+
+            let modelTbody = document.getElementById('device-model-tbody');
+            let modelRowsHtml = "";
+            let grandTotalTested = 0, grandPassed = 0, grandFailed = 0;
+            let chartLabels = [], chartPassedData = [], chartFailedData = [];
+
+            let testedDeviceKeys = Object.keys(deviceTotals).filter(d => deviceTotals[d].total > 0).sort();
+
+            if (testedDeviceKeys.length === 0) {
+                modelRowsHtml = `<tr><td colspan="5" class="p-4 text-center text-slate-400">No device model records found.</td></tr>`;
+            } else {
+                testedDeviceKeys.forEach(m => {
+                    let stat = deviceTotals[m];
+                    grandTotalTested += stat.total;
+                    grandPassed += stat.passed;
+                    grandFailed += stat.failed;
+
+                    chartLabels.push(m);
+                    chartPassedData.push(stat.passed);
+                    chartFailedData.push(stat.failed);
+
+                    let failRate = stat.total > 0 ? ((stat.failed / stat.total) * 100).toFixed(2) : "0.00";
+
+                    modelRowsHtml += `
+                        <tr class="hover:bg-slate-50 border-b border-slate-200">
+                            <td class="p-3 border border-slate-200 font-black text-slate-900 bg-slate-50">${m}</td>
+                            <td class="p-3 border border-slate-200 text-center font-black text-slate-900">${stat.total.toLocaleString()}</td>
+                            <td class="p-3 border border-slate-200 text-center font-black text-emerald-600">${stat.passed.toLocaleString()}</td>
+                            <td class="p-3 border border-slate-200 text-center font-black text-rose-600">${stat.failed.toLocaleString()}</td>
+                            <td class="p-3 border border-slate-200 text-center font-bold text-slate-700">${failRate}%</td>
+                        </tr>
+                    `;
+                });
+
+                let overallFailRate = grandTotalTested > 0 ? ((grandFailed / grandTotalTested) * 100).toFixed(2) : "0.00";
+
+                modelRowsHtml += `
+                    <tr class="bg-slate-200 font-black text-slate-900 border-t-2 border-slate-300">
+                        <td class="p-3 border border-slate-300 uppercase">Total</td>
+                        <td class="p-3 border border-slate-300 text-center text-slate-900">${grandTotalTested.toLocaleString()}</td>
+                        <td class="p-3 border border-slate-300 text-center text-emerald-700">${grandPassed.toLocaleString()}</td>
+                        <td class="p-3 border border-slate-300 text-center text-rose-700">${grandFailed.toLocaleString()}</td>
+                        <td class="p-3 border border-slate-300 text-center text-slate-900">${overallFailRate}%</td>
+                    </tr>
+                `;
+            }
+            modelTbody.innerHTML = modelRowsHtml;
+
+            setTimeout(() => {
+                let ctxDeviceModel = document.getElementById('deviceModelBarChart');
+                if (ctxDeviceModel) {
+                    if (deviceModelChartInstance) deviceModelChartInstance.destroy();
+                    deviceModelChartInstance = new Chart(ctxDeviceModel, {
+                        type: 'bar',
+                        data: {
+                            labels: chartLabels,
+                            datasets: [
+                                { label: 'Passed', data: chartPassedData, backgroundColor: '#10B981', borderRadius: 4 },
+                                { label: 'Failed', data: chartFailedData, backgroundColor: '#EF4444', borderRadius: 4 }
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: { legend: { position: 'bottom', labels: { font: { weight: 'bold', size: 10 }, color: '#0f172a' } } },
+                            scales: {
+                                x: { ticks: { font: { weight: 'bold' }, color: '#0f172a' } },
+                                y: { ticks: { font: { weight: 'bold' }, color: '#0f172a' } }
+                            }
+                        }
+                    });
+                }
+            }, 50);
+        }
+
+        function renderOnuRegionalBreakdown(rawData) {
+            let container = document.getElementById('onu-dynamic-container');
+            if (!container) return;
+
+            let targetRegions = ['HGAO', 'ENUO', 'MDY'];
+            if (currentOnuRegion !== 'All Region') {
+                targetRegions = [currentOnuRegion];
+            }
+
+            let weekRanges = [
+                { name: "Week 1 (1 - 7)", start: 1, end: 7 },
+                { name: "Week 2 (8 - 14)", start: 8, end: 14 },
+                { name: "Week 3 (15 - 21)", start: 15, end: 21 },
+                { name: "Week 4 (22 - End)", start: 22, end: 31 }
+            ];
+
+            let weeklyCompHtml = "";
+            let prevPassRate = null;
+            let weekTrendCardsHtml = "";
+
+            weekRanges.forEach((wk, idx) => {
+                let wkRows = rawData.filter(r => {
+                    let dateStr = parseLocalDate(r['_time'] || r['Date'] || r['col_0'] || '');
+                    if (!dateStr) return false;
+                    let dayNum = parseInt(dateStr.split('-')[2]) || 0;
+                    let matchesRegion = true;
+                    if (currentOnuRegion !== 'All Region') {
+                        matchesRegion = getRowRegion(r) === currentOnuRegion;
+                    }
+                    return dayNum >= wk.start && dayNum <= wk.end && matchesRegion;
+                });
+
+                let totalWk = wkRows.length;
+                let passWk = wkRows.filter(r => isStrictPass(r)).length;
+                let failWk = totalWk - passWk;
+                let pRate = totalWk > 0 ? ((passWk / totalWk) * 100) : 0;
+                let fRate = totalWk > 0 ? ((failWk / totalWk) * 100) : 0;
+
+                let rateDiffBadge = "-";
+                if (prevPassRate !== null && totalWk > 0) {
+                    let diff = pRate - prevPassRate;
+                    if (diff > 0) {
+                        rateDiffBadge = `<span class="text-emerald-600 font-extrabold">▲ +${diff.toFixed(1)}% (Improved)</span>`;
+                    } else if (diff < 0) {
+                        rateDiffBadge = `<span class="text-rose-600 font-extrabold">▼ ${diff.toFixed(1)}% (Dropped)</span>`;
+                    } else {
+                        rateDiffBadge = `<span class="text-slate-500 font-bold">▶ 0.0% (Stable)</span>`;
+                    }
+                }
+                if (totalWk > 0) prevPassRate = pRate;
+
+                weeklyCompHtml += `
+                    <tr class="hover:bg-slate-50 border-b border-slate-200 text-center">
+                        <td class="p-3 text-slate-900 border border-slate-300 font-black">${wk.name}</td>
+                        <td class="p-3 border border-slate-300 text-slate-800">${totalWk.toLocaleString()}</td>
+                        <td class="p-3 border border-slate-300 text-emerald-600 font-black">${passWk.toLocaleString()}</td>
+                        <td class="p-3 border border-slate-300 text-rose-600 font-black">${failWk.toLocaleString()}</td>
+                        <td class="p-3 border border-slate-300 text-blue-600 font-black">${pRate.toFixed(2)}%</td>
+                        <td class="p-3 border border-slate-300 text-amber-600 font-black">${fRate.toFixed(2)}%</td>
+                        <td class="p-3 border border-slate-300 text-xs">${rateDiffBadge}</td>
+                    </tr>
+                `;
+
+                weekTrendCardsHtml += `
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 flex flex-col justify-between font-bold">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-xs font-black text-slate-700">${wk.name}</span>
+                            <span class="text-xs px-2 py-0.5 rounded bg-indigo-100 text-indigo-700 font-bold">${totalWk} Tested</span>
+                        </div>
+                        <div class="space-y-1">
+                            <div class="flex justify-between text-xs">
+                                <span class="text-slate-500">Pass Rate:</span>
+                                <span class="text-emerald-600 font-black">${pRate.toFixed(1)}%</span>
+                            </div>
+                            <div class="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
+                                <div class="bg-emerald-500 h-1.5 rounded-full" style="width: ${pRate}%;"></div>
+                            </div>
+                            <div class="flex justify-between text-xs pt-1">
+                                <span class="text-slate-500">Fail Rate:</span>
+                                <span class="text-rose-600 font-black">${fRate.toFixed(1)}%</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            let html = `
+                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4 font-bold">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-100 pb-3 gap-2">
+                        <div>
+                            <h3 class='text-lg font-black text-slate-950'>Week-by-Week Pass/Fail Rate Trends & Comparison (${currentTestType.toUpperCase()})</h3>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                        ${weekTrendCardsHtml}
+                    </div>
+
+                    <div class="overflow-x-auto rounded-xl border border-slate-300 mt-4">
+                        <table class="w-full text-left border-collapse border border-slate-300 text-xs">
+                            <thead class="bg-slate-800 text-white uppercase font-black text-center">
+                                <tr>
+                                    <th class="p-3 border border-slate-600">Period Week</th>
+                                    <th class="p-3 border border-slate-600">Total Tested</th>
+                                    <th class="p-3 border border-slate-600">Pass Units</th>
+                                    <th class="p-3 border border-slate-600">Fail Units</th>
+                                    <th class="p-3 border border-slate-600">Pass Rate %</th>
+                                    <th class="p-3 border border-slate-600">Fail Rate %</th>
+                                    <th class="p-3 border border-slate-600">Weekly Progress Trend</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${weeklyCompHtml}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-6 font-bold">
+                    <div>
+                        <h3 class='text-lg font-black text-slate-950'>Regional Inspection & Parameter Failure Breakdown</h3>
+                    </div>
+            `;
+
+            targetRegions.forEach(regShort => {
+                let regRows = rawData.filter(r => getRowRegion(r) === regShort);
+
+                let regTotal = regRows.length;
+                let passed = regRows.filter(r => isStrictPass(r)).length;
+                let failed = regTotal - passed;
+                let passRate = regTotal > 0 ? ((passed / regTotal) * 100).toFixed(1) : "0.0";
+                let failRate = regTotal > 0 ? ((failed / regTotal) * 100).toFixed(1) : "0.0";
+
+                let rxFail = regRows.filter(r => checkParamFailIndex(r, 5)).length;
+                let txFail = regRows.filter(r => checkParamFailIndex(r, 6)).length;
+                let biasFail = regRows.filter(r => checkParamFailIndex(r, 7)).length;
+                let voltFail = regRows.filter(r => checkParamFailIndex(r, 8)).length;
+                let tempFail = regRows.filter(r => checkParamFailIndex(r, 9)).length;
+                let onlineFail = regRows.filter(r => checkParamFailIndex(r, 17)).length;
+                let offlineFail = regRows.filter(r => checkParamFailIndex(r, 19)).length;
+                let bip8Fail = regRows.filter(r => checkParamFailIndex(r, 21)).length;
+                let gaspFail = regRows.filter(r => checkParamFailIndex(r, 23)).length;
+                let losFail = regRows.filter(r => checkParamFailIndex(r, 25)).length;
+
+                let badgeColor = regShort === 'HGAO' ? 'bg-amber-500' : (regShort === 'ENUO' ? 'bg-blue-600' : (regShort === 'MDY' ? 'bg-purple-600' : 'bg-emerald-600'));
+
+                html += `
+                    <div class="p-5 rounded-xl border border-slate-200 bg-slate-50/50 space-y-4">
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-slate-200 pb-3">
+                            <span class="px-3 py-1.5 rounded-lg text-xs font-black text-white ${badgeColor}">${regShort} Region</span>
+                            <div class="flex flex-wrap gap-3 text-xs">
+                                <span class="text-slate-700">Total: <strong class="text-slate-900">${regTotal.toLocaleString()}</strong></span>
+                                <span class="text-emerald-600">Passed: <strong>${passed.toLocaleString()}</strong> (${passRate}%)</span>
+                                <span class="text-rose-600">Failed: <strong>${failed.toLocaleString()}</strong> (${failRate}%)</span>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 text-xs">
+                            <div class="bg-white p-2.5 rounded-lg border border-slate-200 flex justify-between items-center">
+                                <span class="text-slate-500">RX:</span>
+                                <span class="px-2 py-0.5 bg-blue-50 text-blue-700 rounded font-black">${rxFail}</span>
+                            </div>
+                            <div class="bg-white p-2.5 rounded-lg border border-slate-200 flex justify-between items-center">
+                                <span class="text-slate-500">TX:</span>
+                                <span class="px-2 py-0.5 bg-indigo-50 text-indigo-700 rounded font-black">${txFail}</span>
+                            </div>
+                            <div class="bg-white p-2.5 rounded-lg border border-slate-200 flex justify-between items-center">
+                                <span class="text-slate-500">BIAS:</span>
+                                <span class="px-2 py-0.5 bg-purple-50 text-purple-700 rounded font-black">${biasFail}</span>
+                            </div>
+                            <div class="bg-white p-2.5 rounded-lg border border-slate-200 flex justify-between items-center">
+                                <span class="text-slate-500">VOLT:</span>
+                                <span class="px-2 py-0.5 bg-pink-50 text-pink-700 rounded font-black">${voltFail}</span>
+                            </div>
+                            <div class="bg-white p-2.5 rounded-lg border border-slate-200 flex justify-between items-center">
+                                <span class="text-slate-500">TEMP:</span>
+                                <span class="px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded font-black">${tempFail}</span>
+                            </div>
+                            <div class="bg-white p-2.5 rounded-lg border border-slate-200 flex justify-between items-center">
+                                <span class="text-slate-500">ONLINE:</span>
+                                <span class="px-2 py-0.5 bg-cyan-50 text-cyan-700 rounded font-black">${onlineFail}</span>
+                            </div>
+                            <div class="bg-white p-2.5 rounded-lg border border-slate-200 flex justify-between items-center">
+                                <span class="text-slate-500">OFFLINE:</span>
+                                <span class="px-2 py-0.5 bg-orange-50 text-orange-700 rounded font-black">${offlineFail}</span>
+                            </div>
+                            <div class="bg-white p-2.5 rounded-lg border border-slate-200 flex justify-between items-center">
+                                <span class="text-slate-500">BIP8:</span>
+                                <span class="px-2 py-0.5 bg-red-50 text-red-700 rounded font-black">${bip8Fail}</span>
+                            </div>
+                            <div class="bg-white p-2.5 rounded-lg border border-slate-200 flex justify-between items-center">
+                                <span class="text-slate-500">GASP:</span>
+                                <span class="px-2 py-0.5 bg-yellow-50 text-yellow-700 rounded font-black">${gaspFail}</span>
+                            </div>
+                            <div class="bg-white p-2.5 rounded-lg border border-slate-200 flex justify-between items-center">
+                                <span class="text-slate-500">LOS:</span>
+                                <span class="px-2 py-0.5 bg-violet-50 text-violet-700 rounded font-black">${losFail}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += `</div>`;
+            container.innerHTML = html;
+        }
+
+        window.onload = function() {
+            loadAllData();
+            setInterval(loadAllData, 14400000);
+        };
+    </script>
+</body>
+</html>
