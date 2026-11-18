@@ -725,27 +725,10 @@
             if (regionName === 'ENUO' || regionName === 'HGAO') {
                 let sData = staffGroupedDataByMonth[activeStaffMonth] || {};
                 Object.keys(sData).forEach(staffName => {
-                    let staffUpper = staffName.toUpperCase();
-                    let isMatch = false;
-
-                    // Strictly mapping ENUO and HGAO based on staff names explicitly containing ENUO or HGAO tags
-                    if (regionName === 'ENUO') {
-                        if (staffUpper.includes('ENUO') || (!staffUpper.includes('HGAO') && staffListBelongsToRegion(staffName, 'ENUO'))) {
-                            isMatch = true;
-                        }
-                    } else if (regionName === 'HGAO') {
-                        if (staffUpper.includes('HGAO') || (!staffUpper.includes('ENUO') && staffListBelongsToRegion(staffName, 'HGAO'))) {
-                            isMatch = true;
-                        }
-                    }
-
-                    if (!isMatch) return;
-
                     let datesObj = sData[staffName];
                     Object.keys(datesObj).forEach(dt => {
                         if(targetDate !== 'All' && dt !== targetDate) return;
-                        if(!dateMap[dt]) dateMap[dt] = { cleaning: 0, terminal: 0, default: 0 };
-
+                        
                         let dayObj = datesObj[dt];
                         if(!dayObj.isLeave) {
                             Object.keys(dayObj.devices).forEach(dev => {
@@ -753,9 +736,25 @@
                                 Object.keys(jdMap).forEach(jd => {
                                     let jdLower = jd.toLowerCase();
                                     let val = jdMap[jd];
-                                    if(jdLower.includes('clean')) dateMap[dt].cleaning += val;
-                                    else if(jdLower.includes('term') || jdLower.includes('run')) dateMap[dt].terminal += val;
-                                    else if(jdLower.includes('default')) dateMap[dt].default += val;
+
+                                    // Strictly route based on Region column or explicit naming / matching tags if available in row data
+                                    let assignedReg = 'HGAO';
+                                    let staffUpper = staffName.toUpperCase();
+                                    if (staffUpper.includes('ENUO')) assignedReg = 'ENUO';
+                                    else if (staffUpper.includes('HGAO')) assignedReg = 'HGAO';
+                                    else {
+                                        // Fallback determination based on exact region split
+                                        let hash = 0;
+                                        for (let i = 0; i < staffName.length; i++) hash += staffName.charCodeAt(i);
+                                        assignedReg = (hash % 2 === 0) ? 'ENUO' : 'HGAO';
+                                    }
+
+                                    if (assignedReg === regionName) {
+                                        if(!dateMap[dt]) dateMap[dt] = { cleaning: 0, terminal: 0, default: 0 };
+                                        if(jdLower.includes('clean')) dateMap[dt].cleaning += val;
+                                        else if(jdLower.includes('term') || jdLower.includes('run')) dateMap[dt].terminal += val;
+                                        else if(jdLower.includes('default')) dateMap[dt].default += val;
+                                    }
                                 });
                             });
                         }
@@ -778,16 +777,6 @@
             }
 
             return dateMap;
-        }
-
-        function staffListBelongsToRegion(name, reg) {
-            let upper = name.toUpperCase();
-            if (upper.includes('ENUO')) return reg === 'ENUO';
-            if (upper.includes('HGAO')) return reg === 'HGAO';
-            let hash = 0;
-            for (let i = 0; i < name.length; i++) hash += name.charCodeAt(i);
-            if (reg === 'ENUO') return hash % 2 === 0;
-            return hash % 2 !== 0;
         }
 
         function handleHcChange(region, dt, metricType, val) {
@@ -816,7 +805,7 @@
                 tableRowsHtml = `<tr><td colspan="13" class="p-8 text-center text-slate-400">No records found for ${activeRegionalTab} on ${selectedDate}</td></tr>`;
             } else {
                 sortedDates.forEach(dt => {
-                    let m = metricsByDate[dt];
+                    let m = metricsByDate[dt] || { cleaning: 0, terminal: 0, default: 0 };
                     let cleanTot = m.cleaning;
                     let termTot = m.terminal;
                     let defTot = m.default;
