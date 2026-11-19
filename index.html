@@ -1049,6 +1049,7 @@
             let sumTerminalTotal = 0, sumTerminalHc = 0;
             let sumDefaultTotal = 0, sumDefaultHc = 0;
             let sumGrandTotal = 0;
+            let sumDailyHc = 0;
 
             if(sortedDates.length === 0) {
                 let dateDesc = selectedRegionalDates.length > 0 ? selectedRegionalDates.join(', ') : 'All Dates';
@@ -1064,17 +1065,17 @@
                     let hcCleanKey = `${activeRegionalTab}_${dt}_cleaning`;
                     let hcTermKey = `${activeRegionalTab}_${dt}_terminal`;
                     let hcDefKey = `${activeRegionalTab}_${dt}_default`;
-                    let hcDailyKey = `${activeRegionalTab}_${dt}_daily`;
 
                     let hcClean = regionalHcInputs[hcCleanKey] !== undefined ? regionalHcInputs[hcCleanKey] : 0;
                     let hcTerm = regionalHcInputs[hcTermKey] !== undefined ? regionalHcInputs[hcTermKey] : 0;
                     let hcDef = regionalHcInputs[hcDefKey] !== undefined ? regionalHcInputs[hcDefKey] : 0;
-                    let hcDaily = regionalHcInputs[hcDailyKey] !== undefined ? regionalHcInputs[hcDailyKey] : 0;
+                    let hcDaily = hcClean + hcTerm + hcDef;
 
                     sumCleaningTotal += cleanTot; sumCleaningHc += hcClean;
                     sumTerminalTotal += termTot; sumTerminalHc += hcTerm;
                     sumDefaultTotal += defTot; sumDefaultHc += hcDef;
                     sumGrandTotal += rowTot;
+                    sumDailyHc += hcDaily;
 
                     let kpiClean = hcClean > 0 ? (cleanTot / hcClean).toFixed(1) : "0.0";
                     let kpiTerm = hcTerm > 0 ? (termTot / hcTerm).toFixed(1) : "0.0";
@@ -1105,15 +1106,6 @@
                         return opts;
                     };
 
-                    let dailyHcOptionsHtml = (currentVal) => {
-                        let opts = `<option value="0" ${0 === currentVal ? 'selected' : ''}>0</option>`;
-                        for(let i=1; i<=20; i++) {
-                            let val = i * 0.5;
-                            opts += `<option value="${val}" ${val === currentVal ? 'selected' : ''}>${val}</option>`;
-                        }
-                        return opts;
-                    };
-
                     tableRowsHtml += `
                         <tr class="hover:bg-slate-50 border-b border-slate-200 text-center font-bold text-slate-800">
                             <td class="p-3 border border-slate-300 bg-slate-50/50 font-black">${dt}</td>
@@ -1139,11 +1131,7 @@
                             </td>
                             <td class="p-3 border border-slate-300 font-black text-purple-700">${kpiDef}</td>
                             <td class="p-3 border border-slate-300 font-black text-slate-900 bg-slate-100">${rowTot}</td>
-                            <td class="p-2 border border-slate-300 bg-amber-50/30">
-                                <select onchange="handleHcChange('${activeRegionalTab}', '${dt}', 'daily', this.value)" class="w-20 p-1 text-center font-black text-amber-900 rounded border border-amber-300 bg-white cursor-pointer focus:ring-2 focus:ring-amber-500">
-                                    ${dailyHcOptionsHtml(hcDaily)}
-                                </select>
-                            </td>
+                            <td class="p-3 border border-slate-300 font-black text-amber-950 bg-amber-50/50">${hcDaily}</td>
                             <td class="p-3 border border-slate-300 font-black text-blue-800 bg-blue-50/30">${oneHcKpiStr}</td>
                             <td class="p-3 border border-slate-300 font-black bg-slate-50">${meetKpiBadge}</td>
                         </tr>
@@ -1202,7 +1190,7 @@
                                     <td class="p-3 border border-slate-300 text-slate-800">${sumDefaultHc}</td>
                                     <td class="p-3 border border-slate-300 text-purple-700">${overallKpiDefault}</td>
                                     <td class="p-3 border border-slate-300 text-slate-950 bg-slate-300">${sumGrandTotal}</td>
-                                    <td class="p-3 border border-slate-300 text-amber-950 bg-amber-100">-</td>
+                                    <td class="p-3 border border-slate-300 text-amber-950 bg-amber-100">${sumDailyHc}</td>
                                     <td class="p-3 border border-slate-300 text-blue-950 bg-blue-100">-</td>
                                     <td class="p-3 border border-slate-300 bg-slate-300">-</td>
                                 </tr>
