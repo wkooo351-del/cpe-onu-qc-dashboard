@@ -328,6 +328,7 @@
         let activeRegionalTab = 'ENUO';
         let selectedRegionalDates = [];
         let availableRegionalDates = [];
+        let regionalRawRowsCache = { ENUO: null, HGAO: null, MYFO: null };
         let regionalHcInputs = JSON.parse(localStorage.getItem('regionalHcInputs') || '{}');
         let inboundDailyHcInputs = JSON.parse(localStorage.getItem('inboundDailyHcInputs') || '{}');
 
@@ -716,6 +717,7 @@
             inboundLiveData = inboundLiveDataByMonth[activeInboundMonth] || getEmptyInboundMonthStructure();
             renderInboundWeek(activeInboundWeek);
 
+            regionalRawRowsCache = { ENUO: null, HGAO: null, MYFO: null };
             await populateRegionalDateFilter();
             await renderRegionalKpiView();
 
@@ -922,11 +924,25 @@
             return dataByWeek;
         }
 
+        async function getRegionalSheetRows(regionName) {
+            if (regionalRawRowsCache[regionName]) {
+                return regionalRawRowsCache[regionName];
+            }
+            let sheetId = regionName === 'MYFO' ? MDY_SHEET_ID : STAFF_SHEET_ID;
+            let candidateSheets = regionName === 'MYFO'
+                ? ["Nov 26", "Oct 26", "Sep 26", "Aug 26", "July 26"]
+                : ["Nov 26", "Oct 26", "YGN-2026", "YGN 2026"];
+
+            let rows = await fetchFlexibleSheet(sheetId, candidateSheets);
+            regionalRawRowsCache[regionName] = rows || [];
+            return regionalRawRowsCache[regionName];
+        }
+
         async function populateRegionalDateFilter() {
             let datesSet = new Set();
 
-            let ygnRows = await fetchFlexibleSheet(STAFF_SHEET_ID, ["Nov 26", "Oct 26", "YGN-2026", "YGN 2026"]);
-            let mdyRows = await fetchFlexibleSheet(MDY_SHEET_ID, ["Nov 26", "Oct 26", "Sep 26", "Aug 26", "July 26"]);
+            let ygnRows = await getRegionalSheetRows('ENUO');
+            let mdyRows = await getRegionalSheetRows('MYFO');
 
             [...ygnRows, ...mdyRows].forEach(row => {
                 let rawArr = row['_rawArray'] || [];
@@ -947,14 +963,43 @@
             return true;
         }
 
+        function rowMatchesRegionalTab(row, regionName) {
+            let rawArr = row['_rawArray'] || [];
+            let candidateVals = [
+                rawArr[11],
+                rawArr[10],
+                rawArr[12],
+                rawArr[9],
+                getVal(row, ['Region', 'Regional', 'Area', 'Hub'], -1)
+            ];
+
+            let foundAnyRegionTag = false;
+            for (let v of candidateVals) {
+                let s = String(v || '').trim().toUpperCase();
+                if (!s) continue;
+                if (regionName === 'MYFO') {
+                    if (s === 'MYFO' || s.includes('MYFO') || s.includes('MDY') || s.includes('MANDALAY')) return true;
+                    if (s === 'ENUO' || s.includes('ENUO') || s === 'HGAO' || s.includes('HGAO')) foundAnyRegionTag = true;
+                } else {
+                    if (s === regionName || s.includes(regionName)) return true;
+                    if (s === 'MYFO' || s.includes('MYFO') || s.includes('MDY') || s.includes('MANDALAY') || (regionName === 'ENUO' && s.includes('HGAO')) || (regionName === 'HGAO' && s.includes('ENUO'))) {
+                        foundAnyRegionTag = true;
+                    }
+                }
+            }
+
+            if (foundAnyRegionTag) return false;
+
+            let fullText = rawArr.join(' ').toUpperCase();
+            if (regionName === 'MYFO') {
+                return fullText.includes('MYFO') || fullText.includes('MDY') || fullText.includes('MANDALAY');
+            }
+            return fullText.includes(regionName);
+        }
+
         async function extractRegionalMetrics(regionName, targetDatesArr) {
             let dateMap = {};
-            let sheetId = regionName === 'MYFO' ? MDY_SHEET_ID : STAFF_SHEET_ID;
-            let candidateSheets = regionName === 'MYFO'
-                ? ["Nov 26", "Oct 26", "Sep 26", "Aug 26", "July 26"]
-                : ["Nov 26", "Oct 26", "YGN-2026", "YGN 2026"];
-
-            let rows = await fetchFlexibleSheet(sheetId, candidateSheets);
+            let rows = await getRegionalSheetRows(regionName);
 
             rows.forEach(row => {
                 let rawArr = row['_rawArray'] || [];
@@ -962,12 +1007,7 @@
                 if (!dt) return;
                 if (Array.isArray(targetDatesArr) && targetDatesArr.length > 0 && !targetDatesArr.includes(dt)) return;
 
-                let rowRegion = String(rawArr[11] || getVal(row, ['Region', 'Regional'], 11)).trim().toUpperCase();
-                if (regionName === 'MYFO') {
-                    if (rowRegion !== 'MYFO' && !rowRegion.includes('MDY') && !rowRegion.includes('MANDALAY')) return;
-                } else {
-                    if (rowRegion !== regionName && !rowRegion.includes(regionName)) return;
-                }
+                if (!rowMatchesRegionalTab(row, regionName)) return;
 
                 let colDVal = rawArr[3] !== undefined ? rawArr[3] : getVal(row, ['Daily (JD)', 'Daily JD', 'JD'], 3);
                 let colDStr = String(colDVal || '').trim().toLowerCase();
