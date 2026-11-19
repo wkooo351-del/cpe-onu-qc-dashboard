@@ -66,7 +66,6 @@
                 </div>
             </div>
 
-            <!-- Summary KPI Cards -->
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 border-l-4 border-l-blue-600">
                     <p class="text-xs font-bold text-slate-400 uppercase">Total Staff</p>
@@ -81,7 +80,7 @@
                     <p id="card-attention-staff" class="mt-2 text-2xl font-black text-amber-600">0</p>
                 </div>
                 <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 border-l-4 border-l-rose-500">
-                    <p class="text-xs font-bold text-slate-400 uppercase">KPI Issue (< Target)</p>
+                    <p class="text-xs font-bold text-slate-400 uppercase">KPI Issue (&lt; Target)</p>
                     <p id="card-kpi-issue-staff" class="mt-2 text-2xl font-black text-rose-600">0</p>
                 </div>
             </div>
@@ -355,51 +354,68 @@
             </div>
         </div>
 
-        <!-- SECTION 6: RMA View (RMA Repair Sheet - From March 2026, Month Filter, Region & Device Breakdown) -->
+        <!-- SECTION 6: RMA View (RMA Repair Sheet - From June 2026, Month & Date Filter inside All Months, Sticky TOTAL RMA Cards, HC 0-5) -->
         <div id="section-rma" class="dashboard-section hidden space-y-6">
-            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-100 pb-4 gap-3">
-                    <div class="flex items-center space-x-3">
-                        <span class="px-4 py-2 rounded-xl text-sm font-black text-white bg-slate-900">RMA REPAIR</span>
-                        <div>
-                            <h2 class="text-lg font-black text-slate-900">RMA Repair Breakdown (From Mar'26)</h2>
-                            <p class="text-xs text-slate-500 font-bold">Source: YGN - 2026 &rarr; RMA Repair sheet (Date, Device Name, Repair Pass / Fail by Region)</p>
+            <!-- Sticky Top Controls + Frozen TOTAL RMA Cards -->
+            <div class="sticky top-[68px] z-40 bg-slate-50 pt-1 pb-2 space-y-3">
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-md space-y-3">
+                    <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3 pb-3 border-b border-slate-100">
+                        <div class="flex items-center space-x-3">
+                            <span class="px-3.5 py-1.5 rounded-xl text-xs font-black text-white bg-slate-900">RMA REPAIR</span>
+                            <div>
+                                <h2 class="text-base font-black text-slate-900">RMA Repair & Reuse Tracking (From Jun'26)</h2>
+                                <p class="text-[11px] text-slate-500 font-bold">Source: YGN - 2026 &rarr; RMA Repair (No Name, Month & Date Filter, Region HC 0–5)</p>
+                            </div>
+                        </div>
+
+                        <!-- Month Filter + Date Filter inside All Months -->
+                        <div class="flex flex-wrap items-center gap-2">
+                            <div class="flex items-center gap-1.5">
+                                <label for="rma-month-select" class="text-xs text-slate-500 uppercase font-black">Month:</label>
+                                <select id="rma-month-select" onchange="switchRmaMonth(this.value)" class="px-3 py-1.5 text-xs font-extrabold rounded-xl bg-slate-50 text-slate-900 border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer">
+                                    <option value="ALL" selected>All Months (Jun'26+)</option>
+                                </select>
+                            </div>
+
+                            <div class="relative flex items-center gap-1.5" id="rma-date-picker-wrapper">
+                                <button type="button" onclick="toggleDateDropdown('rma-date-dropdown', event)" id="rma-date-btn" class="px-3 py-1.5 text-xs font-extrabold rounded-xl bg-slate-50 text-slate-900 border border-slate-300 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer flex items-center gap-1.5">
+                                    <span id="rma-date-label">All Dates</span>
+                                    <span class="text-[10px]">▼</span>
+                                </button>
+                                <button type="button" onclick="clearDateFilter('rma')" class="px-2.5 py-1.5 text-xs font-extrabold rounded-xl bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 cursor-pointer transition">Clear Filters</button>
+                                <div id="rma-date-dropdown" class="hidden absolute right-0 top-full mt-1.5 w-64 bg-white rounded-xl shadow-xl border border-slate-200 z-50 p-2 space-y-1.5">
+                                    <div class="flex justify-between items-center px-2 py-1 border-b border-slate-100 text-[11px] font-black">
+                                        <button type="button" onclick="selectAllDates('rma', true)" class="text-blue-600 hover:underline cursor-pointer">Select All</button>
+                                        <button type="button" onclick="clearDateFilter('rma')" class="text-rose-600 hover:underline cursor-pointer">Clear Filters</button>
+                                    </div>
+                                    <div id="rma-date-options" class="max-h-56 overflow-y-auto space-y-0.5 px-1"></div>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <div class="flex flex-wrap items-center gap-2">
-                        <span class="text-xs text-slate-500 uppercase font-black">Region:</span>
-                        <button onclick="switchRmaRegion('All', this)" class="rma-reg-btn px-3 py-1.5 text-xs font-black rounded-xl bg-blue-600 text-white shadow transition">All</button>
-                        <button onclick="switchRmaRegion('ENUO', this)" class="rma-reg-btn px-3 py-1.5 text-xs font-black rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300 transition">ENUO</button>
-                        <button onclick="switchRmaRegion('HGAO', this)" class="rma-reg-btn px-3 py-1.5 text-xs font-black rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300 transition">HGAO</button>
-                        <button onclick="switchRmaRegion('MYFO', this)" class="rma-reg-btn px-3 py-1.5 text-xs font-black rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300 transition">MYFO</button>
-                    </div>
-                </div>
 
-                <!-- Months Filter Button Bar -->
-                <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 flex flex-wrap items-center gap-2">
-                    <span class="text-xs text-slate-600 uppercase font-black mr-1">Months:</span>
-                    <div id="rma-months-buttons" class="flex flex-wrap gap-2">
-                        <button onclick="switchRmaMonth('ALL', this)" class="rma-month-btn px-3.5 py-1.5 text-xs font-black rounded-xl bg-slate-900 text-white shadow transition">All Months (Mar'26+)</button>
-                    </div>
-                </div>
-
-                <!-- Summary Cards -->
-                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 border-l-4 border-l-slate-800">
-                        <p class="text-xs font-bold text-slate-500 uppercase">Total Repaired</p>
-                        <p id="rma-kpi-total" class="mt-1 text-2xl font-black text-slate-900">0</p>
-                    </div>
-                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 border-l-4 border-l-emerald-500">
-                        <p class="text-xs font-bold text-slate-500 uppercase">Repair Pass</p>
-                        <p id="rma-kpi-pass" class="mt-1 text-2xl font-black text-emerald-700">0</p>
-                    </div>
-                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 border-l-4 border-l-rose-500">
-                        <p class="text-xs font-bold text-slate-500 uppercase">Repair Fail</p>
-                        <p id="rma-kpi-fail" class="mt-1 text-2xl font-black text-rose-600">0</p>
-                    </div>
-                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 border-l-4 border-l-blue-600">
-                        <p class="text-xs font-bold text-slate-500 uppercase">Pass Rate</p>
-                        <p id="rma-kpi-rate" class="mt-1 text-2xl font-black text-blue-700">0.00%</p>
+                    <!-- Frozen TOTAL RMA Summary Cards -->
+                    <div id="rma-frozen-cards" class="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                        <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200 border-l-4 border-l-slate-800">
+                            <p class="text-[11px] font-black text-slate-500 uppercase">Total RMA</p>
+                            <p id="rma-card-total" class="mt-1 text-2xl font-black text-slate-900">0</p>
+                        </div>
+                        <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200 border-l-4 border-l-amber-500">
+                            <p class="text-[11px] font-black text-slate-500 uppercase">Total HC</p>
+                            <p id="rma-card-hc" class="mt-1 text-2xl font-black text-amber-700">0</p>
+                        </div>
+                        <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200 border-l-4 border-l-blue-600">
+                            <p class="text-[11px] font-black text-slate-500 uppercase">Avg KPI</p>
+                            <p id="rma-card-kpi" class="mt-1 text-2xl font-black text-blue-700">0</p>
+                        </div>
+                        <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200 border-l-4 border-l-emerald-500">
+                            <p class="text-[11px] font-black text-slate-500 uppercase">REUSE</p>
+                            <p id="rma-card-reuse" class="mt-1 text-2xl font-black text-emerald-700">0</p>
+                        </div>
+                        <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200 border-l-4 border-l-purple-600 col-span-2 sm:col-span-1">
+                            <p class="text-[11px] font-black text-slate-500 uppercase">REUSE %</p>
+                            <p id="rma-card-reuse-pct" class="mt-1 text-2xl font-black text-purple-700">0.00%</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -443,7 +459,9 @@
 
         let rmaRepairRawRows = [];
         let activeRmaMonth = 'ALL';
-        let activeRmaRegion = 'All';
+        let selectedRmaDates = [];
+        let availableRmaDates = [];
+        let rmaHcInputs = JSON.parse(localStorage.getItem('rmaHcInputs') || '{}');
 
         let onuData = { firstTest: [], secondTest: [], exchangeTest: [] };
         let oltChartInstance = null, failureChartInstance = null, pieChartInstance = null, multiBarChartInstance = null, deviceModelChartInstance = null, paramBarChartInstance = null;
@@ -452,6 +470,7 @@
 
         const VALID_REGIONS = ["ENUO", "HGAO", "MYFO"];
         const MONTH_SHORT_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        const HC_STEP_OPTIONS = [0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5];
 
         function toggleDateDropdown(dropdownId, event) {
             if (event) event.stopPropagation();
@@ -473,6 +492,7 @@
             if (scope === 'staff') list = selectedStaffDates;
             else if (scope === 'regional') list = selectedRegionalDates;
             else if (scope === 'inbound') list = selectedInboundReportDates;
+            else if (scope === 'rma') list = selectedRmaDates;
 
             let labelEl = document.getElementById(`${scope}-date-label`);
             if (!labelEl) return;
@@ -537,6 +557,15 @@
                 selectedInboundReportDates.sort();
                 updateDatePickerButtonLabel('inbound', 'All Dates');
                 renderInboundWeek(activeInboundWeek);
+            } else if (scope === 'rma') {
+                if (isChecked) {
+                    if (!selectedRmaDates.includes(dateVal)) selectedRmaDates.push(dateVal);
+                } else {
+                    selectedRmaDates = selectedRmaDates.filter(d => d !== dateVal);
+                }
+                selectedRmaDates.sort();
+                updateDatePickerButtonLabel('rma', 'All Dates');
+                renderRmaRepairView();
             }
         }
 
@@ -553,6 +582,10 @@
                 selectedInboundReportDates = selectAll ? [...availableInboundReportDates] : [];
                 renderDateCheckboxList('inbound', availableInboundReportDates, selectedInboundReportDates, 'All Dates');
                 renderInboundWeek(activeInboundWeek);
+            } else if (scope === 'rma') {
+                selectedRmaDates = selectAll ? [...availableRmaDates] : [];
+                renderDateCheckboxList('rma', availableRmaDates, selectedRmaDates, 'All Dates');
+                renderRmaRepairView();
             }
         }
 
@@ -569,6 +602,10 @@
                 selectedInboundReportDates = [];
                 renderDateCheckboxList('inbound', availableInboundReportDates, selectedInboundReportDates, 'All Dates');
                 renderInboundWeek(activeInboundWeek);
+            } else if (scope === 'rma') {
+                selectedRmaDates = [];
+                renderDateCheckboxList('rma', availableRmaDates, selectedRmaDates, 'All Dates');
+                renderRmaRepairView();
             }
         }
 
@@ -846,66 +883,49 @@
             return 'HGAO';
         }
 
-        function classifyRmaRepairOutcome(row) {
+        function isRmaReuseRow(row) {
             let statusVal = String(getVal(row, ['Status', 'Repair Status', 'Result', 'QC'], 10) || '').trim().toLowerCase();
-            if (statusVal.includes('reuse') || statusVal === 'pass' || statusVal.includes('repair pass') || statusVal === 'ok') {
-                return 'pass';
-            }
-            return 'fail';
+            return statusVal.includes('reuse') || statusVal === 'pass' || statusVal.includes('repair pass') || statusVal === 'ok';
         }
 
-        function switchRmaMonth(monthKey, btn) {
+        function buildRmaHcOptionsHtml(currentVal) {
+            return HC_STEP_OPTIONS.map(val => {
+                let selected = Math.abs(val - currentVal) < 0.001 ? 'selected' : '';
+                return `<option value="${val}" ${selected}>${val}</option>`;
+            }).join('');
+        }
+
+        function handleRmaHcChange(dt, region, val) {
+            let parsed = parseFloat(val);
+            rmaHcInputs[`${dt}_${region}`] = isNaN(parsed) ? 0 : parsed;
+            localStorage.setItem('rmaHcInputs', JSON.stringify(rmaHcInputs));
+            renderRmaRepairView();
+        }
+
+        function switchRmaMonth(monthKey) {
             activeRmaMonth = monthKey;
-            document.querySelectorAll('.rma-month-btn').forEach(b => {
-                b.className = 'rma-month-btn px-3.5 py-1.5 text-xs font-black rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300 transition';
-            });
-            if (btn) {
-                btn.className = 'rma-month-btn px-3.5 py-1.5 text-xs font-black rounded-xl bg-slate-900 text-white shadow transition';
-            }
+            selectedRmaDates = [];
             renderRmaRepairView();
-        }
-
-        function switchRmaRegion(regName, btn) {
-            activeRmaRegion = regName;
-            document.querySelectorAll('.rma-reg-btn').forEach(b => {
-                b.className = 'rma-reg-btn px-3 py-1.5 text-xs font-black rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300 transition';
-            });
-            if (btn) {
-                btn.className = 'rma-reg-btn px-3 py-1.5 text-xs font-black rounded-xl bg-blue-600 text-white shadow transition';
-            }
-            renderRmaRepairView();
-        }
-
-        function renderRmaMonthButtons(monthsList) {
-            let btnContainer = document.getElementById('rma-months-buttons');
-            if (!btnContainer) return;
-
-            let html = `<button onclick="switchRmaMonth('ALL', this)" class="rma-month-btn px-3.5 py-1.5 text-xs font-black rounded-xl ${activeRmaMonth === 'ALL' ? 'bg-slate-900 text-white shadow' : 'bg-white text-slate-800 hover:bg-slate-100 border border-slate-300'} transition">All Months (Mar'26+)</button>`;
-
-            monthsList.forEach(mKey => {
-                let isActive = activeRmaMonth === mKey;
-                html += `<button onclick="switchRmaMonth('${mKey}', this)" class="rma-month-btn px-3.5 py-1.5 text-xs font-black rounded-xl ${isActive ? 'bg-slate-900 text-white shadow' : 'bg-white text-slate-800 hover:bg-slate-100 border border-slate-300'} transition">${mKey}</button>`;
-            });
-
-            btnContainer.innerHTML = html;
         }
 
         function renderRmaRepairView() {
             let container = document.getElementById('rma-breakdown-container');
             if (!container) return;
 
-            let marchPlusRows = (rmaRepairRawRows || []).filter(row => {
+            // From June 2026 (2026-06-01) onwards
+            let junePlusRows = (rmaRepairRawRows || []).filter(row => {
                 let dt = parseLocalDate(getVal(row, ['Date', 'Repair Date'], 0));
                 if (!dt || !/^\d{4}-\d{2}-\d{2}/.test(dt)) return false;
-                return dt >= '2026-03-01';
+                return dt >= '2026-06-01';
             });
 
             let monthSet = new Set();
-            marchPlusRows.forEach(r => {
+            junePlusRows.forEach(r => {
                 let dt = parseLocalDate(getVal(r, ['Date', 'Repair Date'], 0));
                 let mKey = formatMonthKeyFromDate(dt);
                 if (mKey) monthSet.add(mKey);
             });
+
             let sortedMonths = Array.from(monthSet).sort((a, b) => {
                 let [mA, yA] = a.split("'");
                 let [mB, yB] = b.split("'");
@@ -917,130 +937,250 @@
             if (activeRmaMonth !== 'ALL' && !sortedMonths.includes(activeRmaMonth)) {
                 activeRmaMonth = 'ALL';
             }
-            renderRmaMonthButtons(sortedMonths);
 
-            let filteredRows = marchPlusRows.filter(row => {
+            let monthSelectEl = document.getElementById('rma-month-select');
+            if (monthSelectEl) {
+                let opts = `<option value="ALL" ${activeRmaMonth === 'ALL' ? 'selected' : ''}>All Months (Jun'26+)</option>`;
+                sortedMonths.forEach(mKey => {
+                    opts += `<option value="${mKey}" ${activeRmaMonth === mKey ? 'selected' : ''}>${mKey}</option>`;
+                });
+                monthSelectEl.innerHTML = opts;
+            }
+
+            let monthFilteredRows = junePlusRows.filter(row => {
                 let dt = parseLocalDate(getVal(row, ['Date', 'Repair Date'], 0));
                 let mKey = formatMonthKeyFromDate(dt);
-                if (activeRmaMonth !== 'ALL' && mKey !== activeRmaMonth) return false;
+                return activeRmaMonth === 'ALL' || mKey === activeRmaMonth;
+            });
 
-                let reg = detectRmaRegion(row);
-                if (activeRmaRegion !== 'All' && reg !== activeRmaRegion) return false;
+            availableRmaDates = Array.from(new Set(
+                monthFilteredRows.map(r => parseLocalDate(getVal(r, ['Date', 'Repair Date'], 0))).filter(Boolean)
+            )).sort();
+            selectedRmaDates = selectedRmaDates.filter(d => availableRmaDates.includes(d));
+            renderDateCheckboxList('rma', availableRmaDates, selectedRmaDates, 'All Dates');
 
+            let finalRows = monthFilteredRows.filter(row => {
+                let dt = parseLocalDate(getVal(row, ['Date', 'Repair Date'], 0));
+                if (selectedRmaDates.length > 0 && !selectedRmaDates.includes(dt)) return false;
                 return true;
             });
 
-            let grandTotal = 0, grandPass = 0, grandFail = 0;
-            let groupedByRegion = {};
+            let dateMap = {};
+            let deviceSet = new Set();
 
-            filteredRows.forEach(row => {
+            finalRows.forEach(row => {
                 let dt = parseLocalDate(getVal(row, ['Date', 'Repair Date'], 0));
-                let dev = String(getVal(row, ['Device Name', 'Device', 'Model', 'CPE Type'], 2) || 'Unknown').trim().toUpperCase();
-                if (!dev || dev === '-') dev = 'UNKNOWN';
                 let reg = detectRmaRegion(row);
-                let outcome = classifyRmaRepairOutcome(row);
+                let dev = String(getVal(row, ['Device Name', 'Device', 'Model', 'CPE Type'], 2) || 'FFO').trim().toUpperCase();
+                if (!dev || dev === '-') dev = 'FFO';
+                deviceSet.add(dev);
 
-                grandTotal += 1;
-                if (outcome === 'pass') grandPass += 1;
-                else grandFail += 1;
-
-                if (!groupedByRegion[reg]) groupedByRegion[reg] = {};
-                let key = `${dt}__${dev}`;
-                if (!groupedByRegion[reg][key]) {
-                    groupedByRegion[reg][key] = { date: dt, device: dev, total: 0, pass: 0, fail: 0 };
+                if (!dateMap[dt]) {
+                    dateMap[dt] = {
+                        date: dt,
+                        enuo: 0,
+                        hgao: 0,
+                        myfo: 0,
+                        reuse: 0,
+                        devices: {}
+                    };
                 }
-                groupedByRegion[reg][key].total += 1;
-                if (outcome === 'pass') groupedByRegion[reg][key].pass += 1;
-                else groupedByRegion[reg][key].fail += 1;
+
+                if (reg === 'ENUO') dateMap[dt].enuo += 1;
+                else if (reg === 'MYFO') dateMap[dt].myfo += 1;
+                else dateMap[dt].hgao += 1;
+
+                if (isRmaReuseRow(row)) {
+                    dateMap[dt].reuse += 1;
+                }
+
+                if (!dateMap[dt].devices[dev]) {
+                    dateMap[dt].devices[dev] = { total: 0, pass: 0, fail: 0 };
+                }
+                dateMap[dt].devices[dev].total += 1;
+                if (isRmaReuseRow(row)) dateMap[dt].devices[dev].pass += 1;
+                else dateMap[dt].devices[dev].fail += 1;
             });
 
-            let grandRate = grandTotal > 0 ? ((grandPass / grandTotal) * 100).toFixed(2) + '%' : '0.00%';
-            document.getElementById('rma-kpi-total').innerText = grandTotal.toLocaleString();
-            document.getElementById('rma-kpi-pass').innerText = grandPass.toLocaleString();
-            document.getElementById('rma-kpi-fail').innerText = grandFail.toLocaleString();
-            document.getElementById('rma-kpi-rate').innerText = grandRate;
+            let sortedDates = Object.keys(dateMap).sort();
+            let hasMyfo = sortedDates.some(dt => dateMap[dt].myfo > 0);
 
-            let targetRegions = activeRmaRegion === 'All'
-                ? ['ENUO', 'HGAO', 'MYFO'].filter(r => groupedByRegion[r] || r === 'ENUO' || r === 'HGAO')
-                : [activeRmaRegion];
+            let grandRma = 0, grandHc = 0, grandReuse = 0;
+            let tableRowsHtml = "";
 
-            let cardsHtml = "";
-            targetRegions.forEach(reg => {
-                let entriesObj = groupedByRegion[reg] || {};
-                let sortedEntries = Object.values(entriesObj).sort((a, b) => a.date.localeCompare(b.date) || a.device.localeCompare(b.device));
+            if (sortedDates.length === 0) {
+                let colCount = hasMyfo ? 14 : 11;
+                tableRowsHtml = `<tr><td colspan="${colCount}" class="p-8 text-center text-slate-400">No RMA Repair records found for ${activeRmaMonth === 'ALL' ? "Jun'26+" : activeRmaMonth}.</td></tr>`;
+            } else {
+                sortedDates.forEach(dt => {
+                    let dObj = dateMap[dt];
+                    let enuoHc = rmaHcInputs[`${dt}_ENUO`] !== undefined ? rmaHcInputs[`${dt}_ENUO`] : 0;
+                    let hgaoHc = rmaHcInputs[`${dt}_HGAO`] !== undefined ? rmaHcInputs[`${dt}_HGAO`] : 0;
+                    let myfoHc = rmaHcInputs[`${dt}_MYFO`] !== undefined ? rmaHcInputs[`${dt}_MYFO`] : 0;
 
-                let regTotal = 0, regPass = 0, regFail = 0;
-                let rowsHtml = "";
+                    let enuoKpi = enuoHc > 0 ? Math.round(dObj.enuo / enuoHc) : 0;
+                    let hgaoKpi = hgaoHc > 0 ? Math.round(dObj.hgao / hgaoHc) : 0;
+                    let myfoKpi = myfoHc > 0 ? Math.round(dObj.myfo / myfoHc) : 0;
 
-                if (sortedEntries.length === 0) {
-                    rowsHtml = `<tr><td colspan="6" class="p-6 text-center text-slate-400">No RMA Repair records for ${reg} (${activeRmaMonth === 'ALL' ? "Mar'26+" : activeRmaMonth}).</td></tr>`;
-                } else {
-                    sortedEntries.forEach(item => {
-                        regTotal += item.total;
-                        regPass += item.pass;
-                        regFail += item.fail;
-                        let rateStr = item.total > 0 ? ((item.pass / item.total) * 100).toFixed(1) + '%' : '0.0%';
+                    let rowTotalRma = dObj.enuo + dObj.hgao + (hasMyfo ? dObj.myfo : 0);
+                    let rowTotalHc = enuoHc + hgaoHc + (hasMyfo ? myfoHc : 0);
+                    let rowTotalKpi = rowTotalHc > 0 ? Math.round(rowTotalRma / rowTotalHc) : 0;
+                    let rowReuse = dObj.reuse;
+                    let rowReusePct = rowTotalRma > 0 ? ((rowReuse / rowTotalRma) * 100).toFixed(2) + '%' : '0.00%';
 
-                        rowsHtml += `
-                            <tr class="hover:bg-slate-50 border-b border-slate-200 text-center">
-                                <td class="p-3 border border-slate-200 font-black text-slate-900">${item.date}</td>
-                                <td class="p-3 border border-slate-200 font-black text-blue-900">${item.device}</td>
-                                <td class="p-3 border border-slate-200 font-black text-slate-900">${item.total.toLocaleString()}</td>
-                                <td class="p-3 border border-slate-200 font-black text-emerald-700 bg-emerald-50/40">${item.pass.toLocaleString()}</td>
-                                <td class="p-3 border border-slate-200 font-black text-rose-600 bg-rose-50/40">${item.fail.toLocaleString()}</td>
-                                <td class="p-3 border border-slate-200 font-black text-blue-700">${rateStr}</td>
-                            </tr>
-                        `;
-                    });
-                }
+                    grandRma += rowTotalRma;
+                    grandHc += rowTotalHc;
+                    grandReuse += rowReuse;
 
-                let regRateStr = regTotal > 0 ? ((regPass / regTotal) * 100).toFixed(2) + '%' : '0.00%';
-                let badgeColor = reg === 'ENUO' ? 'bg-blue-600' : (reg === 'HGAO' ? 'bg-amber-500' : 'bg-emerald-600');
+                    let myfoCellsHtml = hasMyfo ? `
+                        <td class="p-3 border border-slate-200 font-black text-slate-900">${dObj.myfo}</td>
+                        <td class="p-2 border border-slate-200">
+                            <select onchange="handleRmaHcChange('${dt}', 'MYFO', this.value)" class="w-16 px-1.5 py-1 text-center font-black rounded-md border border-slate-300 bg-white cursor-pointer focus:ring-2 focus:ring-blue-500 text-xs">
+                                ${buildRmaHcOptionsHtml(myfoHc)}
+                            </select>
+                        </td>
+                        <td class="p-3 border border-slate-200 font-black text-blue-600">${myfoKpi}</td>
+                    ` : '';
 
-                cardsHtml += `
-                    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-100 pb-3 gap-2">
-                            <div class="flex items-center gap-2.5">
-                                <span class="px-3.5 py-1.5 rounded-lg text-xs font-black text-white ${badgeColor}">${reg} Region</span>
-                                <span class="text-xs font-black text-slate-500">Period: ${activeRmaMonth === 'ALL' ? "Mar'26 onwards" : activeRmaMonth}</span>
-                            </div>
-                            <div class="flex flex-wrap gap-3 text-xs font-black">
-                                <span class="text-slate-800">Total: <strong>${regTotal.toLocaleString()}</strong></span>
-                                <span class="text-emerald-700">Pass: <strong>${regPass.toLocaleString()}</strong></span>
-                                <span class="text-rose-600">Fail: <strong>${regFail.toLocaleString()}</strong></span>
-                                <span class="text-blue-700">Pass %: <strong>${regRateStr}</strong></span>
-                            </div>
-                        </div>
+                    tableRowsHtml += `
+                        <tr class="hover:bg-slate-50/90 border-b border-slate-200 text-center text-xs font-bold text-slate-800">
+                            <td class="p-3 border border-slate-200 font-black text-slate-900">${dt}</td>
+                            <td class="p-3 border border-slate-200 font-black text-slate-900">${dObj.enuo}</td>
+                            <td class="p-2 border border-slate-200">
+                                <select onchange="handleRmaHcChange('${dt}', 'ENUO', this.value)" class="w-16 px-1.5 py-1 text-center font-black rounded-md border border-slate-300 bg-white cursor-pointer focus:ring-2 focus:ring-blue-500 text-xs">
+                                    ${buildRmaHcOptionsHtml(enuoHc)}
+                                </select>
+                            </td>
+                            <td class="p-3 border border-slate-200 font-black text-blue-600">${enuoKpi}</td>
+                            <td class="p-3 border border-slate-200 font-black text-slate-900">${dObj.hgao}</td>
+                            <td class="p-2 border border-slate-200">
+                                <select onchange="handleRmaHcChange('${dt}', 'HGAO', this.value)" class="w-16 px-1.5 py-1 text-center font-black rounded-md border border-slate-300 bg-white cursor-pointer focus:ring-2 focus:ring-blue-500 text-xs">
+                                    ${buildRmaHcOptionsHtml(hgaoHc)}
+                                </select>
+                            </td>
+                            <td class="p-3 border border-slate-200 font-black text-blue-600">${hgaoKpi}</td>
+                            ${myfoCellsHtml}
+                            <td class="p-3 border border-slate-200 font-black text-slate-900 bg-slate-50/70">${rowTotalRma}</td>
+                            <td class="p-3 border border-slate-200 font-bold text-slate-700 bg-slate-50/70">${rowTotalHc}</td>
+                            <td class="p-3 border border-slate-200 font-black text-blue-600 bg-slate-50/70">${rowTotalKpi}</td>
+                            <td class="p-3 border border-slate-200 font-black text-emerald-700">${rowReuse}</td>
+                            <td class="p-3 border border-slate-200 font-black text-purple-700">${rowReusePct}</td>
+                        </tr>
+                    `;
+                });
+            }
 
-                        <div class="overflow-x-auto rounded-xl border border-slate-300">
+            let grandKpi = grandHc > 0 ? Math.round(grandRma / grandHc) : 0;
+            let grandReusePct = grandRma > 0 ? ((grandReuse / grandRma) * 100).toFixed(2) + '%' : '0.00%';
+
+            document.getElementById('rma-card-total').innerText = grandRma.toLocaleString();
+            document.getElementById('rma-card-hc').innerText = grandHc.toLocaleString();
+            document.getElementById('rma-card-kpi').innerText = grandKpi.toLocaleString();
+            document.getElementById('rma-card-reuse').innerText = grandReuse.toLocaleString();
+            document.getElementById('rma-card-reuse-pct').innerText = grandReusePct;
+
+            let myfoHeaderTop = hasMyfo ? `<th colspan="3" class="p-2.5 border border-slate-700 bg-slate-900">MYFO</th>` : '';
+            let myfoHeaderSub = hasMyfo ? `
+                <th class="p-2 border border-slate-700 bg-slate-800">RMA</th>
+                <th class="p-2 border border-slate-700 bg-slate-800">HC</th>
+                <th class="p-2 border border-slate-700 bg-slate-800">KPI</th>
+            ` : '';
+
+            // Device breakdown table (Date, Device Name, Total, Repair Pass, Repair Fail, Pass %)
+            let sortedDevices = Array.from(deviceSet).sort();
+            let devRowsHtml = "";
+            let devGrandTotal = 0, devGrandPass = 0, devGrandFail = 0;
+
+            sortedDates.forEach(dt => {
+                let dObj = dateMap[dt];
+                sortedDevices.forEach(dev => {
+                    let st = dObj.devices[dev];
+                    if (!st) return;
+                    devGrandTotal += st.total;
+                    devGrandPass += st.pass;
+                    devGrandFail += st.fail;
+                    let rate = st.total > 0 ? ((st.pass / st.total) * 100).toFixed(1) + '%' : '0.0%';
+
+                    devRowsHtml += `
+                        <tr class="hover:bg-slate-50 border-b border-slate-200 text-center text-xs font-bold text-slate-800">
+                            <td class="p-2.5 border border-slate-200 font-black text-slate-900">${dt}</td>
+                            <td class="p-2.5 border border-slate-200 font-black text-blue-900">${dev}</td>
+                            <td class="p-2.5 border border-slate-200 font-black text-slate-900">${st.total}</td>
+                            <td class="p-2.5 border border-slate-200 font-black text-emerald-700">${st.pass}</td>
+                            <td class="p-2.5 border border-slate-200 font-black text-rose-600">${st.fail}</td>
+                            <td class="p-2.5 border border-slate-200 font-black text-purple-700">${rate}</td>
+                        </tr>
+                    `;
+                });
+            });
+
+            if (!devRowsHtml) {
+                devRowsHtml = `<tr><td colspan="6" class="p-6 text-center text-slate-400">No device records for selected filter.</td></tr>`;
+            }
+            let devGrandRate = devGrandTotal > 0 ? ((devGrandPass / devGrandTotal) * 100).toFixed(2) + '%' : '0.00%';
+
+            container.innerHTML = `
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-6">
+                    <div class="overflow-x-auto rounded-xl border border-slate-300 shadow-sm">
+                        <table class="w-full text-left border-collapse border border-slate-300 text-xs">
+                            <thead class="bg-slate-900 text-white uppercase font-black text-center">
+                                <tr>
+                                    <th rowspan="2" class="p-3 border border-slate-700 align-middle bg-slate-900">Date</th>
+                                    <th colspan="3" class="p-2.5 border border-slate-700 bg-slate-900">ENUO</th>
+                                    <th colspan="3" class="p-2.5 border border-slate-700 bg-slate-900">HGAO</th>
+                                    ${myfoHeaderTop}
+                                    <th colspan="3" class="p-2.5 border border-slate-700 bg-slate-900">TOTAL RMA</th>
+                                    <th rowspan="2" class="p-3 border border-slate-700 align-middle bg-slate-900">REUSE</th>
+                                    <th rowspan="2" class="p-3 border border-slate-700 align-middle bg-slate-900">REUSE %</th>
+                                </tr>
+                                <tr>
+                                    <th class="p-2 border border-slate-700 bg-slate-800">RMA</th>
+                                    <th class="p-2 border border-slate-700 bg-slate-800">HC</th>
+                                    <th class="p-2 border border-slate-700 bg-slate-800">KPI</th>
+                                    <th class="p-2 border border-slate-700 bg-slate-800">RMA</th>
+                                    <th class="p-2 border border-slate-700 bg-slate-800">HC</th>
+                                    <th class="p-2 border border-slate-700 bg-slate-800">KPI</th>
+                                    ${myfoHeaderSub}
+                                    <th class="p-2 border border-slate-700 bg-slate-800">Total</th>
+                                    <th class="p-2 border border-slate-700 bg-slate-800">HC</th>
+                                    <th class="p-2 border border-slate-700 bg-slate-800">KPI</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${tableRowsHtml}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="space-y-3 pt-2">
+                        <h3 class="text-sm font-black text-slate-900 uppercase tracking-wide">Device Breakdown (Repair Pass / Fail)</h3>
+                        <div class="overflow-x-auto rounded-xl border border-slate-300 shadow-sm">
                             <table class="w-full text-left border-collapse border border-slate-300 text-xs">
                                 <thead class="bg-slate-800 text-white uppercase font-black text-center">
                                     <tr>
-                                        <th class="p-3 border border-slate-600">Date</th>
-                                        <th class="p-3 border border-slate-600">Device Name</th>
-                                        <th class="p-3 border border-slate-600">Total</th>
-                                        <th class="p-3 border border-slate-600 bg-emerald-900">Repair Pass</th>
-                                        <th class="p-3 border border-slate-600 bg-rose-900">Repair Fail</th>
-                                        <th class="p-3 border border-slate-600">Pass Rate</th>
+                                        <th class="p-2.5 border border-slate-600">Date</th>
+                                        <th class="p-2.5 border border-slate-600">Device Name</th>
+                                        <th class="p-2.5 border border-slate-600">Total</th>
+                                        <th class="p-2.5 border border-slate-600">Repair Pass (Reuse)</th>
+                                        <th class="p-2.5 border border-slate-600">Repair Fail</th>
+                                        <th class="p-2.5 border border-slate-600">Pass %</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    ${rowsHtml}
-                                    <tr class="bg-slate-200 font-black text-slate-900 text-center border-t-2 border-slate-400">
-                                        <td colspan="2" class="p-3 border border-slate-300 text-right uppercase">${reg} TOTAL</td>
-                                        <td class="p-3 border border-slate-300">${regTotal.toLocaleString()}</td>
-                                        <td class="p-3 border border-slate-300 text-emerald-800 bg-emerald-100">${regPass.toLocaleString()}</td>
-                                        <td class="p-3 border border-slate-300 text-rose-700 bg-rose-100">${regFail.toLocaleString()}</td>
-                                        <td class="p-3 border border-slate-300 text-blue-900">${regRateStr}</td>
+                                    ${devRowsHtml}
+                                    <tr class="bg-slate-100 font-black text-slate-900 text-center border-t-2 border-slate-300">
+                                        <td colspan="2" class="p-2.5 border border-slate-300 text-right uppercase">TOTAL</td>
+                                        <td class="p-2.5 border border-slate-300">${devGrandTotal.toLocaleString()}</td>
+                                        <td class="p-2.5 border border-slate-300 text-emerald-700">${devGrandPass.toLocaleString()}</td>
+                                        <td class="p-2.5 border border-slate-300 text-rose-600">${devGrandFail.toLocaleString()}</td>
+                                        <td class="p-2.5 border border-slate-300 text-purple-700">${devGrandRate}</td>
                                     </tr>
                                 </tbody>
                             </table>
                         </div>
                     </div>
-                `;
-            });
-
-            container.innerHTML = cardsHtml;
+                </div>
+            `;
         }
 
         async function loadAndRenderRmaRepairTab() {
