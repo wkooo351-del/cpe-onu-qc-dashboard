@@ -26,6 +26,8 @@
                 <button onclick="switchMasterTab('section-inbound', this)" id="master-btn-inbound" class="px-3 py-1.5 text-xs font-bold rounded-md text-slate-200 hover:text-white transition">Inbound Regional</button>
                 <button onclick="switchMasterTab('section-regional-kpi', this)" id="master-btn-regional-kpi" class="px-3 py-1.5 text-xs font-bold rounded-md text-slate-200 hover:text-white transition">Regional KPI</button>
                 <button onclick="switchMasterTab('section-onu', this)" id="master-btn-onu" class="px-3 py-1.5 text-xs font-bold rounded-md text-slate-200 hover:text-white transition">ONU Inspection</button>
+                <button onclick="switchMasterTab('section-qc-test', this)" id="master-btn-qc-test" class="px-3 py-1.5 text-xs font-bold rounded-md text-slate-200 hover:text-white transition">QC Test</button>
+                <button onclick="switchMasterTab('section-rma', this)" id="master-btn-rma" class="px-3 py-1.5 text-xs font-bold rounded-md text-slate-200 hover:text-white transition">RMA</button>
             </div>
         </div>
     </div>
@@ -301,6 +303,107 @@
             </div>
             <div id="onu-dynamic-container" class="space-y-6"></div>
         </div>
+
+        <!-- SECTION 5: QC Test View -->
+        <div id="section-qc-test" class="dashboard-section hidden space-y-6">
+            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-100 pb-4 gap-3">
+                    <div class="flex items-center space-x-3">
+                        <span class="px-4 py-2 rounded-xl text-sm font-black text-white bg-cyan-600">QC TEST</span>
+                        <div>
+                            <h2 class="text-lg font-black text-slate-900">QC Test Dashboard</h2>
+                            <p class="text-xs text-slate-500 font-bold">Ready for QC Test data source & metrics integration.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 border-l-4 border-l-cyan-600">
+                        <p class="text-xs font-bold text-slate-500 uppercase">Total QC Tested</p>
+                        <p id="qc-kpi-total" class="mt-1 text-2xl font-black text-slate-900">0</p>
+                    </div>
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 border-l-4 border-l-emerald-500">
+                        <p class="text-xs font-bold text-slate-500 uppercase">QC Passed</p>
+                        <p id="qc-kpi-passed" class="mt-1 text-2xl font-black text-emerald-700">0</p>
+                    </div>
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 border-l-4 border-l-rose-500">
+                        <p class="text-xs font-bold text-slate-500 uppercase">QC Failed</p>
+                        <p id="qc-kpi-failed" class="mt-1 text-2xl font-black text-rose-600">0</p>
+                    </div>
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 border-l-4 border-l-blue-600">
+                        <p class="text-xs font-bold text-slate-500 uppercase">QC Pass Rate</p>
+                        <p id="qc-kpi-rate" class="mt-1 text-2xl font-black text-blue-700">0.00%</p>
+                    </div>
+                </div>
+                <div id="qc-test-container" class="overflow-x-auto rounded-xl border border-slate-300">
+                    <table class="w-full text-left border-collapse border border-slate-300 text-xs">
+                        <thead class="bg-slate-800 text-white uppercase font-black">
+                            <tr>
+                                <th class="p-3 border border-slate-600">Date</th>
+                                <th class="p-3 border border-slate-600">Region</th>
+                                <th class="p-3 border border-slate-600">Device / Model</th>
+                                <th class="p-3 border border-slate-600 text-center">Total</th>
+                                <th class="p-3 border border-slate-600 text-center">Pass</th>
+                                <th class="p-3 border border-slate-600 text-center">Fail</th>
+                                <th class="p-3 border border-slate-600 text-center">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="qc-test-tbody" class="font-bold text-slate-800">
+                            <tr><td colspan="7" class="p-8 text-center text-slate-400">QC Test tab added. Share your Google Sheet ID / tab name or columns to load live QC Test data.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 6: RMA View -->
+        <div id="section-rma" class="dashboard-section hidden space-y-6">
+            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-100 pb-4 gap-3">
+                    <div class="flex items-center space-x-3">
+                        <span class="px-4 py-2 rounded-xl text-sm font-black text-white bg-amber-600">RMA</span>
+                        <div>
+                            <h2 class="text-lg font-black text-slate-900">RMA Tracking Dashboard</h2>
+                            <p class="text-xs text-slate-500 font-bold">Ready for RMA sheet data & failure/reuse metrics integration.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 border-l-4 border-l-amber-600">
+                        <p class="text-xs font-bold text-slate-500 uppercase">Total RMA Units</p>
+                        <p id="rma-kpi-total" class="mt-1 text-2xl font-black text-slate-900">0</p>
+                    </div>
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 border-l-4 border-l-emerald-500">
+                        <p class="text-xs font-bold text-slate-500 uppercase">Repaired / Reuse</p>
+                        <p id="rma-kpi-reuse" class="mt-1 text-2xl font-black text-emerald-700">0</p>
+                    </div>
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 border-l-4 border-l-rose-500">
+                        <p class="text-xs font-bold text-slate-500 uppercase">Pending / Scrapped</p>
+                        <p id="rma-kpi-pending" class="mt-1 text-2xl font-black text-rose-600">0</p>
+                    </div>
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 border-l-4 border-l-indigo-600">
+                        <p class="text-xs font-bold text-slate-500 uppercase">RMA Ratio</p>
+                        <p id="rma-kpi-ratio" class="mt-1 text-2xl font-black text-indigo-700">0.00%</p>
+                    </div>
+                </div>
+                <div id="rma-container" class="overflow-x-auto rounded-xl border border-slate-300">
+                    <table class="w-full text-left border-collapse border border-slate-300 text-xs">
+                        <thead class="bg-slate-800 text-white uppercase font-black">
+                            <tr>
+                                <th class="p-3 border border-slate-600">Date</th>
+                                <th class="p-3 border border-slate-600">Region</th>
+                                <th class="p-3 border border-slate-600">Model</th>
+                                <th class="p-3 border border-slate-600">Issue / Defect</th>
+                                <th class="p-3 border border-slate-600 text-center">Qty</th>
+                                <th class="p-3 border border-slate-600 text-center">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="rma-tbody" class="font-bold text-slate-800">
+                            <tr><td colspan="6" class="p-8 text-center text-slate-400">RMA tab added. Share your Google Sheet ID / tab name or columns to load live RMA data.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     </main>
 
     <script>
@@ -484,7 +587,7 @@
             document.querySelectorAll('.dashboard-section').forEach(el => el.classList.add('hidden'));
             document.getElementById(sectionId).classList.remove('hidden');
 
-            ['master-btn-hc', 'master-btn-inbound', 'master-btn-regional-kpi', 'master-btn-onu'].forEach(id => {
+            ['master-btn-hc', 'master-btn-inbound', 'master-btn-regional-kpi', 'master-btn-onu', 'master-btn-qc-test', 'master-btn-rma'].forEach(id => {
                 let el = document.getElementById(id);
                 if(el) el.className = 'px-3 py-1.5 text-xs font-bold rounded-md text-slate-200 hover:text-white transition';
             });
