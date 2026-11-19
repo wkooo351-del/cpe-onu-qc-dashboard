@@ -912,7 +912,6 @@
             let container = document.getElementById('rma-breakdown-container');
             if (!container) return;
 
-            // From June 2026 (2026-06-01) onwards
             let junePlusRows = (rmaRepairRawRows || []).filter(row => {
                 let dt = parseLocalDate(getVal(row, ['Date', 'Repair Date'], 0));
                 if (!dt || !/^\d{4}-\d{2}-\d{2}/.test(dt)) return false;
@@ -1033,36 +1032,36 @@
                     grandReuse += rowReuse;
 
                     let myfoCellsHtml = hasMyfo ? `
-                        <td class="p-3 border border-slate-200 font-black text-slate-900">${dObj.myfo}</td>
-                        <td class="p-2 border border-slate-200">
-                            <select onchange="handleRmaHcChange('${dt}', 'MYFO', this.value)" class="w-16 px-1.5 py-1 text-center font-black rounded-md border border-slate-300 bg-white cursor-pointer focus:ring-2 focus:ring-blue-500 text-xs">
+                        <td class="p-3 border border-slate-200 font-black text-emerald-900 bg-emerald-50/40">${dObj.myfo}</td>
+                        <td class="p-2 border border-slate-200 bg-emerald-50/20">
+                            <select onchange="handleRmaHcChange('${dt}', 'MYFO', this.value)" class="w-16 px-1.5 py-1 text-center font-black rounded-md border border-emerald-300 bg-white text-emerald-900 cursor-pointer focus:ring-2 focus:ring-emerald-500 text-xs">
                                 ${buildRmaHcOptionsHtml(myfoHc)}
                             </select>
                         </td>
-                        <td class="p-3 border border-slate-200 font-black text-blue-600">${myfoKpi}</td>
+                        <td class="p-3 border border-slate-200 font-black text-emerald-700 bg-emerald-50/40">${myfoKpi}</td>
                     ` : '';
 
                     tableRowsHtml += `
                         <tr class="hover:bg-slate-50/90 border-b border-slate-200 text-center text-xs font-bold text-slate-800">
                             <td class="p-3 border border-slate-200 font-black text-slate-900">${dt}</td>
-                            <td class="p-3 border border-slate-200 font-black text-slate-900">${dObj.enuo}</td>
-                            <td class="p-2 border border-slate-200">
-                                <select onchange="handleRmaHcChange('${dt}', 'ENUO', this.value)" class="w-16 px-1.5 py-1 text-center font-black rounded-md border border-slate-300 bg-white cursor-pointer focus:ring-2 focus:ring-blue-500 text-xs">
+                            <td class="p-3 border border-slate-200 font-black text-blue-900 bg-blue-50/40">${dObj.enuo}</td>
+                            <td class="p-2 border border-slate-200 bg-blue-50/20">
+                                <select onchange="handleRmaHcChange('${dt}', 'ENUO', this.value)" class="w-16 px-1.5 py-1 text-center font-black rounded-md border border-blue-300 bg-white text-blue-900 cursor-pointer focus:ring-2 focus:ring-blue-500 text-xs">
                                     ${buildRmaHcOptionsHtml(enuoHc)}
                                 </select>
                             </td>
-                            <td class="p-3 border border-slate-200 font-black text-blue-600">${enuoKpi}</td>
-                            <td class="p-3 border border-slate-200 font-black text-slate-900">${dObj.hgao}</td>
-                            <td class="p-2 border border-slate-200">
-                                <select onchange="handleRmaHcChange('${dt}', 'HGAO', this.value)" class="w-16 px-1.5 py-1 text-center font-black rounded-md border border-slate-300 bg-white cursor-pointer focus:ring-2 focus:ring-blue-500 text-xs">
+                            <td class="p-3 border border-slate-200 font-black text-blue-700 bg-blue-50/40">${enuoKpi}</td>
+                            <td class="p-3 border border-slate-200 font-black text-amber-900 bg-amber-50/40">${dObj.hgao}</td>
+                            <td class="p-2 border border-slate-200 bg-amber-50/20">
+                                <select onchange="handleRmaHcChange('${dt}', 'HGAO', this.value)" class="w-16 px-1.5 py-1 text-center font-black rounded-md border border-amber-300 bg-white text-amber-900 cursor-pointer focus:ring-2 focus:ring-amber-500 text-xs">
                                     ${buildRmaHcOptionsHtml(hgaoHc)}
                                 </select>
                             </td>
-                            <td class="p-3 border border-slate-200 font-black text-blue-600">${hgaoKpi}</td>
+                            <td class="p-3 border border-slate-200 font-black text-amber-700 bg-amber-50/40">${hgaoKpi}</td>
                             ${myfoCellsHtml}
-                            <td class="p-3 border border-slate-200 font-black text-slate-900 bg-slate-50/70">${rowTotalRma}</td>
-                            <td class="p-3 border border-slate-200 font-bold text-slate-700 bg-slate-50/70">${rowTotalHc}</td>
-                            <td class="p-3 border border-slate-200 font-black text-blue-600 bg-slate-50/70">${rowTotalKpi}</td>
+                            <td class="p-3 border border-slate-200 font-black text-slate-900 bg-slate-100/80">${rowTotalRma}</td>
+                            <td class="p-3 border border-slate-200 font-bold text-slate-800 bg-slate-100/80">${rowTotalHc}</td>
+                            <td class="p-3 border border-slate-200 font-black text-indigo-700 bg-slate-100/80">${rowTotalKpi}</td>
                             <td class="p-3 border border-slate-200 font-black text-emerald-700">${rowReuse}</td>
                             <td class="p-3 border border-slate-200 font-black text-purple-700">${rowReusePct}</td>
                         </tr>
@@ -1079,14 +1078,13 @@
             document.getElementById('rma-card-reuse').innerText = grandReuse.toLocaleString();
             document.getElementById('rma-card-reuse-pct').innerText = grandReusePct;
 
-            let myfoHeaderTop = hasMyfo ? `<th colspan="3" class="p-2.5 border border-slate-700 bg-slate-900">MYFO</th>` : '';
+            let myfoHeaderTop = hasMyfo ? `<th colspan="3" class="p-2.5 border border-emerald-800 bg-emerald-700 text-white">MYFO</th>` : '';
             let myfoHeaderSub = hasMyfo ? `
-                <th class="p-2 border border-slate-700 bg-slate-800">RMA</th>
-                <th class="p-2 border border-slate-700 bg-slate-800">HC</th>
-                <th class="p-2 border border-slate-700 bg-slate-800">KPI</th>
+                <th class="p-2 border border-emerald-800 bg-emerald-600 text-white">RMA</th>
+                <th class="p-2 border border-emerald-800 bg-emerald-600 text-white">HC</th>
+                <th class="p-2 border border-emerald-800 bg-emerald-600 text-white">KPI</th>
             ` : '';
 
-            // Device breakdown table (Date, Device Name, Total, Repair Pass, Repair Fail, Pass %)
             let sortedDevices = Array.from(deviceSet).sort();
             let devRowsHtml = "";
             let devGrandTotal = 0, devGrandPass = 0, devGrandFail = 0;
@@ -1126,20 +1124,20 @@
                             <thead class="bg-slate-900 text-white uppercase font-black text-center">
                                 <tr>
                                     <th rowspan="2" class="p-3 border border-slate-700 align-middle bg-slate-900">Date</th>
-                                    <th colspan="3" class="p-2.5 border border-slate-700 bg-slate-900">ENUO</th>
-                                    <th colspan="3" class="p-2.5 border border-slate-700 bg-slate-900">HGAO</th>
+                                    <th colspan="3" class="p-2.5 border border-blue-800 bg-blue-700 text-white">ENUO</th>
+                                    <th colspan="3" class="p-2.5 border border-amber-800 bg-amber-600 text-white">HGAO</th>
                                     ${myfoHeaderTop}
                                     <th colspan="3" class="p-2.5 border border-slate-700 bg-slate-900">TOTAL RMA</th>
                                     <th rowspan="2" class="p-3 border border-slate-700 align-middle bg-slate-900">REUSE</th>
                                     <th rowspan="2" class="p-3 border border-slate-700 align-middle bg-slate-900">REUSE %</th>
                                 </tr>
                                 <tr>
-                                    <th class="p-2 border border-slate-700 bg-slate-800">RMA</th>
-                                    <th class="p-2 border border-slate-700 bg-slate-800">HC</th>
-                                    <th class="p-2 border border-slate-700 bg-slate-800">KPI</th>
-                                    <th class="p-2 border border-slate-700 bg-slate-800">RMA</th>
-                                    <th class="p-2 border border-slate-700 bg-slate-800">HC</th>
-                                    <th class="p-2 border border-slate-700 bg-slate-800">KPI</th>
+                                    <th class="p-2 border border-blue-800 bg-blue-600 text-white">RMA</th>
+                                    <th class="p-2 border border-blue-800 bg-blue-600 text-white">HC</th>
+                                    <th class="p-2 border border-blue-800 bg-blue-600 text-white">KPI</th>
+                                    <th class="p-2 border border-amber-800 bg-amber-500 text-white">RMA</th>
+                                    <th class="p-2 border border-amber-800 bg-amber-500 text-white">HC</th>
+                                    <th class="p-2 border border-amber-800 bg-amber-500 text-white">KPI</th>
                                     ${myfoHeaderSub}
                                     <th class="p-2 border border-slate-700 bg-slate-800">Total</th>
                                     <th class="p-2 border border-slate-700 bg-slate-800">HC</th>
@@ -2588,42 +2586,46 @@
                             <td class="p-2 border border-slate-200 text-center font-bold text-red-700 bg-red-50/40">${stat.bip8 > 0 ? stat.bip8.toLocaleString() : '-'}</td>
                             <td class="p-2 border border-slate-200 text-center font-bold text-yellow-700 bg-yellow-50/40">${stat.gasp > 0 ? stat.gasp.toLocaleString() : '-'}</td>
                             <td class="p-2 border border-slate-200 text-center font-bold text-violet-700 bg-violet-50/40">${stat.los > 0 ? stat.los.toLocaleString() : '-'}</td>
-                            <td class="p-2 border border-slate-200 text-center font-black text-rose-600 bg-slate-100">${stat.totalFail.toLocaleString()}</td>
+                            <td class="p-2 border border-slate-200 text-center font-black bg-slate-200 text-slate-900">${stat.totalFail.toLocaleString()}</td>
                         </tr>
                     `;
                 });
 
                 matrixRowsHtml += `
-                    <tr class="bg-slate-200 font-black text-slate-900 border-t-2 border-slate-300">
-                        <td class="p-2.5 border border-slate-300 uppercase">Total</td>
-                        <td class="p-2.5 border border-slate-300 text-center text-blue-900 bg-blue-100">${colTotals.rx.toLocaleString()}</td>
-                        <td class="p-2.5 border border-slate-300 text-center text-indigo-900 bg-indigo-100">${colTotals.tx.toLocaleString()}</td>
-                        <td class="p-2.5 border border-slate-300 text-center text-purple-900 bg-purple-100">${colTotals.bias.toLocaleString()}</td>
-                        <td class="p-2.5 border border-slate-300 text-center text-pink-900 bg-pink-100">${colTotals.volt.toLocaleString()}</td>
-                        <td class="p-2.5 border border-slate-300 text-center text-emerald-900 bg-emerald-100">${colTotals.temp.toLocaleString()}</td>
-                        <td class="p-2.5 border border-slate-300 text-center text-cyan-900 bg-cyan-100">${colTotals.online.toLocaleString()}</td>
-                        <td class="p-2.5 border border-slate-300 text-center text-orange-900 bg-orange-100">${colTotals.offline.toLocaleString()}</td>
-                        <td class="p-2.5 border border-slate-300 text-center text-red-900 bg-red-100">${colTotals.bip8.toLocaleString()}</td>
-                        <td class="p-2.5 border border-slate-300 text-center text-yellow-900 bg-yellow-100">${colTotals.gasp.toLocaleString()}</td>
-                        <td class="p-2.5 border border-slate-300 text-center text-violet-900 bg-violet-100">${colTotals.los.toLocaleString()}</td>
-                        <td class="p-2.5 border border-slate-300 text-center text-rose-700 text-sm bg-slate-300">${colTotals.totalFail.toLocaleString()}</td>
+                    <tr class="bg-slate-900 text-white font-black border-t-2 border-slate-700">
+                        <td class="p-2.5 border border-slate-700 uppercase">TOTAL</td>
+                        <td class="p-2.5 border border-slate-700 text-center text-blue-300">${colTotals.rx > 0 ? colTotals.rx.toLocaleString() : '-'}</td>
+                        <td class="p-2.5 border border-slate-700 text-center text-indigo-300">${colTotals.tx > 0 ? colTotals.tx.toLocaleString() : '-'}</td>
+                        <td class="p-2.5 border border-slate-700 text-center text-purple-300">${colTotals.bias > 0 ? colTotals.bias.toLocaleString() : '-'}</td>
+                        <td class="p-2.5 border border-slate-700 text-center text-pink-300">${colTotals.volt > 0 ? colTotals.volt.toLocaleString() : '-'}</td>
+                        <td class="p-2.5 border border-slate-700 text-center text-emerald-300">${colTotals.temp > 0 ? colTotals.temp.toLocaleString() : '-'}</td>
+                        <td class="p-2.5 border border-slate-700 text-center text-cyan-300">${colTotals.online > 0 ? colTotals.online.toLocaleString() : '-'}</td>
+                        <td class="p-2.5 border border-slate-700 text-center text-orange-300">${colTotals.offline > 0 ? colTotals.offline.toLocaleString() : '-'}</td>
+                        <td class="p-2.5 border border-slate-700 text-center text-red-300">${colTotals.bip8 > 0 ? colTotals.bip8.toLocaleString() : '-'}</td>
+                        <td class="p-2.5 border border-slate-700 text-center text-yellow-300">${colTotals.gasp > 0 ? colTotals.gasp.toLocaleString() : '-'}</td>
+                        <td class="p-2.5 border border-slate-700 text-center text-violet-300">${colTotals.los > 0 ? colTotals.los.toLocaleString() : '-'}</td>
+                        <td class="p-2.5 border border-slate-700 text-center text-emerald-400">${colTotals.totalFail.toLocaleString()}</td>
                     </tr>
                 `;
             }
             matrixTbody.innerHTML = matrixRowsHtml;
 
             setTimeout(() => {
-                let ctxParam = document.getElementById('paramBarChart');
-                if (ctxParam) {
+                let ctxParamBar = document.getElementById('paramBarChart');
+                if (ctxParamBar) {
                     if (paramBarChartInstance) paramBarChartInstance.destroy();
-                    paramBarChartInstance = new Chart(ctxParam, {
+                    let paramLabels = ['Rx', 'Tx', 'Bias', 'Volt', 'Temp', 'Online', 'Offline', 'BIP8', 'Gasp', 'LOS'];
+                    let paramValues = [colTotals.rx, colTotals.tx, colTotals.bias, colTotals.volt, colTotals.temp, colTotals.online, colTotals.offline, colTotals.bip8, colTotals.gasp, colTotals.los];
+                    let barColors = ['#3b82f6', '#6366f1', '#a855f7', '#ec4899', '#10b981', '#06b6d4', '#f97316', '#ef4444', '#eab308', '#8b5cf6'];
+
+                    paramBarChartInstance = new Chart(ctxParamBar, {
                         type: 'bar',
                         data: {
-                            labels: ['Rx', 'Tx', 'Bias', 'Volt', 'Temp', 'Online', 'Offline', 'BIP8', 'Gasp', 'LOS'],
+                            labels: paramLabels,
                             datasets: [{
-                                label: 'Failure Count',
-                                data: [colTotals.rx, colTotals.tx, colTotals.bias, colTotals.volt, colTotals.temp, colTotals.online, colTotals.offline, colTotals.bip8, colTotals.gasp, colTotals.los],
-                                backgroundColor: ['#3b82f6', '#6366f1', '#a855f7', '#ec4899', '#10b981', '#06b6d4', '#f97316', '#ef4444', '#eab308', '#8b5cf6'],
+                                label: 'Failures Count',
+                                data: paramValues,
+                                backgroundColor: barColors,
                                 borderRadius: 4
                             }]
                         },
@@ -2632,93 +2634,91 @@
                             maintainAspectRatio: false,
                             plugins: { legend: { display: false } },
                             scales: {
-                                x: { ticks: { font: { weight: 'bold', size: 9 }, color: '#0f172a' } },
+                                x: { ticks: { font: { weight: 'bold', size: 10 }, color: '#0f172a' } },
                                 y: { ticks: { font: { weight: 'bold' }, color: '#0f172a' } }
                             }
                         }
                     });
                 }
-            }, 50);
+            }, 100);
 
-            let deviceTotals = {};
+            let modelSummary = {};
             data.forEach(r => {
                 let dev = getDeviceName(r);
-                if (!deviceTotals[dev]) {
-                    deviceTotals[dev] = { total: 0, passed: 0, failed: 0 };
+                if (!modelSummary[dev]) {
+                    modelSummary[dev] = { total: 0, passed: 0, failed: 0 };
                 }
-                deviceTotals[dev].total += 1;
-                if (isStrictPass(r)) {
-                    deviceTotals[dev].passed += 1;
-                } else {
-                    deviceTotals[dev].failed += 1;
-                }
+                modelSummary[dev].total++;
+                if (isStrictPass(r)) modelSummary[dev].passed++;
+                else modelSummary[dev].failed++;
             });
 
             let modelTbody = document.getElementById('device-model-tbody');
             if(!modelTbody) return;
             let modelRowsHtml = "";
-            let grandTotalTested = 0, grandPassed = 0, grandFailed = 0;
-            let chartLabels = [], chartPassedData = [], chartFailedData = [];
+            let sumTot = 0, sumPas = 0, sumFai = 0;
 
-            let testedDeviceKeys = Object.keys(deviceTotals).filter(d => deviceTotals[d].total > 0).sort();
-
-            if (testedDeviceKeys.length === 0) {
-                modelRowsHtml = `<tr><td colspan="5" class="p-4 text-center text-slate-400">No device model records found.</td></tr>`;
+            let modelsSorted = Object.keys(modelSummary).sort();
+            if (modelsSorted.length === 0) {
+                modelRowsHtml = `<tr><td colspan="5" class="p-4 text-center text-slate-400">No models recorded.</td></tr>`;
             } else {
-                testedDeviceKeys.forEach(m => {
-                    let stat = deviceTotals[m];
-                    grandTotalTested += stat.total;
-                    grandPassed += stat.passed;
-                    grandFailed += stat.failed;
+                modelsSorted.forEach(dev => {
+                    let m = modelSummary[dev];
+                    sumTot += m.total;
+                    sumPas += m.passed;
+                    sumFai += m.failed;
 
-                    chartLabels.push(m);
-                    chartPassedData.push(stat.passed);
-                    chartFailedData.push(stat.failed);
-
-                    let failRate = stat.total > 0 ? ((stat.failed / stat.total) * 100).toFixed(2) : "0.00";
+                    let fRate = m.total > 0 ? ((m.failed / m.total) * 100).toFixed(2) : "0.00";
+                    let rateBadge = parseFloat(fRate) > 0 
+                        ? `<span class="text-rose-600 font-black">${fRate}%</span>` 
+                        : `<span class="text-emerald-700 font-black">${fRate}%</span>`;
 
                     modelRowsHtml += `
                         <tr class="hover:bg-slate-50 border-b border-slate-200">
-                            <td class="p-3 border border-slate-200 font-black text-slate-900 bg-slate-50">${m}</td>
-                            <td class="p-3 border border-slate-200 text-center font-black text-slate-900">${stat.total.toLocaleString()}</td>
-                            <td class="p-3 border border-slate-200 text-center font-black text-emerald-600">${stat.passed.toLocaleString()}</td>
-                            <td class="p-3 border border-slate-200 text-center font-black text-rose-600">${stat.failed.toLocaleString()}</td>
-                            <td class="p-3 border border-slate-200 text-center font-bold text-slate-700">${failRate}%</td>
+                            <td class="p-3 border border-slate-200 font-black bg-slate-100 text-slate-900">${dev}</td>
+                            <td class="p-3 border border-slate-200 text-center font-black">${m.total.toLocaleString()}</td>
+                            <td class="p-3 border border-slate-200 text-center font-black text-emerald-700">${m.passed.toLocaleString()}</td>
+                            <td class="p-3 border border-slate-200 text-center font-black text-rose-600">${m.failed > 0 ? m.failed.toLocaleString() : '-'}</td>
+                            <td class="p-3 border border-slate-200 text-center font-black">${rateBadge}</td>
                         </tr>
                     `;
                 });
 
-                let overallFailRate = grandTotalTested > 0 ? ((grandFailed / grandTotalTested) * 100).toFixed(2) : "0.00";
-
+                let overallFRate = sumTot > 0 ? ((sumFai / sumTot) * 100).toFixed(2) : "0.00";
                 modelRowsHtml += `
-                    <tr class="bg-slate-200 font-black text-slate-900 border-t-2 border-slate-300">
-                        <td class="p-3 border border-slate-300 uppercase">Total</td>
-                        <td class="p-3 border border-slate-300 text-center text-slate-900">${grandTotalTested.toLocaleString()}</td>
-                        <td class="p-3 border border-slate-300 text-center text-emerald-700">${grandPassed.toLocaleString()}</td>
-                        <td class="p-3 border border-slate-300 text-center text-rose-700">${grandFailed.toLocaleString()}</td>
-                        <td class="p-3 border border-slate-300 text-center text-slate-900">${overallFailRate}%</td>
+                    <tr class="bg-slate-900 text-white font-black border-t-2 border-slate-700">
+                        <td class="p-3 border border-slate-700 uppercase">TOTAL</td>
+                        <td class="p-3 border border-slate-700 text-center text-white">${sumTot.toLocaleString()}</td>
+                        <td class="p-3 border border-slate-700 text-center text-emerald-400">${sumPas.toLocaleString()}</td>
+                        <td class="p-3 border border-slate-700 text-center text-rose-400">${sumFai > 0 ? sumFai.toLocaleString() : '-'}</td>
+                        <td class="p-3 border border-slate-700 text-center text-amber-400">${overallFRate}%</td>
                     </tr>
                 `;
             }
             modelTbody.innerHTML = modelRowsHtml;
 
             setTimeout(() => {
-                let ctxDeviceModel = document.getElementById('deviceModelBarChart');
-                if (ctxDeviceModel) {
+                let ctxModel = document.getElementById('deviceModelBarChart');
+                if (ctxModel) {
                     if (deviceModelChartInstance) deviceModelChartInstance.destroy();
-                    deviceModelChartInstance = new Chart(ctxDeviceModel, {
+                    let mLabels = modelsSorted;
+                    let mFailCounts = mLabels.map(m => modelSummary[m].failed);
+
+                    deviceModelChartInstance = new Chart(ctxModel, {
                         type: 'bar',
                         data: {
-                            labels: chartLabels,
-                            datasets: [
-                                { label: 'Passed', data: chartPassedData, backgroundColor: '#10B981', borderRadius: 4 },
-                                { label: 'Failed', data: chartFailedData, backgroundColor: '#EF4444', borderRadius: 4 }
-                            ]
+                            labels: mLabels,
+                            datasets: [{
+                                label: 'Failed Units',
+                                data: mFailCounts,
+                                backgroundColor: '#ef4444',
+                                borderRadius: 4
+                            }]
                         },
                         options: {
                             responsive: true,
                             maintainAspectRatio: false,
-                            plugins: { legend: { position: 'bottom', labels: { font: { weight: 'bold', size: 10 }, color: '#0f172a' } } },
+                            plugins: { legend: { display: false } },
                             scales: {
                                 x: { ticks: { font: { weight: 'bold' }, color: '#0f172a' } },
                                 y: { ticks: { font: { weight: 'bold' }, color: '#0f172a' } }
@@ -2726,185 +2726,86 @@
                         }
                     });
                 }
-            }, 50);
+            }, 100);
         }
 
-        function renderOnuRegionalBreakdown(rawData) {
-            let container = document.getElementById('onu-dynamic-container');
-            if (!container) return;
+        function renderOnuRegionalBreakdown(filteredByPeriod) {
+            let dynContainer = document.getElementById('onu-dynamic-container');
+            if(!dynContainer) return;
 
-            let targetRegions = ['HGAO', 'ENUO', 'MYFO'];
-            if (currentOnuRegion !== 'All Region') {
-                targetRegions = [currentOnuRegion];
-            }
+            let targetRegions = currentOnuRegion === 'All Region' ? ['HGAO', 'ENUO', 'MYFO'] : [currentOnuRegion];
+            let html = "";
 
-            let weekRanges = [
-                { name: "Week 1 (1 - 7)", start: 1, end: 7 },
-                { name: "Week 2 (8 - 14)", start: 8, end: 14 },
-                { name: "Week 3 (15 - 21)", start: 15, end: 21 },
-                { name: "Week 4 (22 - End)", start: 22, end: 31 }
-            ];
+            targetRegions.forEach(reg => {
+                let rData = filteredByPeriod.filter(r => getRowRegion(r) === reg);
+                let tot = rData.length;
+                let pas = rData.filter(r => isStrictPass(r)).length;
+                let fai = tot - pas;
+                let pRate = tot > 0 ? ((pas / tot) * 100).toFixed(2) : "0.00";
+                let fRate = tot > 0 ? ((fai / tot) * 100).toFixed(2) : "0.00";
 
-            let weeklyCompHtml = "";
-            let prevPassRate = null;
-            let weekTrendCardsHtml = "";
+                let badgeClass = reg === 'HGAO' ? 'bg-amber-500 text-white' : (reg === 'ENUO' ? 'bg-blue-600 text-white' : 'bg-emerald-600 text-white');
 
-            weekRanges.forEach((wk, idx) => {
-                let wkRows = rawData.filter(r => {
-                    let dateStr = parseLocalDate(r['_rawArray'][0] || getVal(r, ['Date'], 0));
-                    if (!dateStr) return false;
-                    let dayNum = parseInt(dateStr.split('-')[2]) || 0;
-                    let matchesRegion = true;
-                    if (currentOnuRegion !== 'All Region') {
-                        matchesRegion = getRowRegion(r) === currentOnuRegion;
-                    }
-                    return dayNum >= wk.start && dayNum <= wk.end && matchesRegion;
+                let regModelMap = {};
+                rData.forEach(r => {
+                    let m = getDeviceName(r);
+                    if(!regModelMap[m]) regModelMap[m] = { total: 0, passed: 0, failed: 0 };
+                    regModelMap[m].total++;
+                    if(isStrictPass(r)) regModelMap[m].passed++;
+                    else regModelMap[m].failed++;
                 });
 
-                let totalWk = wkRows.length;
-                let passWk = wkRows.filter(r => isStrictPass(r)).length;
-                let failWk = totalWk - passWk;
-                let pRate = totalWk > 0 ? ((passWk / totalWk) * 100) : 0;
-                let fRate = totalWk > 0 ? ((failWk / totalWk) * 100) : 0;
-
-                let rateDiffBadge = "-";
-                if (prevPassRate !== null && totalWk > 0) {
-                    let diff = pRate - prevPassRate;
-                    if (diff > 0) {
-                        rateDiffBadge = `<span class="text-emerald-600 font-extrabold">▲ +${diff.toFixed(1)}% (Improved)</span>`;
-                    } else if (diff < 0) {
-                        rateDiffBadge = `<span class="text-rose-600 font-extrabold">▼ ${diff.toFixed(1)}% (Dropped)</span>`;
-                    } else {
-                        rateDiffBadge = `<span class="text-slate-500 font-bold">▶ 0.0% (Stable)</span>`;
-                    }
-                }
-                if (totalWk > 0) prevPassRate = pRate;
-
-                weeklyCompHtml += `
-                    <tr class="hover:bg-slate-50 border-b border-slate-200 text-center">
-                        <td class="p-3 text-slate-900 border border-slate-300 font-black">${wk.name}</td>
-                        <td class="p-3 border border-slate-300 text-slate-800">${totalWk.toLocaleString()}</td>
-                        <td class="p-3 border border-slate-300 text-emerald-600 font-black">${passWk.toLocaleString()}</td>
-                        <td class="p-3 border border-slate-300 text-rose-600 font-black">${failWk.toLocaleString()}</td>
-                        <td class="p-3 border border-slate-300 text-blue-600 font-black">${pRate.toFixed(2)}%</td>
-                        <td class="p-3 border border-slate-300 text-amber-600 font-black">${fRate.toFixed(2)}%</td>
-                        <td class="p-3 border border-slate-300 text-xs">${rateDiffBadge}</td>
-                    </tr>
-                `;
-
-                weekTrendCardsHtml += `
-                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 flex flex-col justify-between font-bold">
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="text-xs font-black text-slate-700">${wk.name}</span>
-                            <span class="text-xs px-2 py-0.5 rounded bg-indigo-100 text-indigo-700 font-bold">${totalWk} Tested</span>
-                        </div>
-                        <div class="space-y-1">
-                            <div class="flex justify-between text-xs">
-                                <span class="text-slate-500">Pass Rate:</span>
-                                <span class="text-emerald-600 font-black">${pRate.toFixed(1)}%</span>
-                            </div>
-                            <div class="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
-                                <div class="bg-emerald-500 h-1.5 rounded-full" style="width: ${pRate}%;"></div>
-                            </div>
-                            <div class="flex justify-between text-xs pt-1">
-                                <span class="text-slate-500">Fail Rate:</span>
-                                <span class="text-rose-600 font-black">${fRate.toFixed(1)}%</span>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            });
-
-            let html = `
-                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4 font-bold">
-                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-100 pb-3 gap-2">
-                        <div>
-                            <h3 class='text-lg font-black text-slate-950'>Week-by-Week Pass/Fail Rate Trends & Comparison (${currentTestType.toUpperCase()})</h3>
-                        </div>
-                    </div>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                        ${weekTrendCardsHtml}
-                    </div>
-                    <div class="overflow-x-auto rounded-xl border border-slate-300 mt-4">
-                        <table class="w-full text-left border-collapse border border-slate-300 text-xs">
-                            <thead class="bg-slate-800 text-white uppercase font-black text-center">
-                                <tr>
-                                    <th class="p-3 border border-slate-600">Period Week</th>
-                                    <th class="p-3 border border-slate-600">Total Tested</th>
-                                    <th class="p-3 border border-slate-600">Pass Units</th>
-                                    <th class="p-3 border border-slate-600">Fail Units</th>
-                                    <th class="p-3 border border-slate-600">Pass Rate %</th>
-                                    <th class="p-3 border border-slate-600">Fail Rate %</th>
-                                    <th class="p-3 border border-slate-600">Weekly Progress Trend</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${weeklyCompHtml}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-6 font-bold">
-                    <div>
-                        <h3 class='text-lg font-black text-slate-950'>Regional Inspection & Parameter Failure Breakdown</h3>
-                    </div>
-            `;
-
-            targetRegions.forEach(regShort => {
-                let regRows = rawData.filter(r => getRowRegion(r) === regShort);
-                let regTotal = regRows.length;
-                let passed = regRows.filter(r => isStrictPass(r)).length;
-                let failed = regTotal - passed;
-                let passRate = regTotal > 0 ? ((passed / regTotal) * 100).toFixed(1) : "0.0";
-                let failRate = regTotal > 0 ? ((failed / regTotal) * 100).toFixed(1) : "0.0";
-
-                let rxFail = regRows.filter(r => checkParamFailIndex(r, 5)).length;
-                let txFail = regRows.filter(r => checkParamFailIndex(r, 6)).length;
-                let biasFail = regRows.filter(r => checkParamFailIndex(r, 7)).length;
-                let voltFail = regRows.filter(r => checkParamFailIndex(r, 8)).length;
-                let tempFail = regRows.filter(r => checkParamFailIndex(r, 9)).length;
-                let onlineFail = regRows.filter(r => checkParamFailIndex(r, 17)).length;
-                let offlineFail = regRows.filter(r => checkParamFailIndex(r, 19)).length;
-                let bip8Fail = regRows.filter(r => checkParamFailIndex(r, 21)).length;
-                let gaspFail = regRows.filter(r => checkParamFailIndex(r, 23)).length;
-                let losFail = regRows.filter(r => checkParamFailIndex(r, 25)).length;
-
-                let badgeColor = regShort === 'HGAO' ? 'bg-amber-500' : (regShort === 'ENUO' ? 'bg-blue-600' : 'bg-emerald-600');
+                let regModelRowsHtml = Object.keys(regModelMap).sort().map(m => {
+                    let s = regModelMap[m];
+                    let fr = s.total > 0 ? ((s.failed / s.total) * 100).toFixed(2) : "0.00";
+                    return `
+                        <tr class="border-b border-slate-200 text-xs font-bold">
+                            <td class="p-2.5 border border-slate-200 font-black text-slate-900">${m}</td>
+                            <td class="p-2.5 border border-slate-200 text-center">${s.total.toLocaleString()}</td>
+                            <td class="p-2.5 border border-slate-200 text-center text-emerald-700">${s.passed.toLocaleString()}</td>
+                            <td class="p-2.5 border border-slate-200 text-center text-rose-600">${s.failed > 0 ? s.failed.toLocaleString() : '-'}</td>
+                            <td class="p-2.5 border border-slate-200 text-center font-black text-rose-600">${fr}%</td>
+                        </tr>
+                    `;
+                }).join('') || `<tr><td colspan="5" class="p-4 text-center text-slate-400">No devices for ${reg}</td></tr>`;
 
                 html += `
-                    <div class="p-5 rounded-xl border border-slate-200 bg-slate-50/50 space-y-4">
-                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-slate-200 pb-3">
-                            <span class="px-3 py-1.5 rounded-lg text-xs font-black text-white ${badgeColor}">${regShort} Region</span>
-                            <div class="flex flex-wrap gap-3 text-xs">
-                                <span class="text-slate-700">Total: <strong class="text-slate-900">${regTotal.toLocaleString()}</strong></span>
-                                <span class="text-emerald-600">Passed: <strong>${passed.toLocaleString()}</strong> (${passRate}%)</span>
-                                <span class="text-rose-600">Failed: <strong>${failed.toLocaleString()}</strong> (${failRate}%)</span>
+                    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-100 pb-3 gap-2">
+                            <div class="flex items-center gap-3">
+                                <span class="px-3.5 py-1.5 rounded-xl text-xs font-black ${badgeClass}">${reg}</span>
+                                <h3 class="text-base font-black text-slate-900">${reg} Regional ONU Inspection Breakdown</h3>
+                            </div>
+                            <div class="flex flex-wrap gap-3 text-xs font-black">
+                                <span class="px-3 py-1 rounded-lg bg-slate-100 text-slate-800">Total: ${tot.toLocaleString()}</span>
+                                <span class="px-3 py-1 rounded-lg bg-emerald-100 text-emerald-800">Pass: ${pas.toLocaleString()} (${pRate}%)</span>
+                                <span class="px-3 py-1 rounded-lg bg-rose-100 text-rose-700">Fail: ${fai.toLocaleString()} (${fRate}%)</span>
                             </div>
                         </div>
-                        <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 text-xs">
-                            <div class="bg-white p-2.5 rounded-lg border border-slate-200 flex justify-between items-center"><span class="text-slate-500">RX:</span><span class="px-2 py-0.5 bg-blue-50 text-blue-700 rounded font-black">${rxFail}</span></div>
-                            <div class="bg-white p-2.5 rounded-lg border border-slate-200 flex justify-between items-center"><span class="text-slate-500">TX:</span><span class="px-2 py-0.5 bg-indigo-50 text-indigo-700 rounded font-black">${txFail}</span></div>
-                            <div class="bg-white p-2.5 rounded-lg border border-slate-200 flex justify-between items-center"><span class="text-slate-500">BIAS:</span><span class="px-2 py-0.5 bg-purple-50 text-purple-700 rounded font-black">${biasFail}</span></div>
-                            <div class="bg-white p-2.5 rounded-lg border border-slate-200 flex justify-between items-center"><span class="text-slate-500">VOLT:</span><span class="px-2 py-0.5 bg-pink-50 text-pink-700 rounded font-black">${voltFail}</span></div>
-                            <div class="bg-white p-2.5 rounded-lg border border-slate-200 flex justify-between items-center"><span class="text-slate-500">TEMP:</span><span class="px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded font-black">${tempFail}</span></div>
-                            <div class="bg-white p-2.5 rounded-lg border border-slate-200 flex justify-between items-center"><span class="text-slate-500">ONLINE:</span><span class="px-2 py-0.5 bg-cyan-50 text-cyan-700 rounded font-black">${onlineFail}</span></div>
-                            <div class="bg-white p-2.5 rounded-lg border border-slate-200 flex justify-between items-center"><span class="text-slate-500">OFFLINE:</span><span class="px-2 py-0.5 bg-orange-50 text-orange-700 rounded font-black">${offlineFail}</span></div>
-                            <div class="bg-white p-2.5 rounded-lg border border-slate-200 flex justify-between items-center"><span class="text-slate-500">BIP8:</span><span class="px-2 py-0.5 bg-red-50 text-red-700 rounded font-black">${bip8Fail}</span></div>
-                            <div class="bg-white p-2.5 rounded-lg border border-slate-200 flex justify-between items-center"><span class="text-slate-500">GASP:</span><span class="px-2 py-0.5 bg-yellow-50 text-yellow-700 rounded font-black">${gaspFail}</span></div>
-                            <div class="bg-white p-2.5 rounded-lg border border-slate-200 flex justify-between items-center"><span class="text-slate-500">LOS:</span><span class="px-2 py-0.5 bg-violet-50 text-violet-700 rounded font-black">${losFail}</span></div>
+                        <div class="overflow-x-auto rounded-xl border border-slate-300">
+                            <table class="w-full text-left border-collapse border border-slate-300 text-xs">
+                                <thead class="bg-slate-800 text-white uppercase font-black">
+                                    <tr>
+                                        <th class="p-2.5 border border-slate-600">MODEL</th>
+                                        <th class="p-2.5 border border-slate-600 text-center">TOTAL</th>
+                                        <th class="p-2.5 border border-slate-600 text-center">PASSED</th>
+                                        <th class="p-2.5 border border-slate-600 text-center">FAILED</th>
+                                        <th class="p-2.5 border border-slate-600 text-center">FAIL RATE</th>
+                                    </tr>
+                                </thead>
+                                <tbody>${regModelRowsHtml}</tbody>
+                            </table>
                         </div>
                     </div>
                 `;
             });
 
-            html += `</div>`;
-            container.innerHTML = html;
+            dynContainer.innerHTML = html;
         }
 
-        window.onload = function() {
+        window.addEventListener('DOMContentLoaded', () => {
             loadAllData();
-            setInterval(loadAllData, 14400000);
-        };
+        });
     </script>
 </body>
 </html>
