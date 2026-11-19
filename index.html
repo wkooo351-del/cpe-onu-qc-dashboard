@@ -286,6 +286,7 @@
 
     <script>
         const STAFF_SHEET_ID = "14WOHloWhGuQOc95PrRUsYWAHT6PTCC6EL2pY18uglVs";
+        const MDY_SHEET_ID = "PASTE_MDY_2026_SHEET_ID_HERE"; // MDY - 2026 Spreadsheet ID ကို ဤနေရာတွင် ထည့်ပါ[cite: 5]
         const INBOUND_SHEET_ID = "1PK1Bz7gRg8x3L8IOr7Xx8ntMADaznWWhYyEjchzuM6M";
         const ONU_SS_ID = "1EHtzUxAO1EuB_CxejyqBFiAjOsZQX4meYZqDcIRx9po";
         const DAILY_TARGET = 150;
@@ -423,6 +424,7 @@
         }
 
         async function fetchGoogleSheetData(sheetId, sheetName = "") {
+            if (!sheetId || sheetId.includes("PASTE_")) return [];
             try {
                 let url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json`;
                 if (sheetName) url += `&sheet=${encodeURIComponent(sheetName)}`;
@@ -456,6 +458,7 @@
         }
 
         async function fetchFlexibleSheet(sheetId, candidateNames) {
+            if (!sheetId || sheetId.includes("PASTE_")) return [];
             for (let name of candidateNames) {
                 let rows = await fetchGoogleSheetData(sheetId, name);
                 if (rows.length > 0) return rows;
@@ -727,8 +730,8 @@
         async function populateRegionalDateFilter() {
             let datesSet = new Set();
 
-            let ygnRows = await fetchFlexibleSheet(STAFF_SHEET_ID, ["YGN-2026", "YGN 2026"]);
-            let mdyRows = await fetchFlexibleSheet(STAFF_SHEET_ID, ["MDY-2026", "MDY 2026"]);
+            let ygnRows = await fetchFlexibleSheet(STAFF_SHEET_ID, ["Nov 26", "Oct 26", "YGN-2026", "YGN 2026"]);
+            let mdyRows = await fetchFlexibleSheet(MDY_SHEET_ID, ["Nov 26", "Oct 26", "July 26", "Sep 26", "Aug 26"]);
 
             [...ygnRows, ...mdyRows].forEach(row => {
                 let rawArr = row['_rawArray'] || [];
@@ -761,8 +764,12 @@
 
         async function extractRegionalMetrics(regionName, targetDate) {
             let dateMap = {};
-            let sheetName = regionName === 'MYFO' ? "MDY-2026" : "YGN-2026";
-            let rows = await fetchFlexibleSheet(STAFF_SHEET_ID, [sheetName, sheetName.replace('-', ' ')]);
+            let sheetId = regionName === 'MYFO' ? MDY_SHEET_ID : STAFF_SHEET_ID;
+            let candidateSheets = regionName === 'MYFO'
+                ? ["Nov 26", "Oct 26", "July 26", "Sep 26", "Aug 26"]
+                : ["Nov 26", "Oct 26", "YGN-2026", "YGN 2026"];
+
+            let rows = await fetchFlexibleSheet(sheetId, candidateSheets);
 
             rows.forEach(row => {
                 let rawArr = row['_rawArray'] || [];
@@ -777,16 +784,18 @@
                     if (rowRegion !== regionName && !rowRegion.includes(regionName)) return;
                 }
 
-                let colDVal = rawArr[3] !== undefined ? rawArr[3] : getVal(row, ['Daily JD', 'JD', 'Qty'], 3);
+                let colDVal = rawArr[3] !== undefined ? rawArr[3] : getVal(row, ['Daily (JD)', 'Daily JD', 'JD'], 3);
                 let colDStr = String(colDVal || '').trim().toLowerCase();
-                let macVal = rawArr[5] !== undefined ? rawArr[5] : getVal(row, ['Mac', 'MAC', 'Mac Address'], 5);
+                let qtyRaw = rawArr[4] !== undefined ? rawArr[4] : getVal(row, ['Qty', 'Quantity'], 4);
+                let macVal = rawArr[5] !== undefined ? rawArr[5] : getVal(row, ['Mac', 'MAC', 'Default MAC', 'Mac Address'], 5);
 
                 if (!dateMap[dt]) {
                     dateMap[dt] = { cleaning: 0, terminal: 0, default: 0 };
                 }
 
                 if (colDStr.includes('clean')) {
-                    let cleanQty = parseFloat(colDVal);
+                    let cleanQty = parseFloat(qtyRaw);
+                    if (isNaN(cleanQty)) cleanQty = parseFloat(colDVal);
                     if (!isNaN(cleanQty)) {
                         dateMap[dt].cleaning += cleanQty;
                     }
