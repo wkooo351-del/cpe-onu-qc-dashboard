@@ -1050,6 +1050,8 @@
             let sumDefaultTotal = 0, sumDefaultHc = 0;
             let sumGrandTotal = 0;
             let sumDailyHc = 0;
+            let meetDaysCount = 0;
+            let activeDaysCount = 0;
 
             if(sortedDates.length === 0) {
                 let dateDesc = selectedRegionalDates.length > 0 ? selectedRegionalDates.join(', ') : 'All Dates';
@@ -1086,7 +1088,9 @@
 
                     let meetKpiBadge = "-";
                     if (hcDaily > 0) {
+                        activeDaysCount++;
                         if (oneHcKpiVal >= 50) {
+                            meetDaysCount++;
                             meetKpiBadge = `<span class="px-2.5 py-1 bg-emerald-100 text-emerald-800 font-black rounded-lg text-xs">YES</span>`;
                         } else {
                             meetKpiBadge = `<span class="px-2.5 py-1 bg-rose-100 text-rose-700 font-black rounded-lg text-xs">NO</span>`;
@@ -1143,6 +1147,19 @@
             let overallKpiTerminal = sumTerminalHc > 0 ? (sumTerminalTotal / sumTerminalHc).toFixed(1) : "0.0";
             let overallKpiDefault = sumDefaultHc > 0 ? (sumDefaultTotal / sumDefaultHc).toFixed(1) : "0.0";
 
+            let totalOneHcKpiVal = sumDailyHc > 0 ? (sumGrandTotal / sumDailyHc) : 0;
+            let totalOneHcKpiStr = sumDailyHc > 0 ? totalOneHcKpiVal.toFixed(1) : "0.0";
+
+            let totalMeetKpiBadge = "-";
+            if (sumDailyHc > 0) {
+                let meetPct = activeDaysCount > 0 ? Math.round((meetDaysCount / activeDaysCount) * 100) : 0;
+                if (totalOneHcKpiVal >= 50) {
+                    totalMeetKpiBadge = `<span class="px-2.5 py-1 bg-emerald-100 text-emerald-800 font-black rounded-lg text-xs">YES (${meetPct}%)</span>`;
+                } else {
+                    totalMeetKpiBadge = `<span class="px-2.5 py-1 bg-rose-100 text-rose-700 font-black rounded-lg text-xs">NO (${meetPct}%)</span>`;
+                }
+            }
+
             container.innerHTML = `
                 <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-6">
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-100 pb-4 gap-3">
@@ -1191,8 +1208,8 @@
                                     <td class="p-3 border border-slate-300 text-purple-700">${overallKpiDefault}</td>
                                     <td class="p-3 border border-slate-300 text-slate-950 bg-slate-300">${sumGrandTotal}</td>
                                     <td class="p-3 border border-slate-300 text-amber-950 bg-amber-100">${sumDailyHc}</td>
-                                    <td class="p-3 border border-slate-300 text-blue-950 bg-blue-100">-</td>
-                                    <td class="p-3 border border-slate-300 bg-slate-300">-</td>
+                                    <td class="p-3 border border-slate-300 text-blue-950 bg-blue-100">${totalOneHcKpiStr}</td>
+                                    <td class="p-3 border border-slate-300 bg-slate-200">${totalMeetKpiBadge}</td>
                                 </tr>
                             </tbody>
                         </table>
