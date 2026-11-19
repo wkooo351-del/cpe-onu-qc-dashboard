@@ -945,8 +945,7 @@
             let mdyRows = await getRegionalSheetRows('MYFO');
 
             [...ygnRows, ...mdyRows].forEach(row => {
-                let rawArr = row['_rawArray'] || [];
-                let dt = parseLocalDate(rawArr[0] || getVal(row, ['Date'], 0));
+                let dt = parseLocalDate(getVal(row, ['Date'], 0));
                 if (dt) datesSet.add(dt);
             });
 
@@ -965,36 +964,25 @@
 
         function rowMatchesRegionalTab(row, regionName) {
             let rawArr = row['_rawArray'] || [];
-            let candidateVals = [
-                rawArr[11],
-                rawArr[10],
-                rawArr[12],
-                rawArr[9],
-                getVal(row, ['Region', 'Regional', 'Area', 'Hub'], -1)
-            ];
+            let headers = row['_headers'] || [];
 
-            let foundAnyRegionTag = false;
-            for (let v of candidateVals) {
-                let s = String(v || '').trim().toUpperCase();
-                if (!s) continue;
-                if (regionName === 'MYFO') {
-                    if (s === 'MYFO' || s.includes('MYFO') || s.includes('MDY') || s.includes('MANDALAY')) return true;
-                    if (s === 'ENUO' || s.includes('ENUO') || s === 'HGAO' || s.includes('HGAO')) foundAnyRegionTag = true;
-                } else {
-                    if (s === regionName || s.includes(regionName)) return true;
-                    if (s === 'MYFO' || s.includes('MYFO') || s.includes('MDY') || s.includes('MANDALAY') || (regionName === 'ENUO' && s.includes('HGAO')) || (regionName === 'HGAO' && s.includes('ENUO'))) {
-                        foundAnyRegionTag = true;
+            for (let i = 0; i < headers.length; i++) {
+                let h = String(headers[i] || '').toLowerCase().trim();
+                let v = String(rawArr[i] || '').trim().toUpperCase();
+                if (!v) continue;
+                if (h.includes('region') || h.includes('area') || h.includes('hub') || h.includes('branch') || h.includes('location')) {
+                    if (regionName === 'MYFO') {
+                        return v.includes('MYFO') || v.includes('MDY') || v.includes('MANDALAY');
                     }
+                    return v === regionName || v.includes(regionName);
                 }
             }
 
-            if (foundAnyRegionTag) return false;
-
-            let fullText = rawArr.join(' ').toUpperCase();
+            let fullText = rawArr.map(x => String(x || '')).join(' ').toUpperCase();
             if (regionName === 'MYFO') {
                 return fullText.includes('MYFO') || fullText.includes('MDY') || fullText.includes('MANDALAY');
             }
-            return fullText.includes(regionName);
+            return new RegExp(`\\b${regionName}\\b`).test(fullText) || fullText.includes(regionName);
         }
 
         async function extractRegionalMetrics(regionName, targetDatesArr) {
@@ -1002,35 +990,30 @@
             let rows = await getRegionalSheetRows(regionName);
 
             rows.forEach(row => {
-                let rawArr = row['_rawArray'] || [];
-                let dt = parseLocalDate(rawArr[0] || getVal(row, ['Date'], 0));
+                let dt = parseLocalDate(getVal(row, ['Date'], 0));
                 if (!dt) return;
                 if (Array.isArray(targetDatesArr) && targetDatesArr.length > 0 && !targetDatesArr.includes(dt)) return;
 
                 if (!rowMatchesRegionalTab(row, regionName)) return;
 
-                let colDVal = rawArr[3] !== undefined ? rawArr[3] : getVal(row, ['Daily (JD)', 'Daily JD', 'JD'], 3);
-                let colDStr = String(colDVal || '').trim().toLowerCase();
-                let qtyRaw = rawArr[4] !== undefined ? rawArr[4] : getVal(row, ['Qty', 'Quantity'], 4);
-                let macVal = rawArr[5] !== undefined ? rawArr[5] : getVal(row, ['Mac', 'MAC', 'Default MAC', 'Mac Address'], 5);
+                let jd = String(getVal(row, ['Daily (JD)', 'JD', 'Daily'], 4) || '').trim().toLowerCase();
+                let qty = parseFloat(getVal(row, ['KPI', 'Qty', 'Quantity', 'Total'], 3)) || 0;
+                let mac = String(getVal(row, ['MAC', 'Mac Address'], 5) || '').trim();
+                let hasValidMac = isValidRegionalMac(mac);
 
                 if (!dateMap[dt]) {
                     dateMap[dt] = { cleaning: 0, terminal: 0, default: 0 };
                 }
 
-                if (colDStr.includes('clean')) {
-                    let cleanQty = parseFloat(qtyRaw);
-                    if (isNaN(cleanQty)) cleanQty = parseFloat(colDVal);
-                    if (!isNaN(cleanQty)) {
-                        dateMap[dt].cleaning += cleanQty;
+                if (jd.includes('clean')) {
+                    dateMap[dt].cleaning += (qty > 0 ? qty : 1);
+                } else if (jd === 'run' || jd.includes('terminal') || jd.includes('term') || jd === 'use' || jd.includes('reprovision')) {
+                    if (hasValidMac || qty > 0) {
+                        dateMap[dt].terminal += (qty > 0 ? qty : 1);
                     }
-                } else if (colDStr.includes('run') || colDStr.includes('terminal') || colDStr.includes('term') || colDStr.includes('use') || colDStr.includes('reprovision')) {
-                    if (isValidRegionalMac(macVal)) {
-                        dateMap[dt].terminal += 1;
-                    }
-                } else if (colDStr.includes('default')) {
-                    if (isValidRegionalMac(macVal)) {
-                        dateMap[dt].default += 1;
+                } else if (jd.includes('default')) {
+                    if (hasValidMac || qty > 0) {
+                        dateMap[dt].default += (qty > 0 ? qty : 1);
                     }
                 }
             });
