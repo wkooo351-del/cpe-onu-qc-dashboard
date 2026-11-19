@@ -287,6 +287,7 @@
     <script>
         const STAFF_SHEET_ID = "14WOHloWhGuQOc95PrRUsYWAHT6PTCC6EL2pY18uglVs";
         const MDY_SHEET_ID = "1XrjpVgSeu1IDpyNNyuJdjYji8MxnoQWuo3bwwPWAs9Q";
+        const MDY_PUB_ID = "2PACX-1vSzlFoe5J1rUr2WOLosUnfKzt8btlAa2cQ6NFVAlqIQJ4hBw4XROJduI0xczupCnsWQc0ZEBt9Hqnei";
         const INBOUND_SHEET_ID = "1PK1Bz7gRg8x3L8IOr7Xx8ntMADaznWWhYyEjchzuM6M";
         const ONU_SS_ID = "1EHtzUxAO1EuB_CxejyqBFiAjOsZQX4meYZqDcIRx9po";
         const DAILY_TARGET = 150;
@@ -423,38 +424,96 @@
             updateOnuDashboard();
         }
 
+        function parseCsvLine(line) {
+            let result = [];
+            let current = '';
+            let inQuotes = false;
+            for (let i = 0; i < line.length; i++) {
+                let ch = line[i];
+                if (ch === '"') {
+                    if (inQuotes && line[i + 1] === '"') {
+                        current += '"';
+                        i++;
+                    } else {
+                        inQuotes = !inQuotes;
+                    }
+                } else if (ch === ',' && !inQuotes) {
+                    result.push(current.trim());
+                    current = '';
+                } else {
+                    current += ch;
+                }
+            }
+            result.push(current.trim());
+            return result;
+        }
+
+        function rowsToSheetObjects(rows) {
+            if (!rows || rows.length === 0) return [];
+            let headers = rows[0].map((h, idx) => String(h || '').trim() || `col_${idx}`);
+            let dataRows = rows.slice(1);
+            return dataRows.map(row => {
+                let obj = {};
+                headers.forEach((h, idx) => {
+                    obj[h] = row[idx] !== undefined ? row[idx] : '';
+                    obj[`col_${idx}`] = row[idx] !== undefined ? row[idx] : '';
+                });
+                obj['_rawArray'] = row;
+                obj['_headers'] = headers;
+                return obj;
+            });
+        }
+
         async function fetchGoogleSheetData(sheetId, sheetName = "") {
             if (!sheetId || sheetId.includes("PASTE_")) return [];
             try {
                 let url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json`;
                 if (sheetName) url += `&sheet=${encodeURIComponent(sheetName)}`;
                 const res = await fetch(url);
-                const text = await res.text();
-                if (!text.startsWith('/*O_o*/')) return [];
-                const json = JSON.parse(text.substring(47, text.length - 2));
-                
-                const colLabels = (json.table.cols || []).map(c => (c && c.label) ? String(c.label).trim() : '');
-                const rows = json.table.rows.map(r => r.c ? r.c.map(cell => cell ? (cell.v !== null ? cell.v : '') : '') : []);
-                if (rows.length === 0) return [];
-
-                let headers = colLabels.some(l => l !== '') ? colLabels : rows[0].map(h => String(h).trim());
-                let dataRows = colLabels.some(l => l !== '') ? rows : rows.slice(1);
-                
-                return dataRows.map(row => {
-                    let obj = {};
-                    headers.forEach((h, idx) => {
-                        let keyName = h || `col_${idx}`;
-                        obj[keyName] = row[idx];
-                        obj[`col_${idx}`] = row[idx];
-                    });
-                    obj['_rawArray'] = row;
-                    obj['_headers'] = headers;
-                    return obj;
-                });
+                if (res.ok) {
+                    const text = await res.text();
+                    if (text.startsWith('/*O_o*/')) {
+                        const json = JSON.parse(text.substring(47, text.length - 2));
+                        const colLabels = (json.table.cols || []).map(c => (c && c.label) ? String(c.label).trim() : '');
+                        const rows = json.table.rows.map(r => r.c ? r.c.map(cell => cell ? (cell.v !== null ? cell.v : '') : '') : []);
+                        if (rows.length > 0) {
+                            let headers = colLabels.some(l => l !== '') ? colLabels : rows[0].map(h => String(h).trim());
+                            let dataRows = colLabels.some(l => l !== '') ? rows : rows.slice(1);
+                            return dataRows.map(row => {
+                                let obj = {};
+                                headers.forEach((h, idx) => {
+                                    let keyName = h || `col_${idx}`;
+                                    obj[keyName] = row[idx];
+                                    obj[`col_${idx}`] = row[idx];
+                                });
+                                obj['_rawArray'] = row;
+                                obj['_headers'] = headers;
+                                return obj;
+                            });
+                        }
+                    }
+                }
             } catch (err) {
-                console.error("Fetch error for sheet:", sheetId, sheetName, err);
-                return [];
+                console.warn("gviz fetch fallback for:", sheetId, sheetName);
             }
+
+            if (sheetId === MDY_SHEET_ID && typeof MDY_PUB_ID !== "undefined" && MDY_PUB_ID) {
+                try {
+                    let csvUrl = `https://docs.google.com/spreadsheets/d/e/${MDY_PUB_ID}/pub?output=csv`;
+                    if (sheetName) csvUrl += `&sheet=${encodeURIComponent(sheetName)}`;
+                    const csvRes = await fetch(csvUrl);
+                    if (csvRes.ok) {
+                        const csvText = await csvRes.text();
+                        const lines = csvText.split(/\r?\n/).filter(l => l.trim() !== '');
+                        const parsedRows = lines.map(parseCsvLine);
+                        return rowsToSheetObjects(parsedRows);
+                    }
+                } catch (csvErr) {
+                    console.error("CSV fetch error for MDY:", sheetName, csvErr);
+                }
+            }
+
+            return [];
         }
 
         async function fetchFlexibleSheet(sheetId, candidateNames) {
