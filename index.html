@@ -286,7 +286,7 @@
 
     <script>
         const STAFF_SHEET_ID = "14WOHloWhGuQOc95PrRUsYWAHT6PTCC6EL2pY18uglVs";
-        const MDY_SHEET_ID = "PASTE_MDY_2026_SHEET_ID_HERE"; // MDY - 2026 Spreadsheet ID ကို ဤနေရာတွင် ထည့်ပါ[cite: 5]
+        const MDY_SHEET_ID = "1XrjpVgSeu1IDpyNNyuJdjYji8MxnoQWuo3bwwPWAs9Q";
         const INBOUND_SHEET_ID = "1PK1Bz7gRg8x3L8IOr7Xx8ntMADaznWWhYyEjchzuM6M";
         const ONU_SS_ID = "1EHtzUxAO1EuB_CxejyqBFiAjOsZQX4meYZqDcIRx9po";
         const DAILY_TARGET = 150;
@@ -731,7 +731,7 @@
             let datesSet = new Set();
 
             let ygnRows = await fetchFlexibleSheet(STAFF_SHEET_ID, ["Nov 26", "Oct 26", "YGN-2026", "YGN 2026"]);
-            let mdyRows = await fetchFlexibleSheet(MDY_SHEET_ID, ["Nov 26", "Oct 26", "July 26", "Sep 26", "Aug 26"]);
+            let mdyRows = await fetchFlexibleSheet(MDY_SHEET_ID, ["Nov 26", "Oct 26", "Sep 26", "Aug 26", "July 26"]);
 
             [...ygnRows, ...mdyRows].forEach(row => {
                 let rawArr = row['_rawArray'] || [];
@@ -766,7 +766,7 @@
             let dateMap = {};
             let sheetId = regionName === 'MYFO' ? MDY_SHEET_ID : STAFF_SHEET_ID;
             let candidateSheets = regionName === 'MYFO'
-                ? ["Nov 26", "Oct 26", "July 26", "Sep 26", "Aug 26"]
+                ? ["Nov 26", "Oct 26", "Sep 26", "Aug 26", "July 26"]
                 : ["Nov 26", "Oct 26", "YGN-2026", "YGN 2026"];
 
             let rows = await fetchFlexibleSheet(sheetId, candidateSheets);
