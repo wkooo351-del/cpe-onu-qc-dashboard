@@ -92,10 +92,10 @@
                     <table class="w-full text-left border-collapse border border-slate-300 text-sm">
                         <thead>
                             <tr class="border-b border-slate-300 text-xs text-slate-800 uppercase tracking-wider bg-slate-900 text-white">
-                                <th class="py-3.5 px-6 border border-slate-700">Employee[cite: 4]</th>
-                                <th class="py-3.5 px-6 text-center border border-slate-700">Attendance[cite: 4]</th>
-                                <th class="py-3.5 px-6 text-center border border-slate-700">KPI[cite: 4]</th>
-                                <th class="py-3.5 px-6 text-center border border-slate-700">Status[cite: 4]</th>
+                                <th class="py-3.5 px-6 border border-slate-700">Employee</th>
+                                <th class="py-3.5 px-6 text-center border border-slate-700">Attendance</th>
+                                <th class="py-3.5 px-6 text-center border border-slate-700">KPI</th>
+                                <th class="py-3.5 px-6 text-center border border-slate-700">Status</th>
                             </tr>
                         </thead>
                         <tbody id="staff-table-body" class="font-bold divide-y divide-slate-300 text-slate-800">
@@ -629,18 +629,18 @@
 
                 if (isExcellent) {
                     excellentCount++;
-                    statusHtml = `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-emerald-100 text-emerald-800"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block animate-pulse"></span>Excellent</span>[cite: 4]`;
+                    statusHtml = `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-emerald-100 text-emerald-800"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block animate-pulse"></span>Excellent</span>`;
                 } else if (isKpiIssue && isAttendanceIssue) {
                     attentionCount++;
                     kpiIssueCount++;
-                    statusHtml = `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-rose-100 text-rose-800"><span class="w-2.5 h-2.5 rounded-full bg-rose-500 inline-block animate-pulse"></span>KPI & Attendance Issue</span>[cite: 4]`;
+                    statusHtml = `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-rose-100 text-rose-800"><span class="w-2.5 h-2.5 rounded-full bg-rose-500 inline-block animate-pulse"></span>KPI & Attendance Issue</span>`;
                 } else if (isKpiIssue) {
                     kpiIssueCount++;
                     attentionCount++;
-                    statusHtml = `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-rose-100 text-rose-800"><span class="w-2.5 h-2.5 rounded-full bg-rose-500 inline-block animate-pulse"></span>KPI Issue</span>[cite: 4]`;
+                    statusHtml = `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-rose-100 text-rose-800"><span class="w-2.5 h-2.5 rounded-full bg-rose-500 inline-block animate-pulse"></span>KPI Issue</span>`;
                 } else {
                     attentionCount++;
-                    statusHtml = `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-amber-100 text-amber-800"><span class="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block animate-pulse"></span>Attendance Issue</span>[cite: 4]`;
+                    statusHtml = `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-amber-100 text-amber-800"><span class="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block animate-pulse"></span>Attendance Issue</span>`;
                 }
 
                 if (isKpiIssue) {
