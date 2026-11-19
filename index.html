@@ -36,7 +36,7 @@
         <div id="section-hc" class="dashboard-section space-y-6">
             <div class="sticky top-[68px] z-40 bg-slate-50 pb-2 space-y-2">
                 <div class="bg-white p-3 rounded-2xl shadow-md border border-slate-200 flex flex-col sm:flex-row justify-between items-center gap-3">
-                    <div class="flex items-center gap-3">
+                    <div class="flex flex-wrap items-center gap-3">
                         <div class="flex items-center gap-2">
                             <label for="staff-month-select" class="text-xs text-slate-500 uppercase font-black">Month:</label>
                             <select id="staff-month-select" onchange="switchStaffMonth(this.value)" class="px-3 py-1.5 text-xs font-extrabold rounded-xl bg-slate-50 text-slate-900 border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer">
@@ -44,11 +44,20 @@
                                 <option value="Oct'26">Oct'26</option>
                             </select>
                         </div>
-                        <div class="flex items-center gap-2">
-                            <label for="staff-date-filter" class="text-xs text-slate-500 uppercase font-black">Date Filter:</label>
-                            <select id="staff-date-filter" onchange="renderStaffModernDashboard()" class="px-3 py-1.5 text-xs font-extrabold rounded-xl bg-slate-50 text-slate-900 border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer">
-                                <option value="All">All Dates (Summary)</option>
-                            </select>
+                        <div class="relative flex items-center gap-2" id="staff-date-picker-wrapper">
+                            <span class="text-xs text-slate-500 uppercase font-black">Date Filter:</span>
+                            <button type="button" onclick="toggleDateDropdown('staff-date-dropdown', event)" id="staff-date-btn" class="px-3 py-1.5 text-xs font-extrabold rounded-xl bg-slate-50 text-slate-900 border border-slate-300 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer flex items-center gap-2">
+                                <span id="staff-date-label">All Dates (Summary)</span>
+                                <span class="text-[10px]">▼</span>
+                            </button>
+                            <button type="button" onclick="clearDateFilter('staff')" class="px-2.5 py-1.5 text-xs font-extrabold rounded-xl bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 cursor-pointer transition">Clear Filters</button>
+                            <div id="staff-date-dropdown" class="hidden absolute left-0 top-full mt-1.5 w-64 bg-white rounded-xl shadow-xl border border-slate-200 z-50 p-2 space-y-1.5">
+                                <div class="flex justify-between items-center px-2 py-1 border-b border-slate-100 text-[11px] font-black">
+                                    <button type="button" onclick="selectAllDates('staff', true)" class="text-blue-600 hover:underline cursor-pointer">Select All</button>
+                                    <button type="button" onclick="clearDateFilter('staff')" class="text-rose-600 hover:underline cursor-pointer">Clear Filters</button>
+                                </div>
+                                <div id="staff-date-options" class="max-h-56 overflow-y-auto space-y-0.5 px-1"></div>
+                            </div>
                         </div>
                     </div>
                     <span id="staff-active-month-badge" class="text-xs px-3 py-1 bg-blue-50 text-blue-700 rounded-lg font-black border border-blue-200">Active: Nov'26</span>
@@ -137,11 +146,20 @@
         <div id="section-regional-kpi" class="dashboard-section hidden space-y-6">
             <div class="sticky top-[68px] z-40 bg-slate-50 pt-1 pb-3 space-y-3">
                 <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-md flex flex-col sm:flex-row justify-between items-center gap-3">
-                    <div class="flex items-center gap-2">
-                        <label for="regional-date-filter" class="text-xs text-slate-500 uppercase font-black">Date (All) ▼</label>
-                        <select id="regional-date-filter" onchange="renderRegionalKpiView()" class="px-3 py-1.5 text-xs font-extrabold rounded-xl bg-slate-50 text-slate-900 border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer">
-                            <option value="All">All Dates</option>
-                        </select>
+                    <div class="relative flex flex-wrap items-center gap-2" id="regional-date-picker-wrapper">
+                        <span class="text-xs text-slate-500 uppercase font-black">Date Filter:</span>
+                        <button type="button" onclick="toggleDateDropdown('regional-date-dropdown', event)" id="regional-date-btn" class="px-3 py-1.5 text-xs font-extrabold rounded-xl bg-slate-50 text-slate-900 border border-slate-300 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer flex items-center gap-2">
+                            <span id="regional-date-label">All Dates</span>
+                            <span class="text-[10px]">▼</span>
+                        </button>
+                        <button type="button" onclick="clearDateFilter('regional')" class="px-2.5 py-1.5 text-xs font-extrabold rounded-xl bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 cursor-pointer transition">Clear Filters</button>
+                        <div id="regional-date-dropdown" class="hidden absolute left-0 top-full mt-1.5 w-64 bg-white rounded-xl shadow-xl border border-slate-200 z-50 p-2 space-y-1.5">
+                            <div class="flex justify-between items-center px-2 py-1 border-b border-slate-100 text-[11px] font-black">
+                                <button type="button" onclick="selectAllDates('regional', true)" class="text-blue-600 hover:underline cursor-pointer">Select All</button>
+                                <button type="button" onclick="clearDateFilter('regional')" class="text-rose-600 hover:underline cursor-pointer">Clear Filters</button>
+                            </div>
+                            <div id="regional-date-options" class="max-h-56 overflow-y-auto space-y-0.5 px-1"></div>
+                        </div>
                     </div>
                     <div class="flex flex-wrap gap-2">
                         <button onclick="switchRegionalTab('ENUO', this)" id="reg-tab-enuo" class="reg-tab-btn px-4 py-2 text-xs font-black rounded-xl bg-blue-600 text-white shadow transition">ENUO</button>
@@ -296,15 +314,20 @@
         let staffGroupedDataByMonth = {};
         let staffGroupedData = {};
         let activeStaffMonth = "Nov'26";
+        let selectedStaffDates = [];
+        let availableStaffDates = [];
 
         let inboundLiveDataByMonth = {};
         let inboundLiveData = {};
         let activeInboundMonth = "Nov'26";
         let activeInboundWeek = 'Week 1 (1 - 7)';
         let activeInboundReportRegion = 'All Region';
-        let activeInboundReportDate = 'All';
+        let selectedInboundReportDates = [];
+        let availableInboundReportDates = [];
 
         let activeRegionalTab = 'ENUO';
+        let selectedRegionalDates = [];
+        let availableRegionalDates = [];
         let regionalHcInputs = JSON.parse(localStorage.getItem('regionalHcInputs') || '{}');
         let inboundDailyHcInputs = JSON.parse(localStorage.getItem('inboundDailyHcInputs') || '{}');
 
@@ -314,6 +337,125 @@
         let currentOnuRegion = 'All Region';
 
         const VALID_REGIONS = ["ENUO", "HGAO", "MYFO"];
+
+        function toggleDateDropdown(dropdownId, event) {
+            if (event) event.stopPropagation();
+            document.querySelectorAll('[id$="-date-dropdown"]').forEach(el => {
+                if (el.id !== dropdownId) el.classList.add('hidden');
+            });
+            let target = document.getElementById(dropdownId);
+            if (target) target.classList.toggle('hidden');
+        }
+
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('[id$="-date-picker-wrapper"]')) {
+                document.querySelectorAll('[id$="-date-dropdown"]').forEach(el => el.classList.add('hidden'));
+            }
+        });
+
+        function updateDatePickerButtonLabel(scope, defaultText) {
+            let list = [];
+            if (scope === 'staff') list = selectedStaffDates;
+            else if (scope === 'regional') list = selectedRegionalDates;
+            else if (scope === 'inbound') list = selectedInboundReportDates;
+
+            let labelEl = document.getElementById(`${scope}-date-label`);
+            if (!labelEl) return;
+
+            if (!list || list.length === 0) {
+                labelEl.innerText = defaultText;
+            } else if (list.length === 1) {
+                labelEl.innerText = list[0];
+            } else {
+                labelEl.innerText = `${list.length} Dates Selected`;
+            }
+        }
+
+        function renderDateCheckboxList(scope, datesArr, selectedArr, defaultText) {
+            let optsEl = document.getElementById(`${scope}-date-options`);
+            if (!optsEl) return;
+
+            if (!datesArr || datesArr.length === 0) {
+                optsEl.innerHTML = `<div class="py-2 px-2 text-xs text-slate-400">No dates available</div>`;
+                updateDatePickerButtonLabel(scope, defaultText);
+                return;
+            }
+
+            optsEl.innerHTML = datesArr.map(dt => {
+                let checked = selectedArr.includes(dt) ? 'checked' : '';
+                return `
+                    <label class="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-slate-100 cursor-pointer text-xs font-bold text-slate-800 select-none">
+                        <input type="checkbox" value="${dt}" ${checked} onchange="onDateCheckboxChange('${scope}', this.value, this.checked)" class="w-3.5 h-3.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer">
+                        <span>${dt}</span>
+                    </label>
+                `;
+            }).join('');
+
+            updateDatePickerButtonLabel(scope, defaultText);
+        }
+
+        function onDateCheckboxChange(scope, dateVal, isChecked) {
+            if (scope === 'staff') {
+                if (isChecked) {
+                    if (!selectedStaffDates.includes(dateVal)) selectedStaffDates.push(dateVal);
+                } else {
+                    selectedStaffDates = selectedStaffDates.filter(d => d !== dateVal);
+                }
+                selectedStaffDates.sort();
+                updateDatePickerButtonLabel('staff', 'All Dates (Summary)');
+                renderStaffModernDashboard();
+            } else if (scope === 'regional') {
+                if (isChecked) {
+                    if (!selectedRegionalDates.includes(dateVal)) selectedRegionalDates.push(dateVal);
+                } else {
+                    selectedRegionalDates = selectedRegionalDates.filter(d => d !== dateVal);
+                }
+                selectedRegionalDates.sort();
+                updateDatePickerButtonLabel('regional', 'All Dates');
+                renderRegionalKpiView();
+            } else if (scope === 'inbound') {
+                if (isChecked) {
+                    if (!selectedInboundReportDates.includes(dateVal)) selectedInboundReportDates.push(dateVal);
+                } else {
+                    selectedInboundReportDates = selectedInboundReportDates.filter(d => d !== dateVal);
+                }
+                selectedInboundReportDates.sort();
+                updateDatePickerButtonLabel('inbound', 'All Dates');
+                renderInboundWeek(activeInboundWeek);
+            }
+        }
+
+        function selectAllDates(scope, selectAll) {
+            if (scope === 'staff') {
+                selectedStaffDates = selectAll ? [...availableStaffDates] : [];
+                renderDateCheckboxList('staff', availableStaffDates, selectedStaffDates, 'All Dates (Summary)');
+                renderStaffModernDashboard();
+            } else if (scope === 'regional') {
+                selectedRegionalDates = selectAll ? [...availableRegionalDates] : [];
+                renderDateCheckboxList('regional', availableRegionalDates, selectedRegionalDates, 'All Dates');
+                renderRegionalKpiView();
+            } else if (scope === 'inbound') {
+                selectedInboundReportDates = selectAll ? [...availableInboundReportDates] : [];
+                renderDateCheckboxList('inbound', availableInboundReportDates, selectedInboundReportDates, 'All Dates');
+                renderInboundWeek(activeInboundWeek);
+            }
+        }
+
+        function clearDateFilter(scope) {
+            if (scope === 'staff') {
+                selectedStaffDates = [];
+                renderDateCheckboxList('staff', availableStaffDates, selectedStaffDates, 'All Dates (Summary)');
+                renderStaffModernDashboard();
+            } else if (scope === 'regional') {
+                selectedRegionalDates = [];
+                renderDateCheckboxList('regional', availableRegionalDates, selectedRegionalDates, 'All Dates');
+                renderRegionalKpiView();
+            } else if (scope === 'inbound') {
+                selectedInboundReportDates = [];
+                renderDateCheckboxList('inbound', availableInboundReportDates, selectedInboundReportDates, 'All Dates');
+                renderInboundWeek(activeInboundWeek);
+            }
+        }
 
         function getVal(rowObj, headerCandidates, fallbackIndex) {
             if (!rowObj) return '';
@@ -360,6 +502,7 @@
             if (badgeEl) badgeEl.innerText = `Active: ${monthKey}`;
 
             staffGroupedData = staffGroupedDataByMonth[monthKey] || {};
+            selectedStaffDates = [];
             populateStaffDateFilter();
             renderStaffModernDashboard();
         }
@@ -369,17 +512,9 @@
             Object.values(staffGroupedData).forEach(staffObj => {
                 Object.keys(staffObj.dates || {}).forEach(dt => datesSet.add(dt));
             });
-            let sortedDates = Array.from(datesSet).sort();
-            let select = document.getElementById('staff-date-filter');
-            if(!select) return;
-            
-            let currentVal = select.value;
-            let html = `<option value="All">All Dates (Summary)</option>`;
-            sortedDates.forEach(dt => {
-                html += `<option value="${dt}">${dt}</option>`;
-            });
-            select.innerHTML = html;
-            if(sortedDates.includes(currentVal) || currentVal === 'All') select.value = currentVal;
+            availableStaffDates = Array.from(datesSet).sort();
+            selectedStaffDates = selectedStaffDates.filter(d => availableStaffDates.includes(d));
+            renderDateCheckboxList('staff', availableStaffDates, selectedStaffDates, 'All Dates (Summary)');
         }
 
         function switchInboundMonth(monthKey) {
@@ -387,6 +522,7 @@
             let selectEl = document.getElementById('inbound-month-select');
             if (selectEl && selectEl.value !== monthKey) selectEl.value = monthKey;
             inboundLiveData = inboundLiveDataByMonth[monthKey] || getEmptyInboundMonthStructure();
+            selectedInboundReportDates = [];
             renderInboundWeek(activeInboundWeek);
         }
 
@@ -647,7 +783,6 @@
             let alertContainer = document.getElementById('staff-alerts-container');
             if (!container) return;
 
-            let selectedDate = document.getElementById('staff-date-filter').value;
             let staffNames = Object.keys(staffGroupedData).sort();
 
             if (staffNames.length === 0) {
@@ -666,7 +801,7 @@
             staffNames.forEach(name => {
                 let staffObj = staffGroupedData[name];
                 let datesObj = staffObj.dates || {};
-                let targetDates = selectedDate === 'All' ? Object.keys(datesObj) : [selectedDate];
+                let targetDates = selectedStaffDates.length === 0 ? Object.keys(datesObj) : selectedStaffDates;
 
                 let staffSumTime = 0;
                 let staffSumKpi = 0;
@@ -799,19 +934,9 @@
                 if (dt) datesSet.add(dt);
             });
 
-            let sortedDates = Array.from(datesSet).sort();
-            let select = document.getElementById('regional-date-filter');
-            if (!select) return;
-
-            let currentVal = select.value;
-            let html = `<option value="All">All Dates</option>`;
-            sortedDates.forEach(dt => {
-                html += `<option value="${dt}">${dt}</option>`;
-            });
-            select.innerHTML = html;
-            if (sortedDates.includes(currentVal) || currentVal === 'All') {
-                select.value = currentVal;
-            }
+            availableRegionalDates = Array.from(datesSet).sort();
+            selectedRegionalDates = selectedRegionalDates.filter(d => availableRegionalDates.includes(d));
+            renderDateCheckboxList('regional', availableRegionalDates, selectedRegionalDates, 'All Dates');
         }
 
         function isValidRegionalMac(macRaw) {
@@ -822,7 +947,7 @@
             return true;
         }
 
-        async function extractRegionalMetrics(regionName, targetDate) {
+        async function extractRegionalMetrics(regionName, targetDatesArr) {
             let dateMap = {};
             let sheetId = regionName === 'MYFO' ? MDY_SHEET_ID : STAFF_SHEET_ID;
             let candidateSheets = regionName === 'MYFO'
@@ -835,7 +960,7 @@
                 let rawArr = row['_rawArray'] || [];
                 let dt = parseLocalDate(rawArr[0] || getVal(row, ['Date'], 0));
                 if (!dt) return;
-                if (targetDate !== 'All' && dt !== targetDate) return;
+                if (Array.isArray(targetDatesArr) && targetDatesArr.length > 0 && !targetDatesArr.includes(dt)) return;
 
                 let rowRegion = String(rawArr[11] || getVal(row, ['Region', 'Regional'], 11)).trim().toUpperCase();
                 if (regionName === 'MYFO') {
@@ -891,8 +1016,7 @@
             let container = document.getElementById('regional-kpi-container');
             if(!container) return;
 
-            let selectedDate = document.getElementById('regional-date-filter').value;
-            let metricsByDate = await extractRegionalMetrics(activeRegionalTab, selectedDate);
+            let metricsByDate = await extractRegionalMetrics(activeRegionalTab, selectedRegionalDates);
             let sortedDates = Object.keys(metricsByDate).sort();
 
             let badgeColor = activeRegionalTab === 'ENUO' ? 'bg-blue-600' : (activeRegionalTab === 'HGAO' ? 'bg-amber-500' : 'bg-emerald-600');
@@ -904,7 +1028,8 @@
             let sumGrandTotal = 0;
 
             if(sortedDates.length === 0) {
-                tableRowsHtml = `<tr><td colspan="14" class="p-8 text-center text-slate-400">No records found for ${activeRegionalTab} on ${selectedDate}</td></tr>`;
+                let dateDesc = selectedRegionalDates.length > 0 ? selectedRegionalDates.join(', ') : 'All Dates';
+                tableRowsHtml = `<tr><td colspan="14" class="p-8 text-center text-slate-400">No records found for ${activeRegionalTab} on ${dateDesc}</td></tr>`;
             } else {
                 sortedDates.forEach(dt => {
                     let m = metricsByDate[dt] || { cleaning: 0, terminal: 0, default: 0 };
@@ -1418,12 +1543,15 @@
                 return;
             }
 
+            availableInboundReportDates = Array.from(new Set(wData.rawRows.map(r => r.date))).sort();
+            selectedInboundReportDates = selectedInboundReportDates.filter(d => availableInboundReportDates.includes(d));
+
             let filteredRows = wData.rawRows;
             if (activeInboundReportRegion !== 'All Region') {
                 filteredRows = filteredRows.filter(r => r.region === activeInboundReportRegion);
             }
-            if (activeInboundReportDate !== 'All') {
-                filteredRows = filteredRows.filter(r => r.date === activeInboundReportDate);
+            if (selectedInboundReportDates.length > 0) {
+                filteredRows = filteredRows.filter(r => selectedInboundReportDates.includes(r.date));
             }
 
             let filteredTotalQty = 0;
@@ -1500,12 +1628,6 @@
                         </div>
                     </div>
                 `;
-            });
-
-            let availableDates = Array.from(new Set(wData.rawRows.map(r => r.date))).sort();
-            let dateOptionsHtml = `<option value="All">All Dates</option>`;
-            availableDates.forEach(dt => {
-                dateOptionsHtml += `<option value="${dt}" ${activeInboundReportDate === dt ? 'selected' : ''}>${dt}</option>`;
             });
 
             let tableRowsHtml = "";
@@ -1641,9 +1763,20 @@
                                 <button onclick="setInboundReportRegion('HGAO', this)" class="inbound-rep-reg px-3 py-1 rounded-lg text-xs font-black transition ${activeInboundReportRegion === 'HGAO' ? 'bg-indigo-600 text-white shadow' : 'bg-white text-slate-700 hover:bg-slate-100'}">HGAO</button>
                                 <button onclick="setInboundReportRegion('MYFO', this)" class="inbound-rep-reg px-3 py-1 rounded-lg text-xs font-black transition ${activeInboundReportRegion === 'MYFO' ? 'bg-indigo-600 text-white shadow' : 'bg-white text-slate-700 hover:bg-slate-100'}">MYFO</button>
                             </div>
-                            <select onchange="setInboundReportDate(this.value)" class="px-3 py-1.5 text-xs font-extrabold rounded-xl bg-slate-50 text-slate-900 border border-slate-300 focus:outline-none cursor-pointer">
-                                ${dateOptionsHtml}
-                            </select>
+                            <div class="relative flex items-center gap-1.5" id="inbound-date-picker-wrapper">
+                                <button type="button" onclick="toggleDateDropdown('inbound-date-dropdown', event)" id="inbound-date-btn" class="px-3 py-1.5 text-xs font-extrabold rounded-xl bg-slate-50 text-slate-900 border border-slate-300 hover:bg-slate-100 focus:outline-none cursor-pointer flex items-center gap-1.5">
+                                    <span id="inbound-date-label">All Dates</span>
+                                    <span class="text-[10px]">▼</span>
+                                </button>
+                                <button type="button" onclick="clearDateFilter('inbound')" class="px-2.5 py-1.5 text-xs font-extrabold rounded-xl bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 cursor-pointer transition">Clear Filters</button>
+                                <div id="inbound-date-dropdown" class="hidden absolute right-0 top-full mt-1.5 w-60 bg-white rounded-xl shadow-xl border border-slate-200 z-50 p-2 space-y-1.5">
+                                    <div class="flex justify-between items-center px-2 py-1 border-b border-slate-100 text-[11px] font-black">
+                                        <button type="button" onclick="selectAllDates('inbound', true)" class="text-blue-600 hover:underline cursor-pointer">Select All</button>
+                                        <button type="button" onclick="clearDateFilter('inbound')" class="text-rose-600 hover:underline cursor-pointer">Clear Filters</button>
+                                    </div>
+                                    <div id="inbound-date-options" class="max-h-56 overflow-y-auto space-y-0.5 px-1"></div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div class="overflow-x-auto rounded-xl border border-slate-300">
@@ -1666,6 +1799,8 @@
                     </div>
                 </div>
             `;
+
+            renderDateCheckboxList('inbound', availableInboundReportDates, selectedInboundReportDates, 'All Dates');
 
             setTimeout(() => {
                 let ctx = document.getElementById('inboundPieChart');
@@ -1694,11 +1829,6 @@
 
         function setInboundReportRegion(reg, btn) {
             activeInboundReportRegion = reg;
-            renderInboundWeek(activeInboundWeek);
-        }
-
-        function setInboundReportDate(dt) {
-            activeInboundReportDate = dt;
             renderInboundWeek(activeInboundWeek);
         }
 
