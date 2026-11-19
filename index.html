@@ -362,27 +362,23 @@
                     <div class="flex items-center space-x-3">
                         <span class="px-4 py-2 rounded-xl text-sm font-black text-white bg-amber-600">RMA</span>
                         <div>
-                            <h2 class="text-lg font-black text-slate-900">RMA Tracking Dashboard</h2>
-                            <p class="text-xs text-slate-500 font-bold">Ready for RMA sheet data & failure/reuse metrics integration.</p>
+                            <h2 class="text-lg font-black text-slate-900">RMA Tracking Dashboard (YGN-2026)</h2>
+                            <p class="text-xs text-slate-500 font-bold">Filtered from YGN-2026 where Daily JD = "RMA", counting Qty.</p>
                         </div>
                     </div>
                 </div>
-                <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 border-l-4 border-l-amber-600">
-                        <p class="text-xs font-bold text-slate-500 uppercase">Total RMA Units</p>
+                        <p class="text-xs font-bold text-slate-500 uppercase">Total RMA Qty</p>
                         <p id="rma-kpi-total" class="mt-1 text-2xl font-black text-slate-900">0</p>
                     </div>
-                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 border-l-4 border-l-emerald-500">
-                        <p class="text-xs font-bold text-slate-500 uppercase">Repaired / Reuse</p>
-                        <p id="rma-kpi-reuse" class="mt-1 text-2xl font-black text-emerald-700">0</p>
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 border-l-4 border-l-blue-600">
+                        <p class="text-xs font-bold text-slate-500 uppercase">RMA Entries / Rows</p>
+                        <p id="rma-kpi-rows" class="mt-1 text-2xl font-black text-blue-700">0</p>
                     </div>
-                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 border-l-4 border-l-rose-500">
-                        <p class="text-xs font-bold text-slate-500 uppercase">Pending / Scrapped</p>
-                        <p id="rma-kpi-pending" class="mt-1 text-2xl font-black text-rose-600">0</p>
-                    </div>
-                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 border-l-4 border-l-indigo-600">
-                        <p class="text-xs font-bold text-slate-500 uppercase">RMA Ratio</p>
-                        <p id="rma-kpi-ratio" class="mt-1 text-2xl font-black text-indigo-700">0.00%</p>
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 border-l-4 border-l-emerald-600">
+                        <p class="text-xs font-bold text-slate-500 uppercase">Active RMA Dates</p>
+                        <p id="rma-kpi-dates" class="mt-1 text-2xl font-black text-emerald-700">0</p>
                     </div>
                 </div>
                 <div id="rma-container" class="overflow-x-auto rounded-xl border border-slate-300">
@@ -390,15 +386,14 @@
                         <thead class="bg-slate-800 text-white uppercase font-black">
                             <tr>
                                 <th class="p-3 border border-slate-600">Date</th>
-                                <th class="p-3 border border-slate-600">Region</th>
-                                <th class="p-3 border border-slate-600">Model</th>
-                                <th class="p-3 border border-slate-600">Issue / Defect</th>
+                                <th class="p-3 border border-slate-600">Name</th>
+                                <th class="p-3 border border-slate-600">Daily JD</th>
+                                <th class="p-3 border border-slate-600">MAC</th>
                                 <th class="p-3 border border-slate-600 text-center">Qty</th>
-                                <th class="p-3 border border-slate-600 text-center">Status</th>
                             </tr>
                         </thead>
                         <tbody id="rma-tbody" class="font-bold text-slate-800">
-                            <tr><td colspan="6" class="p-8 text-center text-slate-400">RMA tab added. Share your Google Sheet ID / tab name or columns to load live RMA data.</td></tr>
+                            <tr><td colspan="5" class="p-8 text-center text-slate-400">Fetching RMA data from YGN-2026...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -595,6 +590,8 @@
 
             if (sectionId === 'section-regional-kpi') {
                 populateRegionalDateFilter().then(() => renderRegionalKpiView());
+            } else if (sectionId === 'section-rma') {
+                loadAndRenderRmaTab();
             }
         }
 
@@ -800,6 +797,65 @@
             return str;
         }
 
+        async function loadAndRenderRmaTab() {
+            let tbody = document.getElementById('rma-tbody');
+            if (!tbody) return;
+
+            let rows = await fetchFlexibleSheet(STAFF_SHEET_ID, ["YGN-2026", "YGN 2026"]);
+            if (!rows || rows.length === 0) {
+                rows = regionalRawRowsCache['ENUO'] || [];
+            }
+
+            let rmaEntries = [];
+            let totalQty = 0;
+            let uniqueDates = new Set();
+
+            rows.forEach(row => {
+                let jd = String(getVal(row, ['Daily (JD)', 'Daily JD', 'JD', 'Daily'], 4) || '').trim();
+                if (jd.toLowerCase() !== 'rma') return;
+
+                let dateStr = parseLocalDate(getVal(row, ['Date', 'Time'], 0));
+                let name = String(getVal(row, ['Name', 'Staff Name'], 1) || '-').trim();
+                let mac = String(getVal(row, ['MAC', 'Mac Address'], 5) || '-').trim();
+                let rawQty = parseFloat(getVal(row, ['KPI', 'Qty', 'Quantity', 'Total'], 3));
+                let qty = (!isNaN(rawQty) && rawQty > 0) ? rawQty : 1;
+
+                totalQty += qty;
+                if (dateStr) uniqueDates.add(dateStr);
+
+                rmaEntries.push({
+                    date: dateStr || '-',
+                    name: name || '-',
+                    jd: jd,
+                    mac: mac || '-',
+                    qty: qty
+                });
+            });
+
+            let totalQtyEl = document.getElementById('rma-kpi-total');
+            let rowsEl = document.getElementById('rma-kpi-rows');
+            let datesEl = document.getElementById('rma-kpi-dates');
+
+            if (totalQtyEl) totalQtyEl.innerText = totalQty.toLocaleString();
+            if (rowsEl) rowsEl.innerText = rmaEntries.length.toLocaleString();
+            if (datesEl) datesEl.innerText = uniqueDates.size.toLocaleString();
+
+            if (rmaEntries.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-slate-400">No RMA records found in YGN-2026 where Daily JD = "RMA".</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = rmaEntries.map(item => `
+                <tr class="hover:bg-slate-50 border-b border-slate-200">
+                    <td class="p-3 border border-slate-200 font-black text-slate-900">${item.date}</td>
+                    <td class="p-3 border border-slate-200 text-slate-800">${item.name}</td>
+                    <td class="p-3 border border-slate-200"><span class="px-2.5 py-0.5 rounded bg-amber-100 text-amber-900 font-black text-xs">${item.jd}</span></td>
+                    <td class="p-3 border border-slate-200 font-mono text-xs text-slate-700">${item.mac}</td>
+                    <td class="p-3 border border-slate-200 text-center font-black text-amber-800">${item.qty.toLocaleString()}</td>
+                </tr>
+            `).join('');
+        }
+
         async function loadAllData() {
             let octStaffRows = await fetchFlexibleSheet(STAFF_SHEET_ID, ["Oct 26", "Oct'26", "Oct", "Team KPI and Attendence"]);
             staffGroupedDataByMonth["Oct'26"] = processStaffPivotRows(octStaffRows);
@@ -823,6 +879,7 @@
             regionalRawRowsCache = { ENUO: null, HGAO: null, MYFO: null };
             await populateRegionalDateFilter();
             await renderRegionalKpiView();
+            await loadAndRenderRmaTab();
 
             onuData.firstTest = await fetchFlexibleSheet(ONU_SS_ID, ["First Test", "First", "Sheet1"]);
             onuData.secondTest = await fetchFlexibleSheet(ONU_SS_ID, ["Second Test", "Second", "Sheet1"]);
