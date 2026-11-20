@@ -1570,12 +1570,12 @@
                     sumGrandTotal += rowTot;
                     sumDailyHc += hcDaily;
 
-                    let kpiClean = hcClean > 0 ? (cleanTot / hcClean).toFixed(1) : "0.0";
-                    let kpiTerm = hcTerm > 0 ? (termTot / hcTerm).toFixed(1) : "0.0";
-                    let kpiDef = hcDef > 0 ? (defTot / hcDef).toFixed(1) : "0.0";
+                    let kpiClean = hcClean > 0 ? Math.round(cleanTot / hcClean) : 0;
+                    let kpiTerm = hcTerm > 0 ? Math.round(termTot / hcTerm) : 0;
+                    let kpiDef = hcDef > 0 ? Math.round(defTot / hcDef) : 0;
 
                     let oneHcKpiVal = hcDaily > 0 ? (rowTot / hcDaily) : 0;
-                    let oneHcKpiStr = hcDaily > 0 ? oneHcKpiVal.toFixed(1) : "0.0";
+                    let oneHcKpiStr = hcDaily > 0 ? Math.round(oneHcKpiVal) : 0;
 
                     let meetKpiBadge = "-";
                     if (hcDaily > 0) {
@@ -1634,12 +1634,12 @@
                 });
             }
 
-            let overallKpiCleaning = sumCleaningHc > 0 ? (sumCleaningTotal / sumCleaningHc).toFixed(1) : "0.0";
-            let overallKpiTerminal = sumTerminalHc > 0 ? (sumTerminalTotal / sumTerminalHc).toFixed(1) : "0.0";
-            let overallKpiDefault = sumDefaultHc > 0 ? (sumDefaultTotal / sumDefaultHc).toFixed(1) : "0.0";
+            let overallKpiCleaning = sumCleaningHc > 0 ? Math.round(sumCleaningTotal / sumCleaningHc) : 0;
+            let overallKpiTerminal = sumTerminalHc > 0 ? Math.round(sumTerminalTotal / sumTerminalHc) : 0;
+            let overallKpiDefault = sumDefaultHc > 0 ? Math.round(sumDefaultTotal / sumDefaultHc) : 0;
 
             let totalOneHcKpiVal = sumDailyHc > 0 ? (sumGrandTotal / sumDailyHc) : 0;
-            let totalOneHcKpiStr = sumDailyHc > 0 ? totalOneHcKpiVal.toFixed(1) : "0.0";
+            let totalOneHcKpiStr = sumDailyHc > 0 ? Math.round(totalOneHcKpiVal) : 0;
 
             let totalMeetKpiBadge = "-";
             if (sumDailyHc > 0) {
@@ -2189,7 +2189,7 @@
                     regTotalHc += dailyHcVal;
 
                     let oneHcKpiVal = dailyHcVal > 0 ? (dayTotal / dailyHcVal) : 0;
-                    let oneHcKpiStr = dailyHcVal > 0 ? oneHcKpiVal.toFixed(1) : "0.0";
+                    let oneHcKpiStr = dailyHcVal > 0 ? Math.round(oneHcKpiVal) : 0;
 
                     let meetKpiBadge = "-";
                     if (dailyHcVal > 0) {
@@ -2225,7 +2225,7 @@
                 });
 
                 let regAvg1HcVal = regTotalHc > 0 ? (regTotalQty / regTotalHc) : 0;
-                let regAvg1HcStr = regTotalHc > 0 ? regAvg1HcVal.toFixed(1) : "0.0";
+                let regAvg1HcStr = regTotalHc > 0 ? Math.round(regAvg1HcVal) : 0;
                 let regTotalMeetBadge = "-";
                 if (regTotalHc > 0) {
                     if (regAvg1HcVal >= 50) {
