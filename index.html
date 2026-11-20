@@ -305,49 +305,37 @@
 
         <!-- SECTION 5: QC Test View -->
         <div id="section-qc-test" class="dashboard-section hidden space-y-6">
-            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-100 pb-4 gap-3">
-                    <div class="flex items-center space-x-3">
-                        <span class="px-4 py-2 rounded-xl text-sm font-black text-white bg-cyan-600">QC TEST</span>
-                        <div>
-                            <h2 class="text-lg font-black text-slate-900">QC Test Dashboard</h2>
-                            <p class="text-xs text-slate-500 font-bold">Ready for QC Test data source & metrics integration.</p>
-                        </div>
-                    </div>
+            <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-md flex flex-col sm:flex-row justify-between items-center gap-3">
+                <div class="flex flex-wrap items-center gap-2">
+                    <span class="px-3.5 py-1.5 rounded-xl text-xs font-black text-white bg-cyan-600">QC TEST</span>
+                    <span class="text-xs text-slate-500 font-bold">QC Inbound = D-1 (Cleaning + Terminal (Run)) | Test = D (Speed Test + DBM + Lan Port Test)</span>
                 </div>
-                <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
-                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 border-l-4 border-l-cyan-600">
-                        <p class="text-xs font-bold text-slate-500 uppercase">Total QC Tested</p>
-                        <p id="qc-kpi-total" class="mt-1 text-2xl font-black text-slate-900">0</p>
-                    </div>
-                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 border-l-4 border-l-emerald-500">
-                        <p class="text-xs font-bold text-slate-500 uppercase">QC Passed</p>
-                        <p id="qc-kpi-passed" class="mt-1 text-2xl font-black text-emerald-700">0</p>
-                    </div>
-                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 border-l-4 border-l-rose-500">
-                        <p class="text-xs font-bold text-slate-500 uppercase">QC Failed</p>
-                        <p id="qc-kpi-failed" class="mt-1 text-2xl font-black text-rose-600">0</p>
-                    </div>
-                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 border-l-4 border-l-blue-600">
-                        <p class="text-xs font-bold text-slate-500 uppercase">QC Pass Rate</p>
-                        <p id="qc-kpi-rate" class="mt-1 text-2xl font-black text-blue-700">0.00%</p>
-                    </div>
+                <div class="flex flex-wrap gap-2">
+                    <button onclick="switchQcTestRegion('ALL', this)" id="qc-reg-all" class="qc-reg-btn px-4 py-2 text-xs font-black rounded-xl bg-blue-600 text-white shadow transition">All Region</button>
+                    <button onclick="switchQcTestRegion('ENUO', this)" id="qc-reg-enuo" class="qc-reg-btn px-4 py-2 text-xs font-black rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300 transition">ENUO</button>
+                    <button onclick="switchQcTestRegion('HGAO', this)" id="qc-reg-hgao" class="qc-reg-btn px-4 py-2 text-xs font-black rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300 transition">HGAO</button>
+                    <button onclick="switchQcTestRegion('MDY', this)" id="qc-reg-mdy" class="qc-reg-btn px-4 py-2 text-xs font-black rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300 transition">MDY</button>
                 </div>
-                <div id="qc-test-container" class="overflow-x-auto rounded-xl border border-slate-300">
+            </div>
+
+            <div id="qc-test-container" class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+                <p class="text-xs text-slate-400 font-bold">HC settings loaded from Google Sheets.</p>
+                <div class="overflow-x-auto rounded-xl border border-slate-300 shadow-sm">
                     <table class="w-full text-left border-collapse border border-slate-300 text-xs">
-                        <thead class="bg-slate-800 text-white uppercase font-black">
+                        <thead class="bg-slate-900 text-white uppercase font-black text-center">
                             <tr>
-                                <th class="p-3 border border-slate-600">Date</th>
-                                <th class="p-3 border border-slate-600">Region</th>
-                                <th class="p-3 border border-slate-600">Device / Model</th>
-                                <th class="p-3 border border-slate-600 text-center">Total</th>
-                                <th class="p-3 border border-slate-600 text-center">Pass</th>
-                                <th class="p-3 border border-slate-600 text-center">Fail</th>
-                                <th class="p-3 border border-slate-600 text-center">Status</th>
+                                <th class="p-3 border border-slate-700">DATE</th>
+                                <th class="p-3 border border-slate-700">QC INBOUND</th>
+                                <th class="p-3 border border-slate-700">TOTAL TEST</th>
+                                <th class="p-3 border border-slate-700">QC PASS</th>
+                                <th class="p-3 border border-slate-700">QC FAIL</th>
+                                <th class="p-3 border border-slate-700">RMA</th>
+                                <th class="p-3 border border-slate-700">HC</th>
+                                <th class="p-3 border border-slate-700">KPI</th>
                             </tr>
                         </thead>
-                        <tbody id="qc-test-tbody" class="font-bold text-slate-800">
-                            <tr><td colspan="7" class="p-8 text-center text-slate-400">QC Test tab added. Share your Google Sheet ID / tab name or columns to load live QC Test data.</td></tr>
+                        <tbody id="qc-test-tbody" class="font-bold text-slate-800 text-center">
+                            <tr><td colspan="8" class="p-8 text-center text-slate-400">Loading QC Test data...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -456,6 +444,10 @@
         let regionalRawRowsCache = { ENUO: null, HGAO: null, MYFO: null };
         let regionalHcInputs = JSON.parse(localStorage.getItem('regionalHcInputs') || '{}');
         let inboundDailyHcInputs = JSON.parse(localStorage.getItem('inboundDailyHcInputs') || '{}');
+
+        let activeQcTestRegion = 'ALL';
+        let qcTestRmaInputs = JSON.parse(localStorage.getItem('qcTestRmaInputs') || '{}');
+        let qcTestHcInputs = JSON.parse(localStorage.getItem('qcTestHcInputs') || '{}');
 
         let rmaRepairRawRows = [];
         let activeRmaMonth = 'ALL';
@@ -643,6 +635,8 @@
 
             if (sectionId === 'section-regional-kpi') {
                 populateRegionalDateFilter().then(() => renderRegionalKpiView());
+            } else if (sectionId === 'section-qc-test') {
+                renderQcTestView();
             } else if (sectionId === 'section-rma') {
                 loadAndRenderRmaRepairTab();
             }
@@ -689,6 +683,162 @@
                 btn.className = 'reg-tab-btn px-4 py-2 text-xs font-black rounded-xl bg-blue-600 text-white shadow transition';
             }
             await renderRegionalKpiView();
+        }
+
+        function switchQcTestRegion(regKey, btn) {
+            activeQcTestRegion = regKey;
+            document.querySelectorAll('.qc-reg-btn').forEach(b => {
+                b.className = 'qc-reg-btn px-4 py-2 text-xs font-black rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300 transition';
+            });
+            if (btn) {
+                btn.className = 'qc-reg-btn px-4 py-2 text-xs font-black rounded-xl bg-blue-600 text-white shadow transition';
+            }
+            renderQcTestView();
+        }
+
+        function handleQcTestRmaChange(regKey, dt, val) {
+            let num = parseFloat(val);
+            qcTestRmaInputs[`${regKey}_${dt}`] = isNaN(num) ? 0 : num;
+            localStorage.setItem('qcTestRmaInputs', JSON.stringify(qcTestRmaInputs));
+            renderQcTestView();
+        }
+
+        function handleQcTestHcChange(regKey, dt, val) {
+            let num = parseFloat(val);
+            qcTestHcInputs[`${regKey}_${dt}`] = isNaN(num) ? 0 : num;
+            localStorage.setItem('qcTestHcInputs', JSON.stringify(qcTestHcInputs));
+            renderQcTestView();
+        }
+
+        function getPreviousIsoDate(isoDate) {
+            if (!isoDate || !/^\d{4}-\d{2}-\d{2}$/.test(isoDate)) return "";
+            let [y, m, d] = isoDate.split('-').map(Number);
+            let dtObj = new Date(Date.UTC(y, m - 1, d));
+            dtObj.setUTCDate(dtObj.getUTCDate() - 1);
+            let py = dtObj.getUTCFullYear();
+            let pm = String(dtObj.getUTCMonth() + 1).padStart(2, '0');
+            let pd = String(dtObj.getUTCDate()).padStart(2, '0');
+            return `${py}-${pm}-${pd}`;
+        }
+
+        function rowMatchesQcRegion(row, regKey) {
+            if (regKey === 'ALL') return true;
+            if (regKey === 'MDY') {
+                return rowMatchesRegionalTab(row, 'MYFO');
+            }
+            return rowMatchesRegionalTab(row, regKey);
+        }
+
+        function isQcIssueFailed(row) {
+            let issueVal = String(getVal(row, ['Issue Type', 'Issue', 'Defect Type', 'Defect'], -1) || '').trim().toLowerCase();
+            if (!issueVal || issueVal === '-' || issueVal === 'none' || issueVal === 'no issue' || issueVal === 'pass' || issueVal === 'ok' || issueVal === 'normal') {
+                return false;
+            }
+            return true;
+        }
+
+        async function renderQcTestView() {
+            let tbody = document.getElementById('qc-test-tbody');
+            if (!tbody) return;
+
+            let ygnRows = await getRegionalSheetRows('ENUO');
+            let mdyRows = await getRegionalSheetRows('MYFO');
+            let allRows = [...(ygnRows || []), ...(mdyRows || [])];
+
+            let inboundByDate = {}; // date -> qty (Cleaning + Terminal (Run))
+            let testByDate = {};    // date -> { total, pass, fail } (Speed Test + DBM + Lan Port Test)
+            let allDatesSet = new Set();
+
+            allRows.forEach(row => {
+                if (!rowMatchesQcRegion(row, activeQcTestRegion)) return;
+
+                let dt = parseLocalDate(getVal(row, ['Date'], 0));
+                if (!dt || !/^\d{4}-\d{2}-\d{2}$/.test(dt)) return;
+
+                let jd = String(getVal(row, ['Daily (JD)', 'JD', 'Daily'], 4) || '').trim().toLowerCase();
+                let qty = parseFloat(getVal(row, ['KPI', 'Qty', 'Quantity', 'Total'], 3)) || 1;
+                if (qty <= 0) qty = 1;
+
+                let isInboundJd = jd.includes('clean') || jd.includes('terminal') || jd === 'run' || jd.includes('terminal (run)');
+                let isTestJd = jd.includes('speed test') || jd.includes('speed') || jd.includes('dbm') || jd.includes('lan port') || jd.includes('lan');
+
+                if (isInboundJd) {
+                    inboundByDate[dt] = (inboundByDate[dt] || 0) + qty;
+                }
+
+                if (isTestJd) {
+                    allDatesSet.add(dt);
+                    if (!testByDate[dt]) {
+                        testByDate[dt] = { total: 0, pass: 0, fail: 0 };
+                    }
+                    testByDate[dt].total += qty;
+                    if (isQcIssueFailed(row)) {
+                        testByDate[dt].fail += qty;
+                    } else {
+                        testByDate[dt].pass += qty;
+                    }
+                }
+            });
+
+            let sortedDates = Array.from(allDatesSet).sort();
+            if (sortedDates.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="8" class="p-8 text-center text-slate-400">No QC Test records found for ${activeQcTestRegion === 'ALL' ? 'All Region' : activeQcTestRegion}.</td></tr>`;
+                return;
+            }
+
+            let sumInbound = 0, sumTotalTest = 0, sumPass = 0, sumFail = 0, sumRma = 0, sumHc = 0;
+            let rowsHtml = "";
+
+            sortedDates.forEach(dt => {
+                let prevDt = getPreviousIsoDate(dt);
+                let qcInbound = inboundByDate[prevDt] || 0;
+                let tObj = testByDate[dt] || { total: 0, pass: 0, fail: 0 };
+
+                let rmaVal = qcTestRmaInputs[`${activeQcTestRegion}_${dt}`] !== undefined ? qcTestRmaInputs[`${activeQcTestRegion}_${dt}`] : 0;
+                let hcVal = qcTestHcInputs[`${activeQcTestRegion}_${dt}`] !== undefined ? qcTestHcInputs[`${activeQcTestRegion}_${dt}`] : 0;
+                let kpiVal = hcVal > 0 ? Math.round(tObj.total / hcVal) : 0;
+
+                sumInbound += qcInbound;
+                sumTotalTest += tObj.total;
+                sumPass += tObj.pass;
+                sumFail += tObj.fail;
+                sumRma += rmaVal;
+                sumHc += hcVal;
+
+                rowsHtml += `
+                    <tr class="hover:bg-slate-50 border-b border-slate-200 text-center text-xs font-bold text-slate-800">
+                        <td class="p-3 border border-slate-200 font-black text-slate-900">${dt}</td>
+                        <td class="p-3 border border-slate-200 font-bold text-slate-800">${qcInbound.toLocaleString()}</td>
+                        <td class="p-3 border border-slate-200 font-bold text-slate-800">${tObj.total.toLocaleString()}</td>
+                        <td class="p-3 border border-slate-200 font-bold text-slate-800">${tObj.pass.toLocaleString()}</td>
+                        <td class="p-3 border border-slate-200 font-bold text-slate-800">${tObj.fail.toLocaleString()}</td>
+                        <td class="p-2 border border-slate-200">
+                            <input type="number" min="0" step="1" value="${rmaVal}" onchange="handleQcTestRmaChange('${activeQcTestRegion}', '${dt}', this.value)" class="w-20 px-2 py-1 text-center font-bold text-slate-800 bg-white border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </td>
+                        <td class="p-2 border border-slate-200">
+                            <input type="number" min="0" step="0.5" value="${hcVal}" onchange="handleQcTestHcChange('${activeQcTestRegion}', '${dt}', this.value)" class="w-20 px-2 py-1 text-center font-bold text-slate-800 bg-white border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </td>
+                        <td class="p-3 border border-slate-200 font-black text-slate-900">${kpiVal.toLocaleString()}</td>
+                    </tr>
+                `;
+            });
+
+            let totalKpi = sumHc > 0 ? Math.round(sumTotalTest / sumHc) : 0;
+
+            rowsHtml += `
+                <tr class="bg-slate-100 font-black text-slate-900 text-center text-xs border-t-2 border-slate-300">
+                    <td class="p-3 border border-slate-300 text-left uppercase tracking-wider">TOTAL</td>
+                    <td class="p-3 border border-slate-300">${sumInbound.toLocaleString()}</td>
+                    <td class="p-3 border border-slate-300">${sumTotalTest.toLocaleString()}</td>
+                    <td class="p-3 border border-slate-300">${sumPass.toLocaleString()}</td>
+                    <td class="p-3 border border-slate-300">${sumFail.toLocaleString()}</td>
+                    <td class="p-3 border border-slate-300">${sumRma.toLocaleString()}</td>
+                    <td class="p-3 border border-slate-300">${sumHc}</td>
+                    <td class="p-3 border border-slate-300">${totalKpi.toLocaleString()}</td>
+                </tr>
+            `;
+
+            tbody.innerHTML = rowsHtml;
         }
 
         function switchTestType(type, btn) {
@@ -1252,6 +1402,7 @@
             regionalRawRowsCache = { ENUO: null, HGAO: null, MYFO: null };
             await populateRegionalDateFilter();
             await renderRegionalKpiView();
+            await renderQcTestView();
             await loadAndRenderRmaRepairTab();
 
             onuData.firstTest = await fetchFlexibleSheet(ONU_SS_ID, ["First Test", "First", "Sheet1"]);
