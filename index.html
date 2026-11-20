@@ -818,7 +818,7 @@
             let mdyRows = await getRegionalSheetRows('MYFO');
             let allRows = [...(ygnRows || []), ...(mdyRows || [])];
 
-            let inboundByDate = {}; // date -> Run count (D - 1)
+            let inboundByDate = {}; // date -> Cleaning + Run count (D - 1)
             let testByDate = {};    // date -> { total, fail } (DBM + Lan Port Test + Speed Test)
             let testDatesSet = new Set();
 
@@ -833,12 +833,13 @@
                 let mac = String(getVal(row, ['MAC', 'Mac Address'], 5) || '').trim();
                 let hasValidMac = isValidRegionalMac(mac);
 
+                let isCleaningJd = jd.includes('clean');
                 let isRunJd = jd === 'run' || jd.includes('terminal') || jd.includes('term') || jd === 'use' || jd.includes('reprovision');
                 let isTestJd = jd.includes('speed test') || jd.includes('speed') || jd.includes('dbm') || jd.includes('lan port') || jd.includes('lan');
 
-                if (isRunJd) {
-                    let runQty = (!isNaN(qtyRaw) && qtyRaw > 0) ? qtyRaw : (hasValidMac ? 1 : 1);
-                    inboundByDate[dt] = (inboundByDate[dt] || 0) + runQty;
+                if (isCleaningJd || isRunJd) {
+                    let inboundUnit = (!isNaN(qtyRaw) && qtyRaw > 0) ? qtyRaw : (hasValidMac ? 1 : 1);
+                    inboundByDate[dt] = (inboundByDate[dt] || 0) + inboundUnit;
                 }
 
                 if (isTestJd) {
