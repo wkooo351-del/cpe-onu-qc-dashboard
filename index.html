@@ -780,10 +780,10 @@
         }
 
         function isQcColKRma(row) {
-            let colKVal = String(getVal(row, ['USE/ RMA', 'USE/RMA', 'USE / RMA', 'Status'], 10) || '').trim().toUpperCase();
+            let colKVal = String(getVal(row, ['USE/ RMA', 'USE/RMA', 'USE / RMA', 'Status', 'Result'], 10) || '').trim().toUpperCase();
             if (!colKVal) return false;
-            if (colKVal.includes('RMA')) return true;
-            if (colKVal.includes('USE')) return false;
+            if (colKVal.includes('RMA') || colKVal.includes('FAIL')) return true;
+            if (colKVal.includes('USE') || colKVal.includes('PASS')) return false;
             return false;
         }
 
@@ -818,8 +818,8 @@
             let mdyRows = await getRegionalSheetRows('MYFO');
             let allRows = [...(ygnRows || []), ...(mdyRows || [])];
 
-            let inboundByDate = {}; // date -> qty (Terminal (Run) only, NO Cleaning)
-            let testByDate = {};    // date -> { total, pass, fail } (Speed Test + DBM + Lan Port Test)
+            let inboundByDate = {}; // date -> Run count (D - 1)
+            let testByDate = {};    // date -> { total, fail } (DBM + Lan Port Test + Speed Test)
             let testDatesSet = new Set();
 
             allRows.forEach(row => {
@@ -830,25 +830,26 @@
 
                 let jd = String(getVal(row, ['Daily (JD)', 'JD', 'Daily'], 4) || '').trim().toLowerCase();
                 let qtyRaw = parseFloat(getVal(row, ['KPI', 'Qty', 'Quantity', 'Total'], 3));
-                let qty = (!isNaN(qtyRaw) && qtyRaw > 0) ? qtyRaw : 1;
+                let mac = String(getVal(row, ['MAC', 'Mac Address'], 5) || '').trim();
+                let hasValidMac = isValidRegionalMac(mac);
 
-                let isTerminalJd = jd === 'run' || jd.includes('terminal') || jd.includes('term') || jd === 'use' || jd.includes('reprovision');
+                let isRunJd = jd === 'run' || jd.includes('terminal') || jd.includes('term') || jd === 'use' || jd.includes('reprovision');
                 let isTestJd = jd.includes('speed test') || jd.includes('speed') || jd.includes('dbm') || jd.includes('lan port') || jd.includes('lan');
 
-                if (isTerminalJd) {
-                    inboundByDate[dt] = (inboundByDate[dt] || 0) + qty;
+                if (isRunJd) {
+                    let runQty = (!isNaN(qtyRaw) && qtyRaw > 0) ? qtyRaw : (hasValidMac ? 1 : 1);
+                    inboundByDate[dt] = (inboundByDate[dt] || 0) + runQty;
                 }
 
                 if (isTestJd) {
+                    let testQty = (!isNaN(qtyRaw) && qtyRaw > 0) ? qtyRaw : 1;
                     testDatesSet.add(dt);
                     if (!testByDate[dt]) {
-                        testByDate[dt] = { total: 0, pass: 0, fail: 0 };
+                        testByDate[dt] = { total: 0, fail: 0 };
                     }
-                    testByDate[dt].total += qty;
+                    testByDate[dt].total += testQty;
                     if (isQcColKRma(row)) {
-                        testByDate[dt].fail += qty;
-                    } else {
-                        testByDate[dt].pass += qty;
+                        testByDate[dt].fail += testQty;
                     }
                 }
             });
@@ -879,15 +880,17 @@
                     qcInbound = getInboundFallbackQtyForDate(prevDt, activeQcTestRegion);
                 }
 
-                let tObj = testByDate[dt] || { total: 0, pass: 0, fail: 0 };
+                let tObj = testByDate[dt] || { total: 0, fail: 0 };
+                let failVal = Math.min(tObj.total, tObj.fail);
+                let passVal = Math.max(0, tObj.total - failVal);
 
                 let hcVal = qcTestHcInputs[`${activeQcTestRegion}_${dt}`] !== undefined ? qcTestHcInputs[`${activeQcTestRegion}_${dt}`] : 0;
                 let kpiVal = hcVal > 0 ? Math.round(tObj.total / hcVal) : 0;
 
                 sumInbound += qcInbound;
                 sumTotalTest += tObj.total;
-                sumPass += tObj.pass;
-                sumFail += tObj.fail;
+                sumPass += passVal;
+                sumFail += failVal;
                 sumHc += hcVal;
 
                 rowsHtml += `
@@ -895,8 +898,8 @@
                         <td class="p-3 border border-slate-200 font-black text-slate-900 bg-slate-50">${dt}</td>
                         <td class="p-3 border border-slate-200 font-black text-cyan-800 bg-cyan-50/50">${qcInbound.toLocaleString()}</td>
                         <td class="p-3 border border-slate-200 font-black text-blue-800 bg-blue-50/50">${tObj.total.toLocaleString()}</td>
-                        <td class="p-3 border border-slate-200 font-black text-emerald-700 bg-emerald-50/50">${tObj.pass.toLocaleString()}</td>
-                        <td class="p-3 border border-slate-200 font-black text-rose-700 bg-rose-50/50">${tObj.fail.toLocaleString()}</td>
+                        <td class="p-3 border border-slate-200 font-black text-emerald-700 bg-emerald-50/50">${passVal.toLocaleString()}</td>
+                        <td class="p-3 border border-slate-200 font-black text-rose-700 bg-rose-50/50">${failVal.toLocaleString()}</td>
                         <td class="p-2 border border-slate-200 bg-amber-50/40">
                             <input type="number" min="0" step="0.5" value="${hcVal}" onchange="handleQcTestHcChange('${activeQcTestRegion}', '${dt}', this.value)" class="w-20 px-2 py-1 text-center font-black text-amber-900 bg-white border border-amber-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500">
                         </td>
