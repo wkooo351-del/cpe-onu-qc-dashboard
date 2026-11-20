@@ -1005,6 +1005,9 @@
             let hasMyfo = sortedDates.some(dt => dateMap[dt].myfo > 0);
 
             let grandRma = 0, grandHc = 0, grandReuse = 0;
+            let sumEnuoRma = 0, sumEnuoHc = 0;
+            let sumHgaoRma = 0, sumHgaoHc = 0;
+            let sumMyfoRma = 0, sumMyfoHc = 0;
             let tableRowsHtml = "";
 
             if (sortedDates.length === 0) {
@@ -1026,6 +1029,15 @@
                     let rowTotalKpi = rowTotalHc > 0 ? Math.round(rowTotalRma / rowTotalHc) : 0;
                     let rowReuse = dObj.reuse;
                     let rowReusePct = rowTotalRma > 0 ? ((rowReuse / rowTotalRma) * 100).toFixed(2) + '%' : '0.00%';
+
+                    sumEnuoRma += dObj.enuo;
+                    sumEnuoHc += enuoHc;
+                    sumHgaoRma += dObj.hgao;
+                    sumHgaoHc += hgaoHc;
+                    if (hasMyfo) {
+                        sumMyfoRma += dObj.myfo;
+                        sumMyfoHc += myfoHc;
+                    }
 
                     grandRma += rowTotalRma;
                     grandHc += rowTotalHc;
@@ -1067,6 +1079,36 @@
                         </tr>
                     `;
                 });
+
+                let grandEnuoKpi = sumEnuoHc > 0 ? Math.round(sumEnuoRma / sumEnuoHc) : 0;
+                let grandHgaoKpi = sumHgaoHc > 0 ? Math.round(sumHgaoRma / sumHgaoHc) : 0;
+                let grandMyfoKpi = sumMyfoHc > 0 ? Math.round(sumMyfoRma / sumMyfoHc) : 0;
+                let grandTotalKpi = grandHc > 0 ? Math.round(grandRma / grandHc) : 0;
+                let grandTotalReusePct = grandRma > 0 ? ((grandReuse / grandRma) * 100).toFixed(2) + '%' : '0.00%';
+
+                let grandMyfoCellsHtml = hasMyfo ? `
+                    <td class="p-3 border border-slate-300 font-black text-emerald-950 bg-emerald-100/70">${sumMyfoRma.toLocaleString()}</td>
+                    <td class="p-3 border border-slate-300 font-black text-emerald-950 bg-emerald-100/70">${sumMyfoHc}</td>
+                    <td class="p-3 border border-slate-300 font-black text-emerald-800 bg-emerald-100/70">${grandMyfoKpi}</td>
+                ` : '';
+
+                tableRowsHtml += `
+                    <tr class="bg-slate-200 font-black text-slate-900 text-center text-xs border-t-2 border-slate-400">
+                        <td class="p-3 border border-slate-300 uppercase tracking-wider text-right bg-slate-200">GRAND TOTAL</td>
+                        <td class="p-3 border border-slate-300 font-black text-blue-950 bg-blue-100/70">${sumEnuoRma.toLocaleString()}</td>
+                        <td class="p-3 border border-slate-300 font-black text-blue-950 bg-blue-100/70">${sumEnuoHc}</td>
+                        <td class="p-3 border border-slate-300 font-black text-blue-800 bg-blue-100/70">${grandEnuoKpi}</td>
+                        <td class="p-3 border border-slate-300 font-black text-amber-950 bg-amber-100/70">${sumHgaoRma.toLocaleString()}</td>
+                        <td class="p-3 border border-slate-300 font-black text-amber-950 bg-amber-100/70">${sumHgaoHc}</td>
+                        <td class="p-3 border border-slate-300 font-black text-amber-800 bg-amber-100/70">${grandHgaoKpi}</td>
+                        ${grandMyfoCellsHtml}
+                        <td class="p-3 border border-slate-300 font-black text-slate-950 bg-slate-300/80">${grandRma.toLocaleString()}</td>
+                        <td class="p-3 border border-slate-300 font-black text-slate-900 bg-slate-300/80">${grandHc}</td>
+                        <td class="p-3 border border-slate-300 font-black text-indigo-800 bg-slate-300/80">${grandTotalKpi}</td>
+                        <td class="p-3 border border-slate-300 font-black text-emerald-800 bg-slate-200">${grandReuse.toLocaleString()}</td>
+                        <td class="p-3 border border-slate-300 font-black text-purple-800 bg-slate-200">${grandTotalReusePct}</td>
+                    </tr>
+                `;
             }
 
             let grandKpi = grandHc > 0 ? Math.round(grandRma / grandHc) : 0;
@@ -1580,7 +1622,7 @@
                     let meetKpiBadge = "-";
                     if (hcDaily > 0) {
                         activeDaysCount++;
-                        if (oneHcKpiVal >= 50) {
+                        if (oneHcKpiVal >= 150) {
                             meetDaysCount++;
                             meetKpiBadge = `<span class="px-2.5 py-1 bg-emerald-100 text-emerald-800 font-black rounded-lg text-xs">YES</span>`;
                         } else {
@@ -1644,7 +1686,7 @@
             let totalMeetKpiBadge = "-";
             if (sumDailyHc > 0) {
                 let meetPct = activeDaysCount > 0 ? Math.round((meetDaysCount / activeDaysCount) * 100) : 0;
-                if (totalOneHcKpiVal >= 50) {
+                if (totalOneHcKpiVal >= 150) {
                     totalMeetKpiBadge = `<span class="px-2.5 py-1 bg-emerald-100 text-emerald-800 font-black rounded-lg text-xs">YES (${meetPct}%)</span>`;
                 } else {
                     totalMeetKpiBadge = `<span class="px-2.5 py-1 bg-rose-100 text-rose-700 font-black rounded-lg text-xs">NO (${meetPct}%)</span>`;
