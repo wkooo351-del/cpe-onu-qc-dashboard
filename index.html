@@ -307,17 +307,17 @@
         <div id="section-qc-test" class="dashboard-section hidden space-y-6">
             <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-md flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3">
                 <div class="flex flex-wrap items-center gap-3">
-                    <span class="px-3.5 py-1.5 rounded-xl text-xs font-black text-white bg-teal-800">QC TEST</span>
+                    <span class="px-3.5 py-1.5 rounded-xl text-xs font-black text-white bg-indigo-700">QC TEST</span>
                     <div class="relative flex items-center gap-2" id="qc-date-picker-wrapper">
                         <span class="text-xs text-slate-500 uppercase font-black">Date Filter:</span>
-                        <button type="button" onclick="toggleDateDropdown('qc-date-dropdown', event)" id="qc-date-btn" class="px-3 py-1.5 text-xs font-extrabold rounded-xl bg-slate-50 text-slate-900 border border-slate-300 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-600 cursor-pointer flex items-center gap-2">
+                        <button type="button" onclick="toggleDateDropdown('qc-date-dropdown', event)" id="qc-date-btn" class="px-3 py-1.5 text-xs font-extrabold rounded-xl bg-slate-50 text-slate-900 border border-slate-300 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-600 cursor-pointer flex items-center gap-2">
                             <span id="qc-date-label">All Dates</span>
                             <span class="text-[10px]">▼</span>
                         </button>
                         <button type="button" onclick="clearDateFilter('qc')" class="px-2.5 py-1.5 text-xs font-extrabold rounded-xl bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 cursor-pointer transition">Clear Filters</button>
                         <div id="qc-date-dropdown" class="hidden absolute left-0 top-full mt-1.5 w-64 bg-white rounded-xl shadow-xl border border-slate-200 z-50 p-2 space-y-1.5">
                             <div class="flex justify-between items-center px-2 py-1 border-b border-slate-100 text-[11px] font-black">
-                                <button type="button" onclick="selectAllDates('qc', true)" class="text-teal-700 hover:underline cursor-pointer">Select All</button>
+                                <button type="button" onclick="selectAllDates('qc', true)" class="text-indigo-700 hover:underline cursor-pointer">Select All</button>
                                 <button type="button" onclick="clearDateFilter('qc')" class="text-rose-600 hover:underline cursor-pointer">Clear Filters</button>
                             </div>
                             <div id="qc-date-options" class="max-h-56 overflow-y-auto space-y-0.5 px-1"></div>
@@ -325,26 +325,49 @@
                     </div>
                 </div>
                 <div class="flex flex-wrap gap-2">
-                    <button onclick="switchQcTestRegion('ALL', this)" id="qc-reg-all" class="qc-reg-btn px-4 py-2 text-xs font-black rounded-xl bg-teal-800 text-white shadow transition">All Region</button>
+                    <button onclick="switchQcTestRegion('ALL', this)" id="qc-reg-all" class="qc-reg-btn px-4 py-2 text-xs font-black rounded-xl bg-indigo-700 text-white shadow transition">All Region</button>
                     <button onclick="switchQcTestRegion('ENUO', this)" id="qc-reg-enuo" class="qc-reg-btn px-4 py-2 text-xs font-black rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300 transition">ENUO</button>
                     <button onclick="switchQcTestRegion('HGAO', this)" id="qc-reg-hgao" class="qc-reg-btn px-4 py-2 text-xs font-black rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300 transition">HGAO</button>
                     <button onclick="switchQcTestRegion('MDY', this)" id="qc-reg-mdy" class="qc-reg-btn px-4 py-2 text-xs font-black rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300 transition">MDY</button>
                 </div>
             </div>
 
-            <div id="qc-test-container" class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-3">
-                <p class="text-xs text-slate-400 font-bold">HC settings loaded from Google Sheets.</p>
+            <!-- QC KPI Cards -->
+            <div class="grid grid-cols-2 sm:grid-cols-5 gap-4">
+                <div class="bg-white p-4 rounded-xl shadow-sm border-t-4 border-cyan-600">
+                    <p class="text-xs font-bold text-slate-500 uppercase">QC INBOUND</p>
+                    <p id="qc-card-inbound" class="mt-1.5 text-2xl font-black text-cyan-800">0</p>
+                </div>
+                <div class="bg-white p-4 rounded-xl shadow-sm border-t-4 border-blue-600">
+                    <p class="text-xs font-bold text-slate-500 uppercase">TOTAL TEST</p>
+                    <p id="qc-card-total-test" class="mt-1.5 text-2xl font-black text-blue-800">0</p>
+                </div>
+                <div class="bg-white p-4 rounded-xl shadow-sm border-t-4 border-emerald-500">
+                    <p class="text-xs font-bold text-slate-500 uppercase">QC PASS</p>
+                    <p id="qc-card-pass" class="mt-1.5 text-2xl font-black text-emerald-700">0</p>
+                </div>
+                <div class="bg-white p-4 rounded-xl shadow-sm border-t-4 border-rose-500">
+                    <p class="text-xs font-bold text-slate-500 uppercase">QC FAIL</p>
+                    <p id="qc-card-fail" class="mt-1.5 text-2xl font-black text-rose-700">0</p>
+                </div>
+                <div class="bg-white p-4 rounded-xl shadow-sm border-t-4 border-purple-600 col-span-2 sm:col-span-1">
+                    <p class="text-xs font-bold text-slate-500 uppercase">AVG KPI</p>
+                    <p id="qc-card-kpi" class="mt-1.5 text-2xl font-black text-purple-800">0</p>
+                </div>
+            </div>
+
+            <div id="qc-test-container" class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
                 <div class="overflow-x-auto rounded-xl border border-slate-300 shadow-sm">
                     <table class="w-full text-left border-collapse border border-slate-300 text-xs">
-                        <thead class="bg-teal-900 text-white uppercase font-black text-center">
-                            <tr>
-                                <th class="p-3 border border-teal-800">DATE</th>
-                                <th class="p-3 border border-teal-800">QC INBOUND</th>
-                                <th class="p-3 border border-teal-800">TOTAL TEST</th>
-                                <th class="p-3 border border-teal-800">QC PASS</th>
-                                <th class="p-3 border border-teal-800">QC FAIL</th>
-                                <th class="p-3 border border-teal-800">HC</th>
-                                <th class="p-3 border border-teal-800">KPI</th>
+                        <thead>
+                            <tr class="uppercase font-black text-center text-white">
+                                <th class="p-3 border border-slate-700 bg-slate-800">DATE</th>
+                                <th class="p-3 border border-cyan-800 bg-cyan-800">QC INBOUND</th>
+                                <th class="p-3 border border-blue-800 bg-blue-800">TOTAL TEST</th>
+                                <th class="p-3 border border-emerald-800 bg-emerald-700">QC PASS</th>
+                                <th class="p-3 border border-rose-800 bg-rose-700">QC FAIL</th>
+                                <th class="p-3 border border-amber-800 bg-amber-600">HC</th>
+                                <th class="p-3 border border-purple-800 bg-purple-800">KPI</th>
                             </tr>
                         </thead>
                         <tbody id="qc-test-tbody" class="font-bold text-slate-800 text-center">
@@ -723,7 +746,7 @@
                 b.className = 'qc-reg-btn px-4 py-2 text-xs font-black rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300 transition';
             });
             if (btn) {
-                btn.className = 'qc-reg-btn px-4 py-2 text-xs font-black rounded-xl bg-teal-800 text-white shadow transition';
+                btn.className = 'qc-reg-btn px-4 py-2 text-xs font-black rounded-xl bg-indigo-700 text-white shadow transition';
             }
             renderQcTestView();
         }
@@ -772,7 +795,7 @@
 
             let inboundByDate = {}; // date -> qty (Terminal (Run) only, NO Cleaning)
             let testByDate = {};    // date -> { total, pass, fail } (Speed Test + DBM + Lan Port Test)
-            let allDatesSet = new Set();
+            let testDatesSet = new Set();
 
             allRows.forEach(row => {
                 if (!rowMatchesQcRegion(row, activeQcTestRegion)) return;
@@ -792,7 +815,7 @@
                 }
 
                 if (isTestJd) {
-                    allDatesSet.add(dt);
+                    testDatesSet.add(dt);
                     if (!testByDate[dt]) {
                         testByDate[dt] = { total: 0, pass: 0, fail: 0 };
                     }
@@ -805,7 +828,7 @@
                 }
             });
 
-            availableQcDates = Array.from(allDatesSet).sort();
+            availableQcDates = Array.from(testDatesSet).sort();
             selectedQcDates = selectedQcDates.filter(d => availableQcDates.includes(d));
             renderDateCheckboxList('qc', availableQcDates, selectedQcDates, 'All Dates');
 
@@ -813,6 +836,11 @@
 
             if (displayDates.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="7" class="p-8 text-center text-slate-400">No QC Test records found for ${activeQcTestRegion === 'ALL' ? 'All Region' : activeQcTestRegion}.</td></tr>`;
+                document.getElementById('qc-card-inbound').innerText = '0';
+                document.getElementById('qc-card-total-test').innerText = '0';
+                document.getElementById('qc-card-pass').innerText = '0';
+                document.getElementById('qc-card-fail').innerText = '0';
+                document.getElementById('qc-card-kpi').innerText = '0';
                 return;
             }
 
@@ -835,30 +863,36 @@
 
                 rowsHtml += `
                     <tr class="hover:bg-slate-50 border-b border-slate-200 text-center text-xs font-bold text-slate-800">
-                        <td class="p-3 border border-slate-200 font-black text-slate-900">${dt}</td>
-                        <td class="p-3 border border-slate-200 font-bold text-slate-800">${qcInbound.toLocaleString()}</td>
-                        <td class="p-3 border border-slate-200 font-bold text-slate-800">${tObj.total.toLocaleString()}</td>
-                        <td class="p-3 border border-slate-200 font-bold text-slate-800">${tObj.pass.toLocaleString()}</td>
-                        <td class="p-3 border border-slate-200 font-bold text-slate-800">${tObj.fail.toLocaleString()}</td>
-                        <td class="p-2 border border-slate-200">
-                            <input type="number" min="0" step="0.5" value="${hcVal}" onchange="handleQcTestHcChange('${activeQcTestRegion}', '${dt}', this.value)" class="w-20 px-2 py-1 text-center font-bold text-slate-800 bg-white border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-600">
+                        <td class="p-3 border border-slate-200 font-black text-slate-900 bg-slate-50">${dt}</td>
+                        <td class="p-3 border border-slate-200 font-black text-cyan-800 bg-cyan-50/50">${qcInbound.toLocaleString()}</td>
+                        <td class="p-3 border border-slate-200 font-black text-blue-800 bg-blue-50/50">${tObj.total.toLocaleString()}</td>
+                        <td class="p-3 border border-slate-200 font-black text-emerald-700 bg-emerald-50/50">${tObj.pass.toLocaleString()}</td>
+                        <td class="p-3 border border-slate-200 font-black text-rose-700 bg-rose-50/50">${tObj.fail.toLocaleString()}</td>
+                        <td class="p-2 border border-slate-200 bg-amber-50/40">
+                            <input type="number" min="0" step="0.5" value="${hcVal}" onchange="handleQcTestHcChange('${activeQcTestRegion}', '${dt}', this.value)" class="w-20 px-2 py-1 text-center font-black text-amber-900 bg-white border border-amber-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500">
                         </td>
-                        <td class="p-3 border border-slate-200 font-black text-slate-900">${kpiVal.toLocaleString()}</td>
+                        <td class="p-3 border border-slate-200 font-black text-purple-800 bg-purple-50/50">${kpiVal.toLocaleString()}</td>
                     </tr>
                 `;
             });
 
             let totalKpi = sumHc > 0 ? Math.round(sumTotalTest / sumHc) : 0;
 
+            document.getElementById('qc-card-inbound').innerText = sumInbound.toLocaleString();
+            document.getElementById('qc-card-total-test').innerText = sumTotalTest.toLocaleString();
+            document.getElementById('qc-card-pass').innerText = sumPass.toLocaleString();
+            document.getElementById('qc-card-fail').innerText = sumFail.toLocaleString();
+            document.getElementById('qc-card-kpi').innerText = totalKpi.toLocaleString();
+
             rowsHtml += `
                 <tr class="bg-slate-100 font-black text-slate-900 text-center text-xs border-t-2 border-slate-300">
-                    <td class="p-3 border border-slate-300 text-left uppercase tracking-wider">TOTAL</td>
-                    <td class="p-3 border border-slate-300">${sumInbound.toLocaleString()}</td>
-                    <td class="p-3 border border-slate-300">${sumTotalTest.toLocaleString()}</td>
-                    <td class="p-3 border border-slate-300">${sumPass.toLocaleString()}</td>
-                    <td class="p-3 border border-slate-300">${sumFail.toLocaleString()}</td>
-                    <td class="p-3 border border-slate-300">${sumHc}</td>
-                    <td class="p-3 border border-slate-300">${totalKpi.toLocaleString()}</td>
+                    <td class="p-3 border border-slate-300 text-left uppercase tracking-wider bg-slate-200">TOTAL</td>
+                    <td class="p-3 border border-slate-300 text-cyan-900 bg-cyan-100/70">${sumInbound.toLocaleString()}</td>
+                    <td class="p-3 border border-slate-300 text-blue-900 bg-blue-100/70">${sumTotalTest.toLocaleString()}</td>
+                    <td class="p-3 border border-slate-300 text-emerald-800 bg-emerald-100/70">${sumPass.toLocaleString()}</td>
+                    <td class="p-3 border border-slate-300 text-rose-800 bg-rose-100/70">${sumFail.toLocaleString()}</td>
+                    <td class="p-3 border border-slate-300 text-amber-900 bg-amber-100/70">${sumHc}</td>
+                    <td class="p-3 border border-slate-300 text-purple-900 bg-purple-100/70">${totalKpi.toLocaleString()}</td>
                 </tr>
             `;
 
