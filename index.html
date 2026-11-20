@@ -305,13 +305,27 @@
 
         <!-- SECTION 5: QC Test View -->
         <div id="section-qc-test" class="dashboard-section hidden space-y-6">
-            <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-md flex flex-col sm:flex-row justify-between items-center gap-3">
-                <div class="flex flex-wrap items-center gap-2">
-                    <span class="px-3.5 py-1.5 rounded-xl text-xs font-black text-white bg-cyan-600">QC TEST</span>
-                    <span class="text-xs text-slate-500 font-bold">QC Inbound = D-1 (Cleaning + Terminal (Run)) | Test = D (Speed Test + DBM + Lan Port Test)</span>
+            <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-md flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3">
+                <div class="flex flex-wrap items-center gap-3">
+                    <span class="px-3.5 py-1.5 rounded-xl text-xs font-black text-white bg-teal-800">QC TEST</span>
+                    <div class="relative flex items-center gap-2" id="qc-date-picker-wrapper">
+                        <span class="text-xs text-slate-500 uppercase font-black">Date Filter:</span>
+                        <button type="button" onclick="toggleDateDropdown('qc-date-dropdown', event)" id="qc-date-btn" class="px-3 py-1.5 text-xs font-extrabold rounded-xl bg-slate-50 text-slate-900 border border-slate-300 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-600 cursor-pointer flex items-center gap-2">
+                            <span id="qc-date-label">All Dates</span>
+                            <span class="text-[10px]">▼</span>
+                        </button>
+                        <button type="button" onclick="clearDateFilter('qc')" class="px-2.5 py-1.5 text-xs font-extrabold rounded-xl bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 cursor-pointer transition">Clear Filters</button>
+                        <div id="qc-date-dropdown" class="hidden absolute left-0 top-full mt-1.5 w-64 bg-white rounded-xl shadow-xl border border-slate-200 z-50 p-2 space-y-1.5">
+                            <div class="flex justify-between items-center px-2 py-1 border-b border-slate-100 text-[11px] font-black">
+                                <button type="button" onclick="selectAllDates('qc', true)" class="text-teal-700 hover:underline cursor-pointer">Select All</button>
+                                <button type="button" onclick="clearDateFilter('qc')" class="text-rose-600 hover:underline cursor-pointer">Clear Filters</button>
+                            </div>
+                            <div id="qc-date-options" class="max-h-56 overflow-y-auto space-y-0.5 px-1"></div>
+                        </div>
+                    </div>
                 </div>
                 <div class="flex flex-wrap gap-2">
-                    <button onclick="switchQcTestRegion('ALL', this)" id="qc-reg-all" class="qc-reg-btn px-4 py-2 text-xs font-black rounded-xl bg-blue-600 text-white shadow transition">All Region</button>
+                    <button onclick="switchQcTestRegion('ALL', this)" id="qc-reg-all" class="qc-reg-btn px-4 py-2 text-xs font-black rounded-xl bg-teal-800 text-white shadow transition">All Region</button>
                     <button onclick="switchQcTestRegion('ENUO', this)" id="qc-reg-enuo" class="qc-reg-btn px-4 py-2 text-xs font-black rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300 transition">ENUO</button>
                     <button onclick="switchQcTestRegion('HGAO', this)" id="qc-reg-hgao" class="qc-reg-btn px-4 py-2 text-xs font-black rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300 transition">HGAO</button>
                     <button onclick="switchQcTestRegion('MDY', this)" id="qc-reg-mdy" class="qc-reg-btn px-4 py-2 text-xs font-black rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300 transition">MDY</button>
@@ -322,20 +336,19 @@
                 <p class="text-xs text-slate-400 font-bold">HC settings loaded from Google Sheets.</p>
                 <div class="overflow-x-auto rounded-xl border border-slate-300 shadow-sm">
                     <table class="w-full text-left border-collapse border border-slate-300 text-xs">
-                        <thead class="bg-slate-900 text-white uppercase font-black text-center">
+                        <thead class="bg-teal-900 text-white uppercase font-black text-center">
                             <tr>
-                                <th class="p-3 border border-slate-700">DATE</th>
-                                <th class="p-3 border border-slate-700">QC INBOUND</th>
-                                <th class="p-3 border border-slate-700">TOTAL TEST</th>
-                                <th class="p-3 border border-slate-700">QC PASS</th>
-                                <th class="p-3 border border-slate-700">QC FAIL</th>
-                                <th class="p-3 border border-slate-700">RMA</th>
-                                <th class="p-3 border border-slate-700">HC</th>
-                                <th class="p-3 border border-slate-700">KPI</th>
+                                <th class="p-3 border border-teal-800">DATE</th>
+                                <th class="p-3 border border-teal-800">QC INBOUND</th>
+                                <th class="p-3 border border-teal-800">TOTAL TEST</th>
+                                <th class="p-3 border border-teal-800">QC PASS</th>
+                                <th class="p-3 border border-teal-800">QC FAIL</th>
+                                <th class="p-3 border border-teal-800">HC</th>
+                                <th class="p-3 border border-teal-800">KPI</th>
                             </tr>
                         </thead>
                         <tbody id="qc-test-tbody" class="font-bold text-slate-800 text-center">
-                            <tr><td colspan="8" class="p-8 text-center text-slate-400">Loading QC Test data...</td></tr>
+                            <tr><td colspan="7" class="p-8 text-center text-slate-400">Loading QC Test data...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -446,7 +459,8 @@
         let inboundDailyHcInputs = JSON.parse(localStorage.getItem('inboundDailyHcInputs') || '{}');
 
         let activeQcTestRegion = 'ALL';
-        let qcTestRmaInputs = JSON.parse(localStorage.getItem('qcTestRmaInputs') || '{}');
+        let selectedQcDates = [];
+        let availableQcDates = [];
         let qcTestHcInputs = JSON.parse(localStorage.getItem('qcTestHcInputs') || '{}');
 
         let rmaRepairRawRows = [];
@@ -485,6 +499,7 @@
             else if (scope === 'regional') list = selectedRegionalDates;
             else if (scope === 'inbound') list = selectedInboundReportDates;
             else if (scope === 'rma') list = selectedRmaDates;
+            else if (scope === 'qc') list = selectedQcDates;
 
             let labelEl = document.getElementById(`${scope}-date-label`);
             if (!labelEl) return;
@@ -558,6 +573,15 @@
                 selectedRmaDates.sort();
                 updateDatePickerButtonLabel('rma', 'All Dates');
                 renderRmaRepairView();
+            } else if (scope === 'qc') {
+                if (isChecked) {
+                    if (!selectedQcDates.includes(dateVal)) selectedQcDates.push(dateVal);
+                } else {
+                    selectedQcDates = selectedQcDates.filter(d => d !== dateVal);
+                }
+                selectedQcDates.sort();
+                updateDatePickerButtonLabel('qc', 'All Dates');
+                renderQcTestView();
             }
         }
 
@@ -578,6 +602,10 @@
                 selectedRmaDates = selectAll ? [...availableRmaDates] : [];
                 renderDateCheckboxList('rma', availableRmaDates, selectedRmaDates, 'All Dates');
                 renderRmaRepairView();
+            } else if (scope === 'qc') {
+                selectedQcDates = selectAll ? [...availableQcDates] : [];
+                renderDateCheckboxList('qc', availableQcDates, selectedQcDates, 'All Dates');
+                renderQcTestView();
             }
         }
 
@@ -598,6 +626,10 @@
                 selectedRmaDates = [];
                 renderDateCheckboxList('rma', availableRmaDates, selectedRmaDates, 'All Dates');
                 renderRmaRepairView();
+            } else if (scope === 'qc') {
+                selectedQcDates = [];
+                renderDateCheckboxList('qc', availableQcDates, selectedQcDates, 'All Dates');
+                renderQcTestView();
             }
         }
 
@@ -691,15 +723,8 @@
                 b.className = 'qc-reg-btn px-4 py-2 text-xs font-black rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300 transition';
             });
             if (btn) {
-                btn.className = 'qc-reg-btn px-4 py-2 text-xs font-black rounded-xl bg-blue-600 text-white shadow transition';
+                btn.className = 'qc-reg-btn px-4 py-2 text-xs font-black rounded-xl bg-teal-800 text-white shadow transition';
             }
-            renderQcTestView();
-        }
-
-        function handleQcTestRmaChange(regKey, dt, val) {
-            let num = parseFloat(val);
-            qcTestRmaInputs[`${regKey}_${dt}`] = isNaN(num) ? 0 : num;
-            localStorage.setItem('qcTestRmaInputs', JSON.stringify(qcTestRmaInputs));
             renderQcTestView();
         }
 
@@ -729,12 +754,12 @@
             return rowMatchesRegionalTab(row, regKey);
         }
 
-        function isQcIssueFailed(row) {
-            let issueVal = String(getVal(row, ['Issue Type', 'Issue', 'Defect Type', 'Defect'], -1) || '').trim().toLowerCase();
-            if (!issueVal || issueVal === '-' || issueVal === 'none' || issueVal === 'no issue' || issueVal === 'pass' || issueVal === 'ok' || issueVal === 'normal') {
-                return false;
-            }
-            return true;
+        function isQcColKRma(row) {
+            let colKVal = String(getVal(row, ['USE/ RMA', 'USE/RMA', 'USE / RMA', 'Status'], 10) || '').trim().toUpperCase();
+            if (!colKVal) return false;
+            if (colKVal.includes('RMA')) return true;
+            if (colKVal.includes('USE')) return false;
+            return false;
         }
 
         async function renderQcTestView() {
@@ -745,7 +770,7 @@
             let mdyRows = await getRegionalSheetRows('MYFO');
             let allRows = [...(ygnRows || []), ...(mdyRows || [])];
 
-            let inboundByDate = {}; // date -> qty (Cleaning + Terminal (Run))
+            let inboundByDate = {}; // date -> qty (Terminal (Run) only, NO Cleaning)
             let testByDate = {};    // date -> { total, pass, fail } (Speed Test + DBM + Lan Port Test)
             let allDatesSet = new Set();
 
@@ -759,10 +784,10 @@
                 let qty = parseFloat(getVal(row, ['KPI', 'Qty', 'Quantity', 'Total'], 3)) || 1;
                 if (qty <= 0) qty = 1;
 
-                let isInboundJd = jd.includes('clean') || jd.includes('terminal') || jd === 'run' || jd.includes('terminal (run)');
+                let isTerminalJd = jd === 'run' || jd.includes('terminal') || jd.includes('term') || jd === 'use' || jd.includes('reprovision');
                 let isTestJd = jd.includes('speed test') || jd.includes('speed') || jd.includes('dbm') || jd.includes('lan port') || jd.includes('lan');
 
-                if (isInboundJd) {
+                if (isTerminalJd) {
                     inboundByDate[dt] = (inboundByDate[dt] || 0) + qty;
                 }
 
@@ -772,7 +797,7 @@
                         testByDate[dt] = { total: 0, pass: 0, fail: 0 };
                     }
                     testByDate[dt].total += qty;
-                    if (isQcIssueFailed(row)) {
+                    if (isQcColKRma(row)) {
                         testByDate[dt].fail += qty;
                     } else {
                         testByDate[dt].pass += qty;
@@ -780,21 +805,25 @@
                 }
             });
 
-            let sortedDates = Array.from(allDatesSet).sort();
-            if (sortedDates.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="8" class="p-8 text-center text-slate-400">No QC Test records found for ${activeQcTestRegion === 'ALL' ? 'All Region' : activeQcTestRegion}.</td></tr>`;
+            availableQcDates = Array.from(allDatesSet).sort();
+            selectedQcDates = selectedQcDates.filter(d => availableQcDates.includes(d));
+            renderDateCheckboxList('qc', availableQcDates, selectedQcDates, 'All Dates');
+
+            let displayDates = selectedQcDates.length > 0 ? selectedQcDates : availableQcDates;
+
+            if (displayDates.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="p-8 text-center text-slate-400">No QC Test records found for ${activeQcTestRegion === 'ALL' ? 'All Region' : activeQcTestRegion}.</td></tr>`;
                 return;
             }
 
-            let sumInbound = 0, sumTotalTest = 0, sumPass = 0, sumFail = 0, sumRma = 0, sumHc = 0;
+            let sumInbound = 0, sumTotalTest = 0, sumPass = 0, sumFail = 0, sumHc = 0;
             let rowsHtml = "";
 
-            sortedDates.forEach(dt => {
+            displayDates.forEach(dt => {
                 let prevDt = getPreviousIsoDate(dt);
                 let qcInbound = inboundByDate[prevDt] || 0;
                 let tObj = testByDate[dt] || { total: 0, pass: 0, fail: 0 };
 
-                let rmaVal = qcTestRmaInputs[`${activeQcTestRegion}_${dt}`] !== undefined ? qcTestRmaInputs[`${activeQcTestRegion}_${dt}`] : 0;
                 let hcVal = qcTestHcInputs[`${activeQcTestRegion}_${dt}`] !== undefined ? qcTestHcInputs[`${activeQcTestRegion}_${dt}`] : 0;
                 let kpiVal = hcVal > 0 ? Math.round(tObj.total / hcVal) : 0;
 
@@ -802,7 +831,6 @@
                 sumTotalTest += tObj.total;
                 sumPass += tObj.pass;
                 sumFail += tObj.fail;
-                sumRma += rmaVal;
                 sumHc += hcVal;
 
                 rowsHtml += `
@@ -813,10 +841,7 @@
                         <td class="p-3 border border-slate-200 font-bold text-slate-800">${tObj.pass.toLocaleString()}</td>
                         <td class="p-3 border border-slate-200 font-bold text-slate-800">${tObj.fail.toLocaleString()}</td>
                         <td class="p-2 border border-slate-200">
-                            <input type="number" min="0" step="1" value="${rmaVal}" onchange="handleQcTestRmaChange('${activeQcTestRegion}', '${dt}', this.value)" class="w-20 px-2 py-1 text-center font-bold text-slate-800 bg-white border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        </td>
-                        <td class="p-2 border border-slate-200">
-                            <input type="number" min="0" step="0.5" value="${hcVal}" onchange="handleQcTestHcChange('${activeQcTestRegion}', '${dt}', this.value)" class="w-20 px-2 py-1 text-center font-bold text-slate-800 bg-white border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <input type="number" min="0" step="0.5" value="${hcVal}" onchange="handleQcTestHcChange('${activeQcTestRegion}', '${dt}', this.value)" class="w-20 px-2 py-1 text-center font-bold text-slate-800 bg-white border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-600">
                         </td>
                         <td class="p-3 border border-slate-200 font-black text-slate-900">${kpiVal.toLocaleString()}</td>
                     </tr>
@@ -832,7 +857,6 @@
                     <td class="p-3 border border-slate-300">${sumTotalTest.toLocaleString()}</td>
                     <td class="p-3 border border-slate-300">${sumPass.toLocaleString()}</td>
                     <td class="p-3 border border-slate-300">${sumFail.toLocaleString()}</td>
-                    <td class="p-3 border border-slate-300">${sumRma.toLocaleString()}</td>
                     <td class="p-3 border border-slate-300">${sumHc}</td>
                     <td class="p-3 border border-slate-300">${totalKpi.toLocaleString()}</td>
                 </tr>
@@ -1253,7 +1277,7 @@
                         <td class="p-3 border border-slate-300 font-black text-amber-800 bg-amber-100/70">${grandHgaoKpi}</td>
                         ${grandMyfoCellsHtml}
                         <td class="p-3 border border-slate-300 font-black text-slate-950 bg-slate-300/80">${grandRma.toLocaleString()}</td>
-                        <td class="p-3 border border-slate-300 font-black text-slate-900 bg-slate-300/80">${grandHc}</td>
+                        <td class="p-3 border border-slate-300 font-black text-slate-950 bg-slate-300/80">${grandHc}</td>
                         <td class="p-3 border border-slate-300 font-black text-indigo-800 bg-slate-300/80">${grandTotalKpi}</td>
                         <td class="p-3 border border-slate-300 font-black text-emerald-800 bg-slate-200">${grandReuse.toLocaleString()}</td>
                         <td class="p-3 border border-slate-300 font-black text-purple-800 bg-slate-200">${grandTotalReusePct}</td>
