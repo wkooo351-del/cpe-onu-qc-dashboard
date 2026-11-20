@@ -818,8 +818,8 @@
             let mdyRows = await getRegionalSheetRows('MYFO');
             let allRows = [...(ygnRows || []), ...(mdyRows || [])];
 
-            let inboundByDate = {}; // date -> Cleaning + Run count (D - 1)
-            let testByDate = {};    // date -> { total, fail } (DBM + Lan Port Test + Speed Test)
+            let inboundByDate = {};
+            let testByDate = {};
             let testDatesSet = new Set();
 
             allRows.forEach(row => {
@@ -1215,6 +1215,8 @@
                 if (!dev || dev === '-') dev = 'FFO';
                 deviceSet.add(dev);
 
+                let isPass = isRmaReuseRow(row);
+
                 if (!dateMap[dt]) {
                     dateMap[dt] = {
                         date: dt,
@@ -1222,6 +1224,11 @@
                         hgao: 0,
                         myfo: 0,
                         reuse: 0,
+                        regionsPassFail: {
+                            ENUO: { total: 0, pass: 0, fail: 0 },
+                            HGAO: { total: 0, pass: 0, fail: 0 },
+                            MYFO: { total: 0, pass: 0, fail: 0 }
+                        },
                         devices: {}
                     };
                 }
@@ -1230,15 +1237,20 @@
                 else if (reg === 'MYFO') dateMap[dt].myfo += 1;
                 else dateMap[dt].hgao += 1;
 
-                if (isRmaReuseRow(row)) {
+                let rStat = dateMap[dt].regionsPassFail[reg] || dateMap[dt].regionsPassFail.HGAO;
+                rStat.total += 1;
+                if (isPass) {
+                    rStat.pass += 1;
                     dateMap[dt].reuse += 1;
+                } else {
+                    rStat.fail += 1;
                 }
 
                 if (!dateMap[dt].devices[dev]) {
                     dateMap[dt].devices[dev] = { total: 0, pass: 0, fail: 0 };
                 }
                 dateMap[dt].devices[dev].total += 1;
-                if (isRmaReuseRow(row)) dateMap[dt].devices[dev].pass += 1;
+                if (isPass) dateMap[dt].devices[dev].pass += 1;
                 else dateMap[dt].devices[dev].fail += 1;
             });
 
@@ -1368,6 +1380,39 @@
                 <th class="p-2 border border-emerald-800 bg-emerald-600 text-white">KPI</th>
             ` : '';
 
+            let activeRegList = hasMyfo ? ['ENUO', 'HGAO', 'MYFO'] : ['ENUO', 'HGAO'];
+            let regPfRowsHtml = "";
+            let regPfGrandTotal = 0, regPfGrandPass = 0, regPfGrandFail = 0;
+
+            sortedDates.forEach(dt => {
+                let dObj = dateMap[dt];
+                activeRegList.forEach(reg => {
+                    let st = dObj.regionsPassFail[reg];
+                    if (!st || st.total === 0) return;
+                    regPfGrandTotal += st.total;
+                    regPfGrandPass += st.pass;
+                    regPfGrandFail += st.fail;
+                    let rate = st.total > 0 ? ((st.pass / st.total) * 100).toFixed(1) + '%' : '0.0%';
+                    let badgeClass = reg === 'ENUO' ? 'bg-blue-100 text-blue-900' : (reg === 'HGAO' ? 'bg-amber-100 text-amber-900' : 'bg-emerald-100 text-emerald-900');
+
+                    regPfRowsHtml += `
+                        <tr class="hover:bg-slate-50 border-b border-slate-200 text-center text-xs font-bold text-slate-800">
+                            <td class="p-2.5 border border-slate-200 font-black text-slate-900">${dt}</td>
+                            <td class="p-2.5 border border-slate-200 font-black"><span class="px-2.5 py-0.5 rounded ${badgeClass}">${reg}</span></td>
+                            <td class="p-2.5 border border-slate-200 font-black text-slate-900">${st.total.toLocaleString()}</td>
+                            <td class="p-2.5 border border-slate-200 font-black text-emerald-700">${st.pass.toLocaleString()}</td>
+                            <td class="p-2.5 border border-slate-200 font-black text-rose-600">${st.fail.toLocaleString()}</td>
+                            <td class="p-2.5 border border-slate-200 font-black text-purple-700">${rate}</td>
+                        </tr>
+                    `;
+                });
+            });
+
+            if (!regPfRowsHtml) {
+                regPfRowsHtml = `<tr><td colspan="6" class="p-6 text-center text-slate-400">No regional repair records for selected filter.</td></tr>`;
+            }
+            let regPfGrandRate = regPfGrandTotal > 0 ? ((regPfGrandPass / regPfGrandTotal) * 100).toFixed(2) + '%' : '0.00%';
+
             let sortedDevices = Array.from(deviceSet).sort();
             let devRowsHtml = "";
             let devGrandTotal = 0, devGrandPass = 0, devGrandFail = 0;
@@ -1431,6 +1476,34 @@
                                 ${tableRowsHtml}
                             </tbody>
                         </table>
+                    </div>
+
+                    <div class="space-y-3 pt-2">
+                        <h3 class="text-sm font-black text-slate-900 uppercase tracking-wide">Regional Repair Pass / Fail Breakdown (ENUO / HGAO)</h3>
+                        <div class="overflow-x-auto rounded-xl border border-slate-300 shadow-sm">
+                            <table class="w-full text-left border-collapse border border-slate-300 text-xs">
+                                <thead class="bg-slate-800 text-white uppercase font-black text-center">
+                                    <tr>
+                                        <th class="p-2.5 border border-slate-600">Date</th>
+                                        <th class="p-2.5 border border-slate-600">Region</th>
+                                        <th class="p-2.5 border border-slate-600">Total RMA</th>
+                                        <th class="p-2.5 border border-slate-600">Repair Pass (Reuse)</th>
+                                        <th class="p-2.5 border border-slate-600">Repair Fail</th>
+                                        <th class="p-2.5 border border-slate-600">Pass %</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${regPfRowsHtml}
+                                    <tr class="bg-slate-100 font-black text-slate-900 text-center border-t-2 border-slate-300">
+                                        <td colspan="2" class="p-2.5 border border-slate-300 text-right uppercase">TOTAL</td>
+                                        <td class="p-2.5 border border-slate-300">${regPfGrandTotal.toLocaleString()}</td>
+                                        <td class="p-2.5 border border-slate-300 text-emerald-700">${regPfGrandPass.toLocaleString()}</td>
+                                        <td class="p-2.5 border border-slate-300 text-rose-600">${regPfGrandFail.toLocaleString()}</td>
+                                        <td class="p-2.5 border border-slate-300 text-purple-700">${regPfGrandRate}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
 
                     <div class="space-y-3 pt-2">
