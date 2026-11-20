@@ -378,9 +378,8 @@
             </div>
         </div>
 
-        <!-- SECTION 6: RMA View (RMA Repair Sheet - From June 2026, Month & Date Filter inside All Months, Sticky TOTAL RMA Cards, HC 0-5) -->
+        <!-- SECTION 6: RMA View -->
         <div id="section-rma" class="dashboard-section hidden space-y-6">
-            <!-- Sticky Top Controls + Frozen TOTAL RMA Cards -->
             <div class="sticky top-[68px] z-40 bg-slate-50 pt-1 pb-2 space-y-3">
                 <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-md space-y-3">
                     <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3 pb-3 border-b border-slate-100">
@@ -392,7 +391,6 @@
                             </div>
                         </div>
 
-                        <!-- Month Filter + Date Filter inside All Months -->
                         <div class="flex flex-wrap items-center gap-2">
                             <div class="flex items-center gap-1.5">
                                 <label for="rma-month-select" class="text-xs text-slate-500 uppercase font-black">Month:</label>
@@ -418,7 +416,6 @@
                         </div>
                     </div>
 
-                    <!-- Frozen TOTAL RMA Summary Cards -->
                     <div id="rma-frozen-cards" class="grid grid-cols-2 sm:grid-cols-5 gap-3">
                         <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200 border-l-4 border-l-slate-800">
                             <p class="text-[11px] font-black text-slate-500 uppercase">Total RMA</p>
@@ -1258,13 +1255,13 @@
             let hasMyfo = sortedDates.some(dt => dateMap[dt].myfo > 0);
 
             let grandRma = 0, grandHc = 0, grandReuse = 0;
-            let sumEnuoRma = 0, sumEnuoHc = 0;
-            let sumHgaoRma = 0, sumHgaoHc = 0;
-            let sumMyfoRma = 0, sumMyfoHc = 0;
+            let sumEnuoRma = 0, sumEnuoHc = 0, sumEnuoPass = 0, sumEnuoFail = 0;
+            let sumHgaoRma = 0, sumHgaoHc = 0, sumHgaoPass = 0, sumHgaoFail = 0;
+            let sumMyfoRma = 0, sumMyfoHc = 0, sumMyfoPass = 0, sumMyfoFail = 0;
             let tableRowsHtml = "";
 
             if (sortedDates.length === 0) {
-                let colCount = hasMyfo ? 14 : 11;
+                let colCount = hasMyfo ? 18 : 14;
                 tableRowsHtml = `<tr><td colspan="${colCount}" class="p-8 text-center text-slate-400">No RMA Repair records found for ${activeRmaMonth === 'ALL' ? "Jun'26+" : activeRmaMonth}.</td></tr>`;
             } else {
                 sortedDates.forEach(dt => {
@@ -1272,6 +1269,13 @@
                     let enuoHc = rmaHcInputs[`${dt}_ENUO`] !== undefined ? rmaHcInputs[`${dt}_ENUO`] : 0;
                     let hgaoHc = rmaHcInputs[`${dt}_HGAO`] !== undefined ? rmaHcInputs[`${dt}_HGAO`] : 0;
                     let myfoHc = rmaHcInputs[`${dt}_MYFO`] !== undefined ? rmaHcInputs[`${dt}_MYFO`] : 0;
+
+                    let enuoPass = dObj.regionsPassFail.ENUO.pass;
+                    let enuoFail = dObj.regionsPassFail.ENUO.fail;
+                    let hgaoPass = dObj.regionsPassFail.HGAO.pass;
+                    let hgaoFail = dObj.regionsPassFail.HGAO.fail;
+                    let myfoPass = dObj.regionsPassFail.MYFO.pass;
+                    let myfoFail = dObj.regionsPassFail.MYFO.fail;
 
                     let enuoKpi = enuoHc > 0 ? Math.round(dObj.enuo / enuoHc) : 0;
                     let hgaoKpi = hgaoHc > 0 ? Math.round(dObj.hgao / hgaoHc) : 0;
@@ -1285,11 +1289,19 @@
 
                     sumEnuoRma += dObj.enuo;
                     sumEnuoHc += enuoHc;
+                    sumEnuoPass += enuoPass;
+                    sumEnuoFail += enuoFail;
+
                     sumHgaoRma += dObj.hgao;
                     sumHgaoHc += hgaoHc;
+                    sumHgaoPass += hgaoPass;
+                    sumHgaoFail += hgaoFail;
+
                     if (hasMyfo) {
                         sumMyfoRma += dObj.myfo;
                         sumMyfoHc += myfoHc;
+                        sumMyfoPass += myfoPass;
+                        sumMyfoFail += myfoFail;
                     }
 
                     grandRma += rowTotalRma;
@@ -1304,6 +1316,8 @@
                             </select>
                         </td>
                         <td class="p-3 border border-slate-200 font-black text-emerald-700 bg-emerald-50/40">${myfoKpi}</td>
+                        <td class="p-3 border border-slate-200 font-black text-emerald-700 bg-emerald-50/30">${myfoPass}</td>
+                        <td class="p-3 border border-slate-200 font-black text-rose-600 bg-rose-50/30">${myfoFail}</td>
                     ` : '';
 
                     tableRowsHtml += `
@@ -1316,6 +1330,8 @@
                                 </select>
                             </td>
                             <td class="p-3 border border-slate-200 font-black text-blue-700 bg-blue-50/40">${enuoKpi}</td>
+                            <td class="p-3 border border-slate-200 font-black text-emerald-700 bg-emerald-50/40">${enuoPass}</td>
+                            <td class="p-3 border border-slate-200 font-black text-rose-600 bg-rose-50/40">${enuoFail}</td>
                             <td class="p-3 border border-slate-200 font-black text-amber-900 bg-amber-50/40">${dObj.hgao}</td>
                             <td class="p-2 border border-slate-200 bg-amber-50/20">
                                 <select onchange="handleRmaHcChange('${dt}', 'HGAO', this.value)" class="w-16 px-1.5 py-1 text-center font-black rounded-md border border-amber-300 bg-white text-amber-900 cursor-pointer focus:ring-2 focus:ring-amber-500 text-xs">
@@ -1323,6 +1339,8 @@
                                 </select>
                             </td>
                             <td class="p-3 border border-slate-200 font-black text-amber-700 bg-amber-50/40">${hgaoKpi}</td>
+                            <td class="p-3 border border-slate-200 font-black text-emerald-700 bg-emerald-50/30">${hgaoPass}</td>
+                            <td class="p-3 border border-slate-200 font-black text-rose-600 bg-rose-50/30">${hgaoFail}</td>
                             ${myfoCellsHtml}
                             <td class="p-3 border border-slate-200 font-black text-slate-900 bg-slate-100/80">${rowTotalRma}</td>
                             <td class="p-3 border border-slate-200 font-bold text-slate-800 bg-slate-100/80">${rowTotalHc}</td>
@@ -1343,6 +1361,8 @@
                     <td class="p-3 border border-slate-300 font-black text-emerald-950 bg-emerald-100/70">${sumMyfoRma.toLocaleString()}</td>
                     <td class="p-3 border border-slate-300 font-black text-emerald-950 bg-emerald-100/70">${sumMyfoHc}</td>
                     <td class="p-3 border border-slate-300 font-black text-emerald-800 bg-emerald-100/70">${grandMyfoKpi}</td>
+                    <td class="p-3 border border-slate-300 font-black text-emerald-800 bg-emerald-100/70">${sumMyfoPass.toLocaleString()}</td>
+                    <td class="p-3 border border-slate-300 font-black text-rose-700 bg-rose-100/70">${sumMyfoFail.toLocaleString()}</td>
                 ` : '';
 
                 tableRowsHtml += `
@@ -1351,9 +1371,13 @@
                         <td class="p-3 border border-slate-300 font-black text-blue-950 bg-blue-100/70">${sumEnuoRma.toLocaleString()}</td>
                         <td class="p-3 border border-slate-300 font-black text-blue-950 bg-blue-100/70">${sumEnuoHc}</td>
                         <td class="p-3 border border-slate-300 font-black text-blue-800 bg-blue-100/70">${grandEnuoKpi}</td>
+                        <td class="p-3 border border-slate-300 font-black text-emerald-800 bg-emerald-100/70">${sumEnuoPass.toLocaleString()}</td>
+                        <td class="p-3 border border-slate-300 font-black text-rose-700 bg-rose-100/70">${sumEnuoFail.toLocaleString()}</td>
                         <td class="p-3 border border-slate-300 font-black text-amber-950 bg-amber-100/70">${sumHgaoRma.toLocaleString()}</td>
                         <td class="p-3 border border-slate-300 font-black text-amber-950 bg-amber-100/70">${sumHgaoHc}</td>
                         <td class="p-3 border border-slate-300 font-black text-amber-800 bg-amber-100/70">${grandHgaoKpi}</td>
+                        <td class="p-3 border border-slate-300 font-black text-emerald-800 bg-emerald-100/70">${sumHgaoPass.toLocaleString()}</td>
+                        <td class="p-3 border border-slate-300 font-black text-rose-700 bg-rose-100/70">${sumHgaoFail.toLocaleString()}</td>
                         ${grandMyfoCellsHtml}
                         <td class="p-3 border border-slate-300 font-black text-slate-950 bg-slate-300/80">${grandRma.toLocaleString()}</td>
                         <td class="p-3 border border-slate-300 font-black text-slate-950 bg-slate-300/80">${grandHc}</td>
@@ -1373,45 +1397,14 @@
             document.getElementById('rma-card-reuse').innerText = grandReuse.toLocaleString();
             document.getElementById('rma-card-reuse-pct').innerText = grandReusePct;
 
-            let myfoHeaderTop = hasMyfo ? `<th colspan="3" class="p-2.5 border border-emerald-800 bg-emerald-700 text-white">MYFO</th>` : '';
+            let myfoHeaderTop = hasMyfo ? `<th colspan="5" class="p-2.5 border border-emerald-800 bg-emerald-700 text-white">MYFO</th>` : '';
             let myfoHeaderSub = hasMyfo ? `
                 <th class="p-2 border border-emerald-800 bg-emerald-600 text-white">RMA</th>
                 <th class="p-2 border border-emerald-800 bg-emerald-600 text-white">HC</th>
                 <th class="p-2 border border-emerald-800 bg-emerald-600 text-white">KPI</th>
+                <th class="p-2 border border-emerald-800 bg-emerald-600 text-white">PASS</th>
+                <th class="p-2 border border-emerald-800 bg-emerald-600 text-white">FAIL</th>
             ` : '';
-
-            let activeRegList = hasMyfo ? ['ENUO', 'HGAO', 'MYFO'] : ['ENUO', 'HGAO'];
-            let regPfRowsHtml = "";
-            let regPfGrandTotal = 0, regPfGrandPass = 0, regPfGrandFail = 0;
-
-            sortedDates.forEach(dt => {
-                let dObj = dateMap[dt];
-                activeRegList.forEach(reg => {
-                    let st = dObj.regionsPassFail[reg];
-                    if (!st || st.total === 0) return;
-                    regPfGrandTotal += st.total;
-                    regPfGrandPass += st.pass;
-                    regPfGrandFail += st.fail;
-                    let rate = st.total > 0 ? ((st.pass / st.total) * 100).toFixed(1) + '%' : '0.0%';
-                    let badgeClass = reg === 'ENUO' ? 'bg-blue-100 text-blue-900' : (reg === 'HGAO' ? 'bg-amber-100 text-amber-900' : 'bg-emerald-100 text-emerald-900');
-
-                    regPfRowsHtml += `
-                        <tr class="hover:bg-slate-50 border-b border-slate-200 text-center text-xs font-bold text-slate-800">
-                            <td class="p-2.5 border border-slate-200 font-black text-slate-900">${dt}</td>
-                            <td class="p-2.5 border border-slate-200 font-black"><span class="px-2.5 py-0.5 rounded ${badgeClass}">${reg}</span></td>
-                            <td class="p-2.5 border border-slate-200 font-black text-slate-900">${st.total.toLocaleString()}</td>
-                            <td class="p-2.5 border border-slate-200 font-black text-emerald-700">${st.pass.toLocaleString()}</td>
-                            <td class="p-2.5 border border-slate-200 font-black text-rose-600">${st.fail.toLocaleString()}</td>
-                            <td class="p-2.5 border border-slate-200 font-black text-purple-700">${rate}</td>
-                        </tr>
-                    `;
-                });
-            });
-
-            if (!regPfRowsHtml) {
-                regPfRowsHtml = `<tr><td colspan="6" class="p-6 text-center text-slate-400">No regional repair records for selected filter.</td></tr>`;
-            }
-            let regPfGrandRate = regPfGrandTotal > 0 ? ((regPfGrandPass / regPfGrandTotal) * 100).toFixed(2) + '%' : '0.00%';
 
             let sortedDevices = Array.from(deviceSet).sort();
             let devRowsHtml = "";
@@ -1452,8 +1445,8 @@
                             <thead class="bg-slate-900 text-white uppercase font-black text-center">
                                 <tr>
                                     <th rowspan="2" class="p-3 border border-slate-700 align-middle bg-slate-900">Date</th>
-                                    <th colspan="3" class="p-2.5 border border-blue-800 bg-blue-700 text-white">ENUO</th>
-                                    <th colspan="3" class="p-2.5 border border-amber-800 bg-amber-600 text-white">HGAO</th>
+                                    <th colspan="5" class="p-2.5 border border-blue-800 bg-blue-700 text-white">ENUO</th>
+                                    <th colspan="5" class="p-2.5 border border-amber-800 bg-amber-600 text-white">HGAO</th>
                                     ${myfoHeaderTop}
                                     <th colspan="3" class="p-2.5 border border-slate-700 bg-slate-900">TOTAL RMA</th>
                                     <th rowspan="2" class="p-3 border border-slate-700 align-middle bg-slate-900">REUSE</th>
@@ -1463,9 +1456,13 @@
                                     <th class="p-2 border border-blue-800 bg-blue-600 text-white">RMA</th>
                                     <th class="p-2 border border-blue-800 bg-blue-600 text-white">HC</th>
                                     <th class="p-2 border border-blue-800 bg-blue-600 text-white">KPI</th>
+                                    <th class="p-2 border border-blue-800 bg-emerald-700 text-white">PASS</th>
+                                    <th class="p-2 border border-blue-800 bg-rose-700 text-white">FAIL</th>
                                     <th class="p-2 border border-amber-800 bg-amber-500 text-white">RMA</th>
                                     <th class="p-2 border border-amber-800 bg-amber-500 text-white">HC</th>
                                     <th class="p-2 border border-amber-800 bg-amber-500 text-white">KPI</th>
+                                    <th class="p-2 border border-amber-800 bg-emerald-700 text-white">PASS</th>
+                                    <th class="p-2 border border-amber-800 bg-rose-700 text-white">FAIL</th>
                                     ${myfoHeaderSub}
                                     <th class="p-2 border border-slate-700 bg-slate-800">Total</th>
                                     <th class="p-2 border border-slate-700 bg-slate-800">HC</th>
@@ -1476,34 +1473,6 @@
                                 ${tableRowsHtml}
                             </tbody>
                         </table>
-                    </div>
-
-                    <div class="space-y-3 pt-2">
-                        <h3 class="text-sm font-black text-slate-900 uppercase tracking-wide">Regional Repair Pass / Fail Breakdown (ENUO / HGAO)</h3>
-                        <div class="overflow-x-auto rounded-xl border border-slate-300 shadow-sm">
-                            <table class="w-full text-left border-collapse border border-slate-300 text-xs">
-                                <thead class="bg-slate-800 text-white uppercase font-black text-center">
-                                    <tr>
-                                        <th class="p-2.5 border border-slate-600">Date</th>
-                                        <th class="p-2.5 border border-slate-600">Region</th>
-                                        <th class="p-2.5 border border-slate-600">Total RMA</th>
-                                        <th class="p-2.5 border border-slate-600">Repair Pass (Reuse)</th>
-                                        <th class="p-2.5 border border-slate-600">Repair Fail</th>
-                                        <th class="p-2.5 border border-slate-600">Pass %</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${regPfRowsHtml}
-                                    <tr class="bg-slate-100 font-black text-slate-900 text-center border-t-2 border-slate-300">
-                                        <td colspan="2" class="p-2.5 border border-slate-300 text-right uppercase">TOTAL</td>
-                                        <td class="p-2.5 border border-slate-300">${regPfGrandTotal.toLocaleString()}</td>
-                                        <td class="p-2.5 border border-slate-300 text-emerald-700">${regPfGrandPass.toLocaleString()}</td>
-                                        <td class="p-2.5 border border-slate-300 text-rose-600">${regPfGrandFail.toLocaleString()}</td>
-                                        <td class="p-2.5 border border-slate-300 text-purple-700">${regPfGrandRate}</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
                     </div>
 
                     <div class="space-y-3 pt-2">
