@@ -787,6 +787,29 @@
             return false;
         }
 
+        function getInboundFallbackQtyForDate(prevDt, regKey) {
+            if (!prevDt || !/^\d{4}-\d{2}-\d{2}$/.test(prevDt)) return 0;
+            let mKey = formatMonthKeyFromDate(prevDt);
+            let mData = inboundLiveDataByMonth[mKey];
+            if (!mData) return 0;
+
+            let targetReg = regKey === 'MDY' ? 'MYFO' : regKey;
+            let total = 0;
+
+            Object.values(mData).forEach(wkObj => {
+                if (!wkObj || !Array.isArray(wkObj.rawRows)) return;
+                wkObj.rawRows.forEach(r => {
+                    if (r.date === prevDt) {
+                        if (regKey === 'ALL' || r.region === targetReg) {
+                            total += (r.qty || 1);
+                        }
+                    }
+                });
+            });
+
+            return total;
+        }
+
         async function renderQcTestView() {
             let tbody = document.getElementById('qc-test-tbody');
             if (!tbody) return;
@@ -852,6 +875,10 @@
             displayDates.forEach(dt => {
                 let prevDt = getPreviousIsoDate(dt);
                 let qcInbound = inboundByDate[prevDt] || 0;
+                if (qcInbound === 0) {
+                    qcInbound = getInboundFallbackQtyForDate(prevDt, activeQcTestRegion);
+                }
+
                 let tObj = testByDate[dt] || { total: 0, pass: 0, fail: 0 };
 
                 let hcVal = qcTestHcInputs[`${activeQcTestRegion}_${dt}`] !== undefined ? qcTestHcInputs[`${activeQcTestRegion}_${dt}`] : 0;
