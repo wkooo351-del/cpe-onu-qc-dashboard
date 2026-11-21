@@ -1133,31 +1133,29 @@
             return statusVal.includes('reuse') || statusVal === 'pass' || statusVal.includes('repair pass') || statusVal === 'ok';
         }
 
-        function extractRmaFixReason(row) {
-            let reason = String(getVal(row, [
-                'Repair Action', 'Action Taken', 'Fix', 'Fixed', 'What Fixed',
-                'Reason', 'Repair Reason', 'Issue', 'Fault', 'Root Cause',
-                'Remark', 'Remarks', 'Note', 'Notes', 'Comment', 'Comments'
+        function extractRmaIssueTypeQc(row) {
+            let issueVal = String(getVal(row, [
+                'Issue type QC', 'Issue Type QC', 'Issue type', 'Issue Type', 'QC Issue'
             ], -1) || '').trim();
 
-            if (!reason || reason === '-') {
+            if (!issueVal || issueVal === '-') {
                 let headers = row['_headers'] || [];
                 let rawArr = row['_rawArray'] || [];
                 for (let i = 0; i < headers.length; i++) {
                     let h = String(headers[i] || '').toLowerCase().trim();
                     let val = String(rawArr[i] || '').trim();
                     if (!val || val === '-') continue;
-                    if (h.includes('fix') || h.includes('action') || h.includes('reason') || h.includes('issue') || h.includes('remark') || h.includes('note') || h.includes('detail')) {
-                        reason = val;
+                    if (h.includes('issue type qc') || (h.includes('issue') && h.includes('qc')) || h === 'issue type') {
+                        issueVal = val;
                         break;
                     }
                 }
             }
 
-            if (!reason || reason === '-') {
-                reason = 'Unspecified Repair Pass';
+            if (!issueVal || issueVal === '-') {
+                issueVal = 'Unspecified Issue';
             }
-            return reason;
+            return issueVal;
         }
 
         function buildRmaHcOptionsHtml(currentVal) {
@@ -1238,7 +1236,6 @@
 
             let dateMap = {};
             let deviceSet = new Set();
-            let passReasonMap = {}; // { `${dt}__${dev}__${reason}`: { date, device, reason, count } }
 
             finalRows.forEach(row => {
                 let dt = parseLocalDate(getVal(row, ['Date', 'Repair Date'], 0));
@@ -1248,6 +1245,7 @@
                 deviceSet.add(dev);
 
                 let isPass = isRmaReuseRow(row);
+                let issueQc = extractRmaIssueTypeQc(row);
 
                 if (!dateMap[dt]) {
                     dateMap[dt] = {
@@ -1261,7 +1259,9 @@
                             HGAO: { total: 0, pass: 0, fail: 0 },
                             MYFO: { total: 0, pass: 0, fail: 0 }
                         },
-                        devices: {}
+                        devices: {},
+                        passIssues: {},
+                        failIssues: {}
                     };
                 }
 
@@ -1274,15 +1274,10 @@
                 if (isPass) {
                     rStat.pass += 1;
                     dateMap[dt].reuse += 1;
-
-                    let reason = extractRmaFixReason(row);
-                    let rKey = `${dt}__${dev}__${reason}`;
-                    if (!passReasonMap[rKey]) {
-                        passReasonMap[rKey] = { date: dt, device: dev, reason: reason, count: 0 };
-                    }
-                    passReasonMap[rKey].count += 1;
+                    dateMap[dt].passIssues[issueQc] = (dateMap[dt].passIssues[issueQc] || 0) + 1;
                 } else {
                     rStat.fail += 1;
+                    dateMap[dt].failIssues[issueQc] = (dateMap[dt].failIssues[issueQc] || 0) + 1;
                 }
 
                 if (!dateMap[dt].devices[dev]) {
@@ -1450,29 +1445,53 @@
                 <th class="p-2 border border-emerald-800 bg-emerald-600 text-white">FAIL</th>
             ` : '';
 
-            // New Table Above Device Breakdown: What Was Fixed for Repair Pass & Count
-            let sortedReasons = Object.values(passReasonMap).sort((a, b) => {
-                if (a.date !== b.date) return a.date.localeCompare(b.date);
-                if (b.count !== a.count) return b.count - a.count;
-                return a.device.localeCompare(b.device);
-            });
-            let reasonGrandCount = 0;
-            let reasonRowsHtml = sortedReasons.map(item => {
-                reasonGrandCount += item.count;
-                let sharePct = grandReuse > 0 ? ((item.count / grandReuse) * 100).toFixed(1) + '%' : '0.0%';
-                return `
-                    <tr class="hover:bg-slate-50 border-b border-slate-200 text-xs font-bold text-slate-800">
-                        <td class="p-2.5 border border-slate-200 text-center font-black text-slate-900">${item.date}</td>
-                        <td class="p-2.5 border border-slate-200 text-center font-black text-blue-900">${item.device}</td>
-                        <td class="p-2.5 border border-slate-200 text-left font-bold text-slate-900">${item.reason}</td>
-                        <td class="p-2.5 border border-slate-200 text-center font-black text-emerald-700">${item.count.toLocaleString()}</td>
-                        <td class="p-2.5 border border-slate-200 text-center font-black text-purple-700">${sharePct}</td>
-                    </tr>
-                `;
-            }).join('');
+            // Issue type QC Summary Table (1 Date = 1 Row Group, with Repair Pass & Repair Fail side-by-side)
+            let issueRowsHtml = "";
+            let totalIssuePassCount = 0;
+            let totalIssueFailCount = 0;
 
-            if (!reasonRowsHtml) {
-                reasonRowsHtml = `<tr><td colspan="5" class="p-6 text-center text-slate-400">No Repair Pass fix details recorded for selected filter.</td></tr>`;
+            sortedDates.forEach(dt => {
+                let dObj = dateMap[dt];
+                let passEntries = Object.entries(dObj.passIssues).sort((a, b) => b[1] - a[1]);
+                let failEntries = Object.entries(dObj.failIssues).sort((a, b) => b[1] - a[1]);
+
+                let rowSpanCount = Math.max(passEntries.length, failEntries.length, 1);
+
+                for (let idx = 0; idx < rowSpanCount; idx++) {
+                    let pItem = passEntries[idx];
+                    let fItem = failEntries[idx];
+
+                    if (pItem) totalIssuePassCount += pItem[1];
+                    if (fItem) totalIssueFailCount += fItem[1];
+
+                    let dateCell = idx === 0
+                        ? `<td rowspan="${rowSpanCount}" class="p-2.5 border border-slate-200 text-center align-middle font-black text-slate-900 bg-slate-50">${dt}</td>`
+                        : '';
+
+                    let passIssueCell = pItem
+                        ? `<td class="p-2.5 border border-slate-200 text-left font-bold text-slate-900 bg-emerald-50/30">${pItem[0]}</td>
+                           <td class="p-2.5 border border-slate-200 text-center font-black text-emerald-700 bg-emerald-50/40">${pItem[1].toLocaleString()}</td>`
+                        : `<td class="p-2.5 border border-slate-200 text-center text-slate-400">-</td>
+                           <td class="p-2.5 border border-slate-200 text-center text-slate-400">-</td>`;
+
+                    let failIssueCell = fItem
+                        ? `<td class="p-2.5 border border-slate-200 text-left font-bold text-slate-900 bg-rose-50/30">${fItem[0]}</td>
+                           <td class="p-2.5 border border-slate-200 text-center font-black text-rose-600 bg-rose-50/40">${fItem[1].toLocaleString()}</td>`
+                        : `<td class="p-2.5 border border-slate-200 text-center text-slate-400">-</td>
+                           <td class="p-2.5 border border-slate-200 text-center text-slate-400">-</td>`;
+
+                    issueRowsHtml += `
+                        <tr class="hover:bg-slate-50 border-b border-slate-200 text-xs font-bold text-slate-800">
+                            ${dateCell}
+                            ${passIssueCell}
+                            ${failIssueCell}
+                        </tr>
+                    `;
+                }
+            });
+
+            if (!issueRowsHtml) {
+                issueRowsHtml = `<tr><td colspan="5" class="p-6 text-center text-slate-400">No Issue type QC records found for selected filter.</td></tr>`;
             }
 
             let sortedDevices = Array.from(deviceSet).sort();
@@ -1545,24 +1564,30 @@
                     </div>
 
                     <div class="space-y-3 pt-2">
-                        <h3 class="text-sm font-black text-slate-900 uppercase tracking-wide">Repair Pass Fix / Action Summary (What Was Fixed &amp; Count)</h3>
+                        <h3 class="text-sm font-black text-slate-900 uppercase tracking-wide">Issue Type QC Summary (Repair Pass &amp; Repair Fail)</h3>
                         <div class="overflow-x-auto rounded-xl border border-slate-300 shadow-sm">
                             <table class="w-full text-left border-collapse border border-slate-300 text-xs">
                                 <thead class="bg-slate-800 text-white uppercase font-black text-center">
                                     <tr>
-                                        <th class="p-2.5 border border-slate-600">Date</th>
-                                        <th class="p-2.5 border border-slate-600">Device</th>
-                                        <th class="p-2.5 border border-slate-600 text-left">Fixed For Repair Pass (Action / Reason)</th>
-                                        <th class="p-2.5 border border-slate-600">Pass Count</th>
-                                        <th class="p-2.5 border border-slate-600">Share of Reuse</th>
+                                        <th rowspan="2" class="p-2.5 border border-slate-600 align-middle bg-slate-800">Date</th>
+                                        <th colspan="2" class="p-2 border border-emerald-800 bg-emerald-700 text-white">Repair Pass (Reuse)</th>
+                                        <th colspan="2" class="p-2 border border-rose-800 bg-rose-700 text-white">Repair Fail</th>
+                                    </tr>
+                                    <tr>
+                                        <th class="p-2 border border-emerald-800 bg-emerald-600 text-white text-left">Issue type QC</th>
+                                        <th class="p-2 border border-emerald-800 bg-emerald-600 text-white">Pass Count</th>
+                                        <th class="p-2 border border-rose-800 bg-rose-600 text-white text-left">Issue type QC</th>
+                                        <th class="p-2 border border-rose-800 bg-rose-600 text-white">Fail Count</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    ${reasonRowsHtml}
+                                    ${issueRowsHtml}
                                     <tr class="bg-slate-100 font-black text-slate-900 text-center border-t-2 border-slate-300">
-                                        <td colspan="3" class="p-2.5 border border-slate-300 text-right uppercase">TOTAL REPAIR PASS</td>
-                                        <td class="p-2.5 border border-slate-300 text-emerald-700">${reasonGrandCount.toLocaleString()}</td>
-                                        <td class="p-2.5 border border-slate-300 text-purple-700">${grandReuse > 0 ? '100.0%' : '0.0%'}</td>
+                                        <td class="p-2.5 border border-slate-300 text-right uppercase">TOTAL</td>
+                                        <td class="p-2.5 border border-slate-300 text-right text-emerald-800 uppercase">Total Pass:</td>
+                                        <td class="p-2.5 border border-slate-300 text-emerald-700">${totalIssuePassCount.toLocaleString()}</td>
+                                        <td class="p-2.5 border border-slate-300 text-right text-rose-800 uppercase">Total Fail:</td>
+                                        <td class="p-2.5 border border-slate-300 text-rose-600">${totalIssueFailCount.toLocaleString()}</td>
                                     </tr>
                                 </tbody>
                             </table>
