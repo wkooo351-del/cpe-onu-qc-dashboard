@@ -10,6 +10,14 @@
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #f8fafc; font-weight: 700; }
         .staff-grid-nav { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; justify-content: center; padding: 2px; }
+        .rma-hc-select {
+            appearance: none;
+            -webkit-appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 20 20' fill='none'%3E%3Cpath d='M5 7.5L10 12.5L15 7.5' stroke='%23334155' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 6px center;
+            padding-right: 20px !important;
+        }
     </style>
 </head>
 <body class="text-slate-900 font-bold p-4 sm:p-6">
@@ -387,7 +395,6 @@
                             <span class="px-3.5 py-1.5 rounded-xl text-xs font-black text-white bg-slate-900">RMA REPAIR</span>
                             <div>
                                 <h2 class="text-base font-black text-slate-900">RMA Repair & Reuse Tracking (From Jun'26)</h2>
-                                <p class="text-[11px] text-slate-500 font-bold">Source: YGN - 2026 &rarr; RMA Repair (No Name, Month & Date Filter, Region HC 0–5)</p>
                             </div>
                         </div>
 
@@ -443,7 +450,7 @@
 
             <div id="rma-breakdown-container" class="space-y-6">
                 <div class="bg-white p-8 rounded-2xl border border-slate-200 text-center text-slate-400">
-                    Fetching RMA Repair data from YGN - 2026...
+                    Fetching RMA Repair data...
                 </div>
             </div>
         </div>
@@ -1126,6 +1133,33 @@
             return statusVal.includes('reuse') || statusVal === 'pass' || statusVal.includes('repair pass') || statusVal === 'ok';
         }
 
+        function extractRmaFixReason(row) {
+            let reason = String(getVal(row, [
+                'Repair Action', 'Action Taken', 'Fix', 'Fixed', 'What Fixed',
+                'Reason', 'Repair Reason', 'Issue', 'Fault', 'Root Cause',
+                'Remark', 'Remarks', 'Note', 'Notes', 'Comment', 'Comments'
+            ], -1) || '').trim();
+
+            if (!reason || reason === '-') {
+                let headers = row['_headers'] || [];
+                let rawArr = row['_rawArray'] || [];
+                for (let i = 0; i < headers.length; i++) {
+                    let h = String(headers[i] || '').toLowerCase().trim();
+                    let val = String(rawArr[i] || '').trim();
+                    if (!val || val === '-') continue;
+                    if (h.includes('fix') || h.includes('action') || h.includes('reason') || h.includes('issue') || h.includes('remark') || h.includes('note') || h.includes('detail')) {
+                        reason = val;
+                        break;
+                    }
+                }
+            }
+
+            if (!reason || reason === '-') {
+                reason = 'Unspecified Repair Pass';
+            }
+            return reason;
+        }
+
         function buildRmaHcOptionsHtml(currentVal) {
             return HC_STEP_OPTIONS.map(val => {
                 let selected = Math.abs(val - currentVal) < 0.001 ? 'selected' : '';
@@ -1204,6 +1238,7 @@
 
             let dateMap = {};
             let deviceSet = new Set();
+            let passReasonMap = {}; // { `${dt}__${dev}__${reason}`: { date, device, reason, count } }
 
             finalRows.forEach(row => {
                 let dt = parseLocalDate(getVal(row, ['Date', 'Repair Date'], 0));
@@ -1239,6 +1274,13 @@
                 if (isPass) {
                     rStat.pass += 1;
                     dateMap[dt].reuse += 1;
+
+                    let reason = extractRmaFixReason(row);
+                    let rKey = `${dt}__${dev}__${reason}`;
+                    if (!passReasonMap[rKey]) {
+                        passReasonMap[rKey] = { date: dt, device: dev, reason: reason, count: 0 };
+                    }
+                    passReasonMap[rKey].count += 1;
                 } else {
                     rStat.fail += 1;
                 }
@@ -1259,6 +1301,8 @@
             let sumHgaoRma = 0, sumHgaoHc = 0, sumHgaoPass = 0, sumHgaoFail = 0;
             let sumMyfoRma = 0, sumMyfoHc = 0, sumMyfoPass = 0, sumMyfoFail = 0;
             let tableRowsHtml = "";
+
+            const hcSelectClass = "rma-hc-select w-[68px] h-7 px-2 text-center font-extrabold rounded-lg border border-slate-300 bg-white text-slate-900 shadow-2xs cursor-pointer hover:border-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs";
 
             if (sortedDates.length === 0) {
                 let colCount = hasMyfo ? 18 : 14;
@@ -1311,7 +1355,7 @@
                     let myfoCellsHtml = hasMyfo ? `
                         <td class="p-3 border border-slate-200 font-black text-emerald-900 bg-emerald-50/40">${dObj.myfo}</td>
                         <td class="p-2 border border-slate-200 bg-emerald-50/20">
-                            <select onchange="handleRmaHcChange('${dt}', 'MYFO', this.value)" class="w-16 px-1.5 py-1 text-center font-black rounded-md border border-emerald-300 bg-white text-emerald-900 cursor-pointer focus:ring-2 focus:ring-emerald-500 text-xs">
+                            <select onchange="handleRmaHcChange('${dt}', 'MYFO', this.value)" class="${hcSelectClass}">
                                 ${buildRmaHcOptionsHtml(myfoHc)}
                             </select>
                         </td>
@@ -1325,7 +1369,7 @@
                             <td class="p-3 border border-slate-200 font-black text-slate-900">${dt}</td>
                             <td class="p-3 border border-slate-200 font-black text-blue-900 bg-blue-50/40">${dObj.enuo}</td>
                             <td class="p-2 border border-slate-200 bg-blue-50/20">
-                                <select onchange="handleRmaHcChange('${dt}', 'ENUO', this.value)" class="w-16 px-1.5 py-1 text-center font-black rounded-md border border-blue-300 bg-white text-blue-900 cursor-pointer focus:ring-2 focus:ring-blue-500 text-xs">
+                                <select onchange="handleRmaHcChange('${dt}', 'ENUO', this.value)" class="${hcSelectClass}">
                                     ${buildRmaHcOptionsHtml(enuoHc)}
                                 </select>
                             </td>
@@ -1334,7 +1378,7 @@
                             <td class="p-3 border border-slate-200 font-black text-rose-600 bg-rose-50/40">${enuoFail}</td>
                             <td class="p-3 border border-slate-200 font-black text-amber-900 bg-amber-50/40">${dObj.hgao}</td>
                             <td class="p-2 border border-slate-200 bg-amber-50/20">
-                                <select onchange="handleRmaHcChange('${dt}', 'HGAO', this.value)" class="w-16 px-1.5 py-1 text-center font-black rounded-md border border-amber-300 bg-white text-amber-900 cursor-pointer focus:ring-2 focus:ring-amber-500 text-xs">
+                                <select onchange="handleRmaHcChange('${dt}', 'HGAO', this.value)" class="${hcSelectClass}">
                                     ${buildRmaHcOptionsHtml(hgaoHc)}
                                 </select>
                             </td>
@@ -1406,6 +1450,31 @@
                 <th class="p-2 border border-emerald-800 bg-emerald-600 text-white">FAIL</th>
             ` : '';
 
+            // New Table Above Device Breakdown: What Was Fixed for Repair Pass & Count
+            let sortedReasons = Object.values(passReasonMap).sort((a, b) => {
+                if (a.date !== b.date) return a.date.localeCompare(b.date);
+                if (b.count !== a.count) return b.count - a.count;
+                return a.device.localeCompare(b.device);
+            });
+            let reasonGrandCount = 0;
+            let reasonRowsHtml = sortedReasons.map(item => {
+                reasonGrandCount += item.count;
+                let sharePct = grandReuse > 0 ? ((item.count / grandReuse) * 100).toFixed(1) + '%' : '0.0%';
+                return `
+                    <tr class="hover:bg-slate-50 border-b border-slate-200 text-xs font-bold text-slate-800">
+                        <td class="p-2.5 border border-slate-200 text-center font-black text-slate-900">${item.date}</td>
+                        <td class="p-2.5 border border-slate-200 text-center font-black text-blue-900">${item.device}</td>
+                        <td class="p-2.5 border border-slate-200 text-left font-bold text-slate-900">${item.reason}</td>
+                        <td class="p-2.5 border border-slate-200 text-center font-black text-emerald-700">${item.count.toLocaleString()}</td>
+                        <td class="p-2.5 border border-slate-200 text-center font-black text-purple-700">${sharePct}</td>
+                    </tr>
+                `;
+            }).join('');
+
+            if (!reasonRowsHtml) {
+                reasonRowsHtml = `<tr><td colspan="5" class="p-6 text-center text-slate-400">No Repair Pass fix details recorded for selected filter.</td></tr>`;
+            }
+
             let sortedDevices = Array.from(deviceSet).sort();
             let devRowsHtml = "";
             let devGrandTotal = 0, devGrandPass = 0, devGrandFail = 0;
@@ -1473,6 +1542,31 @@
                                 ${tableRowsHtml}
                             </tbody>
                         </table>
+                    </div>
+
+                    <div class="space-y-3 pt-2">
+                        <h3 class="text-sm font-black text-slate-900 uppercase tracking-wide">Repair Pass Fix / Action Summary (What Was Fixed &amp; Count)</h3>
+                        <div class="overflow-x-auto rounded-xl border border-slate-300 shadow-sm">
+                            <table class="w-full text-left border-collapse border border-slate-300 text-xs">
+                                <thead class="bg-slate-800 text-white uppercase font-black text-center">
+                                    <tr>
+                                        <th class="p-2.5 border border-slate-600">Date</th>
+                                        <th class="p-2.5 border border-slate-600">Device</th>
+                                        <th class="p-2.5 border border-slate-600 text-left">Fixed For Repair Pass (Action / Reason)</th>
+                                        <th class="p-2.5 border border-slate-600">Pass Count</th>
+                                        <th class="p-2.5 border border-slate-600">Share of Reuse</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${reasonRowsHtml}
+                                    <tr class="bg-slate-100 font-black text-slate-900 text-center border-t-2 border-slate-300">
+                                        <td colspan="3" class="p-2.5 border border-slate-300 text-right uppercase">TOTAL REPAIR PASS</td>
+                                        <td class="p-2.5 border border-slate-300 text-emerald-700">${reasonGrandCount.toLocaleString()}</td>
+                                        <td class="p-2.5 border border-slate-300 text-purple-700">${grandReuse > 0 ? '100.0%' : '0.0%'}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
 
                     <div class="space-y-3 pt-2">
