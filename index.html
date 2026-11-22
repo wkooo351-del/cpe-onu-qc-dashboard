@@ -1236,6 +1236,8 @@
 
             let dateMap = {};
             let deviceSet = new Set();
+            let actionColsSet = new Set();
+            let reasonColsSet = new Set();
 
             finalRows.forEach(row => {
                 let dt = parseLocalDate(getVal(row, ['Date', 'Repair Date'], 0));
@@ -1274,9 +1276,11 @@
                 if (isPass) {
                     rStat.pass += 1;
                     dateMap[dt].reuse += 1;
+                    actionColsSet.add(issueQc);
                     dateMap[dt].passIssues[issueQc] = (dateMap[dt].passIssues[issueQc] || 0) + 1;
                 } else {
                     rStat.fail += 1;
+                    reasonColsSet.add(issueQc);
                     dateMap[dt].failIssues[issueQc] = (dateMap[dt].failIssues[issueQc] || 0) + 1;
                 }
 
@@ -1445,51 +1449,80 @@
                 <th class="p-2 border border-emerald-800 bg-emerald-600 text-white">FAIL</th>
             ` : '';
 
-            // Compact 1 Date = 1 Row Summary Table (Repair Action vs Failure Reason)
+            // Order action columns with preferred items first, then remaining dynamically
+            const preferredActions = ["DC Pin Soldering", "Flange Changed", "Cover Changed"];
+            let sortedActionCols = Array.from(actionColsSet).sort((a, b) => {
+                let idxA = preferredActions.findIndex(p => p.toLowerCase() === a.toLowerCase());
+                let idxB = preferredActions.findIndex(p => p.toLowerCase() === b.toLowerCase());
+                if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+                if (idxA !== -1) return -1;
+                if (idxB !== -1) return 1;
+                return a.localeCompare(b);
+            });
+            if (sortedActionCols.length === 0) sortedActionCols = [...preferredActions];
+
+            let sortedReasonCols = Array.from(reasonColsSet).sort();
+            if (sortedReasonCols.length === 0) sortedReasonCols = ["No Issue"];
+
+            let actionSubHeadersHtml = sortedActionCols.map(act =>
+                `<th class="p-2 border border-emerald-800 bg-emerald-600 text-white whitespace-nowrap">${act}</th>`
+            ).join('') + `<th class="p-2 border border-emerald-800 bg-emerald-800 text-white whitespace-nowrap">TOTAL PASS</th>`;
+
+            let reasonSubHeadersHtml = sortedReasonCols.map(rsn =>
+                `<th class="p-2 border border-rose-800 bg-rose-600 text-white whitespace-nowrap">${rsn}</th>`
+            ).join('') + `<th class="p-2 border border-rose-800 bg-rose-800 text-white whitespace-nowrap">TOTAL FAIL</th>`;
+
             let issueRowsHtml = "";
-            let totalIssuePassCount = 0;
-            let totalIssueFailCount = 0;
+            let actionColTotals = {};
+            sortedActionCols.forEach(a => actionColTotals[a] = 0);
+            let reasonColTotals = {};
+            sortedReasonCols.forEach(r => reasonColTotals[r] = 0);
+            let grandActionTotal = 0;
+            let grandReasonTotal = 0;
 
             sortedDates.forEach(dt => {
                 let dObj = dateMap[dt];
-                let passEntries = Object.entries(dObj.passIssues).sort((a, b) => b[1] - a[1]);
-                let failEntries = Object.entries(dObj.failIssues).sort((a, b) => b[1] - a[1]);
+                let dayPassSum = 0;
+                let dayFailSum = 0;
 
-                let dayPassSum = passEntries.reduce((acc, item) => acc + item[1], 0);
-                let dayFailSum = failEntries.reduce((acc, item) => acc + item[1], 0);
-                totalIssuePassCount += dayPassSum;
-                totalIssueFailCount += dayFailSum;
+                let actCellsHtml = sortedActionCols.map(act => {
+                    let cnt = dObj.passIssues[act] || 0;
+                    dayPassSum += cnt;
+                    actionColTotals[act] += cnt;
+                    return `<td class="p-2.5 border border-slate-200 text-center ${cnt > 0 ? 'font-black text-emerald-800 bg-emerald-50/30' : 'text-slate-400'}">${cnt > 0 ? cnt : '-'}</td>`;
+                }).join('') + `<td class="p-2.5 border border-slate-200 text-center font-black text-emerald-900 bg-emerald-50/70">${dayPassSum}</td>`;
 
-                let passChipsHtml = passEntries.length > 0
-                    ? passEntries.map(([label, cnt]) =>
-                        `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-900 border border-emerald-200 text-[11px] font-bold">${label} <strong class="text-emerald-700 font-black">(${cnt})</strong></span>`
-                      ).join('')
-                    : `<span class="text-slate-400 text-[11px]">-</span>`;
+                let rsnCellsHtml = sortedReasonCols.map(rsn => {
+                    let cnt = dObj.failIssues[rsn] || 0;
+                    dayFailSum += cnt;
+                    reasonColTotals[rsn] += cnt;
+                    return `<td class="p-2.5 border border-slate-200 text-center ${cnt > 0 ? 'font-black text-rose-700 bg-rose-50/30' : 'text-slate-400'}">${cnt > 0 ? cnt : '-'}</td>`;
+                }).join('') + `<td class="p-2.5 border border-slate-200 text-center font-black text-rose-800 bg-rose-50/70">${dayFailSum}</td>`;
 
-                let failChipsHtml = failEntries.length > 0
-                    ? failEntries.map(([label, cnt]) =>
-                        `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-rose-50 text-rose-900 border border-rose-200 text-[11px] font-bold">${label} <strong class="text-rose-700 font-black">(${cnt})</strong></span>`
-                      ).join('')
-                    : `<span class="text-slate-400 text-[11px]">-</span>`;
+                grandActionTotal += dayPassSum;
+                grandReasonTotal += dayFailSum;
 
                 issueRowsHtml += `
                     <tr class="hover:bg-slate-50 border-b border-slate-200 text-xs font-bold text-slate-800">
                         <td class="p-2.5 border border-slate-200 text-center whitespace-nowrap font-black text-slate-900 bg-slate-50">${dt}</td>
-                        <td class="p-2 border border-slate-200 text-left align-middle">
-                            <div class="flex flex-wrap gap-1.5">${passChipsHtml}</div>
-                        </td>
-                        <td class="p-2.5 border border-slate-200 text-center whitespace-nowrap font-black text-emerald-700 bg-emerald-50/40">${dayPassSum.toLocaleString()}</td>
-                        <td class="p-2 border border-slate-200 text-left align-middle">
-                            <div class="flex flex-wrap gap-1.5">${failChipsHtml}</div>
-                        </td>
-                        <td class="p-2.5 border border-slate-200 text-center whitespace-nowrap font-black text-rose-600 bg-rose-50/40">${dayFailSum.toLocaleString()}</td>
+                        ${actCellsHtml}
+                        ${rsnCellsHtml}
                     </tr>
                 `;
             });
 
+            let totalIssueColsCount = 1 + sortedActionCols.length + 1 + sortedReasonCols.length + 1;
             if (!issueRowsHtml) {
-                issueRowsHtml = `<tr><td colspan="5" class="p-6 text-center text-slate-400">No repair records found for selected filter.</td></tr>`;
+                issueRowsHtml = `<tr><td colspan="${totalIssueColsCount}" class="p-6 text-center text-slate-400">No repair records found for selected filter.</td></tr>`;
             }
+
+            let actionFooterCellsHtml = sortedActionCols.map(act =>
+                `<td class="p-2.5 border border-slate-300 text-center text-emerald-800 bg-emerald-100/70">${actionColTotals[act].toLocaleString()}</td>`
+            ).join('') + `<td class="p-2.5 border border-slate-300 text-center text-emerald-950 bg-emerald-200/80">${grandActionTotal.toLocaleString()}</td>`;
+
+            let reasonFooterCellsHtml = sortedReasonCols.map(rsn =>
+                `<td class="p-2.5 border border-slate-300 text-center text-rose-700 bg-rose-100/70">${reasonColTotals[rsn].toLocaleString()}</td>`
+            ).join('') + `<td class="p-2.5 border border-slate-300 text-center text-rose-900 bg-rose-200/80">${grandReasonTotal.toLocaleString()}</td>`;
 
             let sortedDevices = Array.from(deviceSet).sort();
             let devRowsHtml = "";
@@ -1574,30 +1607,26 @@
                     </div>
 
                     <div class="space-y-3 pt-2">
-                        <h3 class="text-sm font-black text-slate-900 uppercase tracking-wide">Repair Action &amp; Failure Reason Summary (Repair Pass &amp; Repair Fail)</h3>
+                        <h3 class="text-sm font-black text-slate-900 uppercase tracking-wide">Repair Pass (Repair Action) &amp; Repair Fail (Failure Reason)</h3>
                         <div class="overflow-x-auto max-h-[420px] overflow-y-auto rounded-xl border border-slate-300 shadow-sm">
                             <table class="w-full text-left border-collapse border border-slate-300 text-xs">
                                 <thead class="bg-slate-800 text-white uppercase font-black text-center sticky top-0 z-10">
                                     <tr>
                                         <th rowspan="2" class="p-2.5 border border-slate-600 align-middle bg-slate-800">Date</th>
-                                        <th colspan="2" class="p-2 border border-emerald-800 bg-emerald-700 text-white">Repair Pass (Reuse)</th>
-                                        <th colspan="2" class="p-2 border border-rose-800 bg-rose-700 text-white">Repair Fail</th>
+                                        <th colspan="${sortedActionCols.length + 1}" class="p-2 border border-emerald-800 bg-emerald-700 text-white">Repair Pass &mdash; Repair Action</th>
+                                        <th colspan="${sortedReasonCols.length + 1}" class="p-2 border border-rose-800 bg-rose-700 text-white">Repair Fail &mdash; Failure Reason</th>
                                     </tr>
                                     <tr>
-                                        <th class="p-2 border border-emerald-800 bg-emerald-600 text-white text-left">Repair Action</th>
-                                        <th class="p-2 border border-emerald-800 bg-emerald-600 text-white">Pass Count</th>
-                                        <th class="p-2 border border-rose-800 bg-rose-600 text-white text-left">Failure Reason</th>
-                                        <th class="p-2 border border-rose-800 bg-rose-600 text-white">Fail Count</th>
+                                        ${actionSubHeadersHtml}
+                                        ${reasonSubHeadersHtml}
                                     </tr>
                                 </thead>
                                 <tbody>
                                     ${issueRowsHtml}
                                     <tr class="bg-slate-100 font-black text-slate-900 text-center border-t-2 border-slate-300">
-                                        <td class="p-2.5 border border-slate-300 text-right uppercase">TOTAL</td>
-                                        <td class="p-2.5 border border-slate-300 text-right text-emerald-800 uppercase">Total Pass:</td>
-                                        <td class="p-2.5 border border-slate-300 text-emerald-700">${totalIssuePassCount.toLocaleString()}</td>
-                                        <td class="p-2.5 border border-slate-300 text-right text-rose-800 uppercase">Total Fail:</td>
-                                        <td class="p-2.5 border border-slate-300 text-rose-600">${totalIssueFailCount.toLocaleString()}</td>
+                                        <td class="p-2.5 border border-slate-300 text-right uppercase bg-slate-200">TOTAL</td>
+                                        ${actionFooterCellsHtml}
+                                        ${reasonFooterCellsHtml}
                                     </tr>
                                 </tbody>
                             </table>
