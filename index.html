@@ -1449,7 +1449,6 @@
                 <th class="p-2 border border-emerald-800 bg-emerald-600 text-white">FAIL</th>
             ` : '';
 
-            // Order action columns with preferred items first, then remaining dynamically
             const preferredActions = ["DC Pin Soldering", "Flange Changed", "Cover Changed"];
             let sortedActionCols = Array.from(actionColsSet).sort((a, b) => {
                 let idxA = preferredActions.findIndex(p => p.toLowerCase() === a.toLowerCase());
@@ -1540,7 +1539,7 @@
                     dayPass += st.pass;
                     dayFail += st.fail;
                     devSummaryChips.push(
-                        `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-100 text-slate-900 border border-slate-200 text-[11px] font-bold"><strong class="text-blue-900">${dev}</strong>: ${st.total} <span class="text-emerald-700">(P:${st.pass}</span>/<span class="text-rose-600">F:${st.fail})</span></span>`
+                        `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-white text-slate-900 border border-slate-200 shadow-2xs text-xs font-bold"><strong class="text-blue-900">${dev}</strong> : ${st.total} <span class="text-emerald-600">(P:${st.pass}</span> / <span class="text-rose-600">F:${st.fail})</span></span>`
                     );
                 });
 
@@ -1552,14 +1551,14 @@
 
                 devRowsHtml += `
                     <tr class="hover:bg-slate-50 border-b border-slate-200 text-xs font-bold text-slate-800">
-                        <td class="p-2.5 border border-slate-200 text-center whitespace-nowrap font-black text-slate-900 bg-slate-50">${dt}</td>
-                        <td class="p-2 border border-slate-200 text-left align-middle">
-                            <div class="flex flex-wrap gap-1.5">${devSummaryChips.join('')}</div>
+                        <td class="p-3 border border-slate-200 text-center whitespace-nowrap font-black text-slate-900 bg-slate-50/70">${dt}</td>
+                        <td class="p-2.5 border border-slate-200 text-left align-middle bg-slate-50/40">
+                            <div class="flex flex-wrap gap-2">${devSummaryChips.join('')}</div>
                         </td>
-                        <td class="p-2.5 border border-slate-200 text-center whitespace-nowrap font-black text-slate-900">${dayTot}</td>
-                        <td class="p-2.5 border border-slate-200 text-center whitespace-nowrap font-black text-emerald-700">${dayPass}</td>
-                        <td class="p-2.5 border border-slate-200 text-center whitespace-nowrap font-black text-rose-600">${dayFail}</td>
-                        <td class="p-2.5 border border-slate-200 text-center whitespace-nowrap font-black text-purple-700">${rate}</td>
+                        <td class="p-3 border border-slate-200 text-center whitespace-nowrap font-black text-slate-900">${dayTot}</td>
+                        <td class="p-3 border border-slate-200 text-center whitespace-nowrap font-black text-emerald-600">${dayPass}</td>
+                        <td class="p-3 border border-slate-200 text-center whitespace-nowrap font-black text-rose-600">${dayFail}</td>
+                        <td class="p-3 border border-slate-200 text-center whitespace-nowrap font-black text-purple-700">${rate}</td>
                     </tr>
                 `;
             });
@@ -1639,22 +1638,22 @@
                             <table class="w-full text-left border-collapse border border-slate-300 text-xs">
                                 <thead class="bg-slate-800 text-white uppercase font-black text-center sticky top-0 z-10">
                                     <tr>
-                                        <th class="p-2.5 border border-slate-600">Date</th>
-                                        <th class="p-2.5 border border-slate-600 text-left">Devices (Pass / Fail)</th>
-                                        <th class="p-2.5 border border-slate-600">Total</th>
-                                        <th class="p-2.5 border border-slate-600">Repair Pass (Reuse)</th>
-                                        <th class="p-2.5 border border-slate-600">Repair Fail</th>
-                                        <th class="p-2.5 border border-slate-600">Pass %</th>
+                                        <th class="p-3 border border-slate-700 bg-slate-800">Date</th>
+                                        <th class="p-3 border border-slate-700 bg-slate-800 text-left">Devices (Pass / Fail)</th>
+                                        <th class="p-3 border border-slate-700 bg-slate-800">Total</th>
+                                        <th class="p-3 border border-slate-700 bg-slate-800">Repair Pass (Reuse)</th>
+                                        <th class="p-3 border border-slate-700 bg-slate-800">Repair Fail</th>
+                                        <th class="p-3 border border-slate-700 bg-slate-800">Pass %</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     ${devRowsHtml}
-                                    <tr class="bg-slate-100 font-black text-slate-900 text-center border-t-2 border-slate-300">
-                                        <td colspan="2" class="p-2.5 border border-slate-300 text-right uppercase">TOTAL</td>
-                                        <td class="p-2.5 border border-slate-300">${devGrandTotal.toLocaleString()}</td>
-                                        <td class="p-2.5 border border-slate-300 text-emerald-700">${devGrandPass.toLocaleString()}</td>
-                                        <td class="p-2.5 border border-slate-300 text-rose-600">${devGrandFail.toLocaleString()}</td>
-                                        <td class="p-2.5 border border-slate-300 text-purple-700">${devGrandRate}</td>
+                                    <tr class="bg-slate-100/70 font-black text-slate-900 text-center border-t border-slate-300">
+                                        <td colspan="2" class="p-3 border border-slate-200 text-right uppercase text-xs font-black text-slate-900">TOTAL</td>
+                                        <td class="p-3 border border-slate-200 font-black text-slate-900">${devGrandTotal.toLocaleString()}</td>
+                                        <td class="p-3 border border-slate-200 font-black text-emerald-600">${devGrandPass.toLocaleString()}</td>
+                                        <td class="p-3 border border-slate-200 font-black text-rose-600">${devGrandFail.toLocaleString()}</td>
+                                        <td class="p-3 border border-slate-200 font-black text-purple-700">${devGrandRate}</td>
                                     </tr>
                                 </tbody>
                             </table>
