@@ -1445,7 +1445,7 @@
                 <th class="p-2 border border-emerald-800 bg-emerald-600 text-white">FAIL</th>
             ` : '';
 
-            // Issue type QC Summary Table (1 Date = 1 Row Group, with Repair Pass & Repair Fail side-by-side)
+            // Compact 1 Date = 1 Row Summary Table (Repair Action vs Failure Reason)
             let issueRowsHtml = "";
             let totalIssuePassCount = 0;
             let totalIssueFailCount = 0;
@@ -1455,43 +1455,40 @@
                 let passEntries = Object.entries(dObj.passIssues).sort((a, b) => b[1] - a[1]);
                 let failEntries = Object.entries(dObj.failIssues).sort((a, b) => b[1] - a[1]);
 
-                let rowSpanCount = Math.max(passEntries.length, failEntries.length, 1);
+                let dayPassSum = passEntries.reduce((acc, item) => acc + item[1], 0);
+                let dayFailSum = failEntries.reduce((acc, item) => acc + item[1], 0);
+                totalIssuePassCount += dayPassSum;
+                totalIssueFailCount += dayFailSum;
 
-                for (let idx = 0; idx < rowSpanCount; idx++) {
-                    let pItem = passEntries[idx];
-                    let fItem = failEntries[idx];
+                let passChipsHtml = passEntries.length > 0
+                    ? passEntries.map(([label, cnt]) =>
+                        `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-900 border border-emerald-200 text-[11px] font-bold">${label} <strong class="text-emerald-700 font-black">(${cnt})</strong></span>`
+                      ).join('')
+                    : `<span class="text-slate-400 text-[11px]">-</span>`;
 
-                    if (pItem) totalIssuePassCount += pItem[1];
-                    if (fItem) totalIssueFailCount += fItem[1];
+                let failChipsHtml = failEntries.length > 0
+                    ? failEntries.map(([label, cnt]) =>
+                        `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-rose-50 text-rose-900 border border-rose-200 text-[11px] font-bold">${label} <strong class="text-rose-700 font-black">(${cnt})</strong></span>`
+                      ).join('')
+                    : `<span class="text-slate-400 text-[11px]">-</span>`;
 
-                    let dateCell = idx === 0
-                        ? `<td rowspan="${rowSpanCount}" class="p-2.5 border border-slate-200 text-center align-middle font-black text-slate-900 bg-slate-50">${dt}</td>`
-                        : '';
-
-                    let passIssueCell = pItem
-                        ? `<td class="p-2.5 border border-slate-200 text-left font-bold text-slate-900 bg-emerald-50/30">${pItem[0]}</td>
-                           <td class="p-2.5 border border-slate-200 text-center font-black text-emerald-700 bg-emerald-50/40">${pItem[1].toLocaleString()}</td>`
-                        : `<td class="p-2.5 border border-slate-200 text-center text-slate-400">-</td>
-                           <td class="p-2.5 border border-slate-200 text-center text-slate-400">-</td>`;
-
-                    let failIssueCell = fItem
-                        ? `<td class="p-2.5 border border-slate-200 text-left font-bold text-slate-900 bg-rose-50/30">${fItem[0]}</td>
-                           <td class="p-2.5 border border-slate-200 text-center font-black text-rose-600 bg-rose-50/40">${fItem[1].toLocaleString()}</td>`
-                        : `<td class="p-2.5 border border-slate-200 text-center text-slate-400">-</td>
-                           <td class="p-2.5 border border-slate-200 text-center text-slate-400">-</td>`;
-
-                    issueRowsHtml += `
-                        <tr class="hover:bg-slate-50 border-b border-slate-200 text-xs font-bold text-slate-800">
-                            ${dateCell}
-                            ${passIssueCell}
-                            ${failIssueCell}
-                        </tr>
-                    `;
-                }
+                issueRowsHtml += `
+                    <tr class="hover:bg-slate-50 border-b border-slate-200 text-xs font-bold text-slate-800">
+                        <td class="p-2.5 border border-slate-200 text-center whitespace-nowrap font-black text-slate-900 bg-slate-50">${dt}</td>
+                        <td class="p-2 border border-slate-200 text-left align-middle">
+                            <div class="flex flex-wrap gap-1.5">${passChipsHtml}</div>
+                        </td>
+                        <td class="p-2.5 border border-slate-200 text-center whitespace-nowrap font-black text-emerald-700 bg-emerald-50/40">${dayPassSum.toLocaleString()}</td>
+                        <td class="p-2 border border-slate-200 text-left align-middle">
+                            <div class="flex flex-wrap gap-1.5">${failChipsHtml}</div>
+                        </td>
+                        <td class="p-2.5 border border-slate-200 text-center whitespace-nowrap font-black text-rose-600 bg-rose-50/40">${dayFailSum.toLocaleString()}</td>
+                    </tr>
+                `;
             });
 
             if (!issueRowsHtml) {
-                issueRowsHtml = `<tr><td colspan="5" class="p-6 text-center text-slate-400">No Issue type QC records found for selected filter.</td></tr>`;
+                issueRowsHtml = `<tr><td colspan="5" class="p-6 text-center text-slate-400">No repair records found for selected filter.</td></tr>`;
             }
 
             let sortedDevices = Array.from(deviceSet).sort();
@@ -1500,25 +1497,38 @@
 
             sortedDates.forEach(dt => {
                 let dObj = dateMap[dt];
+                let devSummaryChips = [];
+                let dayTot = 0, dayPass = 0, dayFail = 0;
+
                 sortedDevices.forEach(dev => {
                     let st = dObj.devices[dev];
                     if (!st) return;
-                    devGrandTotal += st.total;
-                    devGrandPass += st.pass;
-                    devGrandFail += st.fail;
-                    let rate = st.total > 0 ? ((st.pass / st.total) * 100).toFixed(1) + '%' : '0.0%';
-
-                    devRowsHtml += `
-                        <tr class="hover:bg-slate-50 border-b border-slate-200 text-center text-xs font-bold text-slate-800">
-                            <td class="p-2.5 border border-slate-200 font-black text-slate-900">${dt}</td>
-                            <td class="p-2.5 border border-slate-200 font-black text-blue-900">${dev}</td>
-                            <td class="p-2.5 border border-slate-200 font-black text-slate-900">${st.total}</td>
-                            <td class="p-2.5 border border-slate-200 font-black text-emerald-700">${st.pass}</td>
-                            <td class="p-2.5 border border-slate-200 font-black text-rose-600">${st.fail}</td>
-                            <td class="p-2.5 border border-slate-200 font-black text-purple-700">${rate}</td>
-                        </tr>
-                    `;
+                    dayTot += st.total;
+                    dayPass += st.pass;
+                    dayFail += st.fail;
+                    devSummaryChips.push(
+                        `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-100 text-slate-900 border border-slate-200 text-[11px] font-bold"><strong class="text-blue-900">${dev}</strong>: ${st.total} <span class="text-emerald-700">(P:${st.pass}</span>/<span class="text-rose-600">F:${st.fail})</span></span>`
+                    );
                 });
+
+                if (dayTot === 0) return;
+                devGrandTotal += dayTot;
+                devGrandPass += dayPass;
+                devGrandFail += dayFail;
+                let rate = dayTot > 0 ? ((dayPass / dayTot) * 100).toFixed(1) + '%' : '0.0%';
+
+                devRowsHtml += `
+                    <tr class="hover:bg-slate-50 border-b border-slate-200 text-xs font-bold text-slate-800">
+                        <td class="p-2.5 border border-slate-200 text-center whitespace-nowrap font-black text-slate-900 bg-slate-50">${dt}</td>
+                        <td class="p-2 border border-slate-200 text-left align-middle">
+                            <div class="flex flex-wrap gap-1.5">${devSummaryChips.join('')}</div>
+                        </td>
+                        <td class="p-2.5 border border-slate-200 text-center whitespace-nowrap font-black text-slate-900">${dayTot}</td>
+                        <td class="p-2.5 border border-slate-200 text-center whitespace-nowrap font-black text-emerald-700">${dayPass}</td>
+                        <td class="p-2.5 border border-slate-200 text-center whitespace-nowrap font-black text-rose-600">${dayFail}</td>
+                        <td class="p-2.5 border border-slate-200 text-center whitespace-nowrap font-black text-purple-700">${rate}</td>
+                    </tr>
+                `;
             });
 
             if (!devRowsHtml) {
@@ -1564,19 +1574,19 @@
                     </div>
 
                     <div class="space-y-3 pt-2">
-                        <h3 class="text-sm font-black text-slate-900 uppercase tracking-wide">Issue Type QC Summary (Repair Pass &amp; Repair Fail)</h3>
-                        <div class="overflow-x-auto rounded-xl border border-slate-300 shadow-sm">
+                        <h3 class="text-sm font-black text-slate-900 uppercase tracking-wide">Repair Action &amp; Failure Reason Summary (Repair Pass &amp; Repair Fail)</h3>
+                        <div class="overflow-x-auto max-h-[420px] overflow-y-auto rounded-xl border border-slate-300 shadow-sm">
                             <table class="w-full text-left border-collapse border border-slate-300 text-xs">
-                                <thead class="bg-slate-800 text-white uppercase font-black text-center">
+                                <thead class="bg-slate-800 text-white uppercase font-black text-center sticky top-0 z-10">
                                     <tr>
                                         <th rowspan="2" class="p-2.5 border border-slate-600 align-middle bg-slate-800">Date</th>
                                         <th colspan="2" class="p-2 border border-emerald-800 bg-emerald-700 text-white">Repair Pass (Reuse)</th>
                                         <th colspan="2" class="p-2 border border-rose-800 bg-rose-700 text-white">Repair Fail</th>
                                     </tr>
                                     <tr>
-                                        <th class="p-2 border border-emerald-800 bg-emerald-600 text-white text-left">Issue type QC</th>
+                                        <th class="p-2 border border-emerald-800 bg-emerald-600 text-white text-left">Repair Action</th>
                                         <th class="p-2 border border-emerald-800 bg-emerald-600 text-white">Pass Count</th>
-                                        <th class="p-2 border border-rose-800 bg-rose-600 text-white text-left">Issue type QC</th>
+                                        <th class="p-2 border border-rose-800 bg-rose-600 text-white text-left">Failure Reason</th>
                                         <th class="p-2 border border-rose-800 bg-rose-600 text-white">Fail Count</th>
                                     </tr>
                                 </thead>
@@ -1596,12 +1606,12 @@
 
                     <div class="space-y-3 pt-2">
                         <h3 class="text-sm font-black text-slate-900 uppercase tracking-wide">Device Breakdown (Repair Pass / Fail)</h3>
-                        <div class="overflow-x-auto rounded-xl border border-slate-300 shadow-sm">
+                        <div class="overflow-x-auto max-h-[420px] overflow-y-auto rounded-xl border border-slate-300 shadow-sm">
                             <table class="w-full text-left border-collapse border border-slate-300 text-xs">
-                                <thead class="bg-slate-800 text-white uppercase font-black text-center">
+                                <thead class="bg-slate-800 text-white uppercase font-black text-center sticky top-0 z-10">
                                     <tr>
                                         <th class="p-2.5 border border-slate-600">Date</th>
-                                        <th class="p-2.5 border border-slate-600">Device Name</th>
+                                        <th class="p-2.5 border border-slate-600 text-left">Devices (Pass / Fail)</th>
                                         <th class="p-2.5 border border-slate-600">Total</th>
                                         <th class="p-2.5 border border-slate-600">Repair Pass (Reuse)</th>
                                         <th class="p-2.5 border border-slate-600">Repair Fail</th>
