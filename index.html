@@ -32,49 +32,51 @@
     <main class="max-w-7xl mx-auto px-4 py-6 space-y-6">
         <!-- SECTION 1: HC & Attendance -->
         <div id="section-hc" class="dashboard-section space-y-6">
-            <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-3">
-                <div class="flex items-center gap-3">
-                    <h2 class="text-base font-black text-slate-900">Staff KPI &amp; Attendance</h2>
-                    <span id="staff-active-month-badge" class="px-3 py-1 rounded-full text-xs font-black bg-blue-100 text-blue-800">Active: Nov'26</span>
-                </div>
-                <div class="flex flex-wrap items-center gap-2">
-                    <select id="staff-month-select" onchange="switchStaffMonth(this.value)" class="px-3 py-1.5 text-xs font-extrabold rounded-xl bg-slate-50 text-slate-900 border border-slate-300 cursor-pointer">
-                        <option value="Nov'26" selected>Nov'26</option>
-                        <option value="Oct'26">Oct'26</option>
-                    </select>
-                    <div class="relative flex items-center gap-1.5" id="staff-date-picker-wrapper">
-                        <button type="button" onclick="toggleDateDropdown('staff-date-dropdown', event)" id="staff-date-btn" class="px-3 py-1.5 text-xs font-extrabold rounded-xl bg-slate-50 text-slate-900 border border-slate-300 hover:bg-slate-100 cursor-pointer flex items-center gap-1.5">
-                            <span id="staff-date-label">All Dates (Summary)</span>
-                            <span class="text-[10px]">▼</span>
-                        </button>
-                        <button type="button" onclick="clearDateFilter('staff')" class="px-2.5 py-1.5 text-xs font-extrabold rounded-xl bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 cursor-pointer transition">Clear Filters</button>
-                        <div id="staff-date-dropdown" class="hidden absolute right-0 top-full mt-1.5 w-64 bg-white rounded-xl shadow-xl border border-slate-200 z-50 p-2 space-y-1.5">
-                            <div class="flex justify-between items-center px-2 py-1 border-b border-slate-100 text-[11px] font-black">
-                                <button type="button" onclick="selectAllDates('staff', true)" class="text-blue-600 hover:underline cursor-pointer">Select All</button>
-                                <button type="button" onclick="clearDateFilter('staff')" class="text-rose-600 hover:underline cursor-pointer">Clear Filters</button>
+            <div class="sticky top-[58px] z-30 bg-slate-50/95 backdrop-blur-xs py-1 space-y-3">
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-3">
+                    <div class="flex items-center gap-3">
+                        <h2 class="text-base font-black text-slate-900">Staff KPI &amp; Attendance</h2>
+                        <span id="staff-active-month-badge" class="px-3 py-1 rounded-full text-xs font-black bg-blue-100 text-blue-800">Active: Nov'26</span>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <select id="staff-month-select" onchange="switchStaffMonth(this.value)" class="px-3 py-1.5 text-xs font-extrabold rounded-xl bg-slate-50 text-slate-900 border border-slate-300 cursor-pointer">
+                            <option value="Nov'26" selected>Nov'26</option>
+                            <option value="Oct'26">Oct'26</option>
+                        </select>
+                        <div class="relative flex items-center gap-1.5" id="staff-date-picker-wrapper">
+                            <button type="button" onclick="toggleDateDropdown('staff-date-dropdown', event)" id="staff-date-btn" class="px-3 py-1.5 text-xs font-extrabold rounded-xl bg-slate-50 text-slate-900 border border-slate-300 hover:bg-slate-100 cursor-pointer flex items-center gap-1.5">
+                                <span id="staff-date-label">All Dates (Summary)</span>
+                                <span class="text-[10px]">▼</span>
+                            </button>
+                            <button type="button" onclick="clearDateFilter('staff')" class="px-2.5 py-1.5 text-xs font-extrabold rounded-xl bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 cursor-pointer transition">Clear Filters</button>
+                            <div id="staff-date-dropdown" class="hidden absolute right-0 top-full mt-1.5 w-64 bg-white rounded-xl shadow-xl border border-slate-200 z-50 p-2 space-y-1.5">
+                                <div class="flex justify-between items-center px-2 py-1 border-b border-slate-100 text-[11px] font-black">
+                                    <button type="button" onclick="selectAllDates('staff', true)" class="text-blue-600 hover:underline cursor-pointer">Select All</button>
+                                    <button type="button" onclick="clearDateFilter('staff')" class="text-rose-600 hover:underline cursor-pointer">Clear Filters</button>
+                                </div>
+                                <div id="staff-date-options" class="max-h-56 overflow-y-auto space-y-0.5 px-1"></div>
                             </div>
-                            <div id="staff-date-options" class="max-h-56 overflow-y-auto space-y-0.5 px-1"></div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                <div class="bg-white p-4 rounded-xl shadow-sm border-t-4 border-blue-600">
-                    <p class="text-xs font-bold text-slate-500 uppercase">Total Staff</p>
-                    <p id="card-total-staff" class="mt-1.5 text-2xl font-black text-blue-900">0</p>
-                </div>
-                <div class="bg-white p-4 rounded-xl shadow-sm border-t-4 border-emerald-500">
-                    <p class="text-xs font-bold text-slate-500 uppercase">Excellent</p>
-                    <p id="card-excellent-staff" class="mt-1.5 text-2xl font-black text-emerald-700">0</p>
-                </div>
-                <div class="bg-white p-4 rounded-xl shadow-sm border-t-4 border-amber-500">
-                    <p class="text-xs font-bold text-slate-500 uppercase">Needs Attention</p>
-                    <p id="card-attention-staff" class="mt-1.5 text-2xl font-black text-amber-700">0</p>
-                </div>
-                <div class="bg-white p-4 rounded-xl shadow-sm border-t-4 border-rose-500">
-                    <p class="text-xs font-bold text-slate-500 uppercase">KPI Issues</p>
-                    <p id="card-kpi-issue-staff" class="mt-1.5 text-2xl font-black text-rose-700">0</p>
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="bg-white p-4 rounded-xl shadow-sm border-t-4 border-blue-600">
+                        <p class="text-xs font-bold text-slate-500 uppercase">Total Staff</p>
+                        <p id="card-total-staff" class="mt-1.5 text-2xl font-black text-blue-900">0</p>
+                    </div>
+                    <div class="bg-white p-4 rounded-xl shadow-sm border-t-4 border-emerald-500">
+                        <p class="text-xs font-bold text-slate-500 uppercase">Excellent</p>
+                        <p id="card-excellent-staff" class="mt-1.5 text-2xl font-black text-emerald-700">0</p>
+                    </div>
+                    <div class="bg-white p-4 rounded-xl shadow-sm border-t-4 border-amber-500">
+                        <p class="text-xs font-bold text-slate-500 uppercase">Needs Attention</p>
+                        <p id="card-attention-staff" class="mt-1.5 text-2xl font-black text-amber-700">0</p>
+                    </div>
+                    <div class="bg-white p-4 rounded-xl shadow-sm border-t-4 border-rose-500">
+                        <p class="text-xs font-bold text-slate-500 uppercase">KPI Issues</p>
+                        <p id="card-kpi-issue-staff" class="mt-1.5 text-2xl font-black text-rose-700">0</p>
+                    </div>
                 </div>
             </div>
 
@@ -99,41 +101,41 @@
 
         <!-- SECTION: 1HC DAILY JD & KPI -->
         <div id="section-1hc-jd-kpi" class="dashboard-section hidden space-y-5">
-            <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3">
-                <div class="flex flex-wrap items-center gap-3">
-                    <h2 class="text-base font-black text-slate-900">1HC Daily JD &amp; KPI Tracker (Target: 150)</h2>
-                    <div id="jdkpi-mode-tabs" class="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200">
-                        <button type="button" onclick="switchJdKpiMode('daily')" id="jdkpi-mode-daily" class="px-3 py-1 rounded-lg text-xs font-black transition bg-indigo-600 text-white shadow cursor-pointer">Daily Tab</button>
-                        <button type="button" onclick="switchJdKpiMode('monthly')" id="jdkpi-mode-monthly" class="px-3 py-1 rounded-lg text-xs font-black transition bg-white text-slate-700 hover:bg-slate-100 cursor-pointer">Monthly Tab</button>
-                    </div>
-                </div>
-
-                <div class="flex flex-wrap items-center gap-2">
-                    <div id="jdkpi-source-tabs" class="flex items-center gap-1 bg-slate-50 p-1 rounded-xl border border-slate-200">
-                        <button type="button" data-source="ALL" onclick="switchJdKpiSource('ALL')" class="jdkpi-src-btn px-3 py-1 rounded-lg text-xs font-black transition bg-blue-600 text-white shadow cursor-pointer">ALL</button>
-                        <button type="button" data-source="YGN-2026" onclick="switchJdKpiSource('YGN-2026')" class="jdkpi-src-btn px-3 py-1 rounded-lg text-xs font-black transition bg-white text-slate-700 hover:bg-slate-100 cursor-pointer">YGN</button>
-                        <button type="button" data-source="MDY-2026" onclick="switchJdKpiSource('MDY-2026')" class="jdkpi-src-btn px-3 py-1 rounded-lg text-xs font-black transition bg-white text-slate-700 hover:bg-slate-100 cursor-pointer">MDY</button>
+            <div class="sticky top-[58px] z-30 bg-slate-50/95 backdrop-blur-xs py-1 space-y-3">
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3">
+                    <div class="flex flex-wrap items-center gap-3">
+                        <h2 class="text-base font-black text-slate-900">1HC Daily JD &amp; KPI Tracker (Target: 150)</h2>
+                        <div id="jdkpi-mode-tabs" class="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200">
+                            <button type="button" onclick="switchJdKpiMode('daily')" id="jdkpi-mode-daily" class="px-3 py-1 rounded-lg text-xs font-black transition bg-indigo-600 text-white shadow cursor-pointer">Daily Tab</button>
+                            <button type="button" onclick="switchJdKpiMode('monthly')" id="jdkpi-mode-monthly" class="px-3 py-1 rounded-lg text-xs font-black transition bg-white text-slate-700 hover:bg-slate-100 cursor-pointer">Monthly Tab</button>
+                        </div>
                     </div>
 
-                    <div class="relative flex items-center gap-1.5" id="jdkpi-date-picker-wrapper">
-                        <button type="button" onclick="toggleDateDropdown('jdkpi-date-dropdown', event)" id="jdkpi-date-btn" class="px-3 py-1.5 text-xs font-extrabold rounded-xl bg-slate-50 text-slate-900 border border-slate-300 hover:bg-slate-100 focus:outline-none cursor-pointer flex items-center gap-1.5">
-                            <span id="jdkpi-date-label">All Dates</span>
-                            <span class="text-[10px]">▼</span>
-                        </button>
-                        <button type="button" onclick="clearDateFilter('jdkpi')" class="px-2.5 py-1.5 text-xs font-extrabold rounded-xl bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 cursor-pointer transition">Clear Filters</button>
-                        <div id="jdkpi-date-dropdown" class="hidden absolute right-0 top-full mt-1.5 w-64 bg-white rounded-xl shadow-xl border border-slate-200 z-50 p-2 space-y-1.5">
-                            <div class="flex justify-between items-center px-2 py-1 border-b border-slate-100 text-[11px] font-black">
-                                <button type="button" onclick="selectAllDates('jdkpi', true)" class="text-blue-600 hover:underline cursor-pointer">Select All</button>
-                                <button type="button" onclick="clearDateFilter('jdkpi')" class="text-rose-600 hover:underline cursor-pointer">Clear Filters</button>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <div id="jdkpi-source-tabs" class="flex items-center gap-1 bg-slate-50 p-1 rounded-xl border border-slate-200">
+                            <button type="button" data-source="ALL" onclick="switchJdKpiSource('ALL')" class="jdkpi-src-btn px-3 py-1 rounded-lg text-xs font-black transition bg-blue-600 text-white shadow cursor-pointer">ALL</button>
+                            <button type="button" data-source="YGN-2026" onclick="switchJdKpiSource('YGN-2026')" class="jdkpi-src-btn px-3 py-1 rounded-lg text-xs font-black transition bg-white text-slate-700 hover:bg-slate-100 cursor-pointer">YGN</button>
+                            <button type="button" data-source="MDY-2026" onclick="switchJdKpiSource('MDY-2026')" class="jdkpi-src-btn px-3 py-1 rounded-lg text-xs font-black transition bg-white text-slate-700 hover:bg-slate-100 cursor-pointer">MDY</button>
+                        </div>
+
+                        <div class="relative flex items-center gap-1.5" id="jdkpi-date-picker-wrapper">
+                            <button type="button" onclick="toggleDateDropdown('jdkpi-date-dropdown', event)" id="jdkpi-date-btn" class="px-3 py-1.5 text-xs font-extrabold rounded-xl bg-slate-50 text-slate-900 border border-slate-300 hover:bg-slate-100 focus:outline-none cursor-pointer flex items-center gap-1.5">
+                                <span id="jdkpi-date-label">All Dates</span>
+                                <span class="text-[10px]">▼</span>
+                            </button>
+                            <button type="button" onclick="clearDateFilter('jdkpi')" class="px-2.5 py-1.5 text-xs font-extrabold rounded-xl bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 cursor-pointer transition">Clear Filters</button>
+                            <div id="jdkpi-date-dropdown" class="hidden absolute right-0 top-full mt-1.5 w-64 bg-white rounded-xl shadow-xl border border-slate-200 z-50 p-2 space-y-1.5">
+                                <div class="flex justify-between items-center px-2 py-1 border-b border-slate-100 text-[11px] font-black">
+                                    <button type="button" onclick="selectAllDates('jdkpi', true)" class="text-blue-600 hover:underline cursor-pointer">Select All</button>
+                                    <button type="button" onclick="clearDateFilter('jdkpi')" class="text-rose-600 hover:underline cursor-pointer">Clear Filters</button>
+                                </div>
+                                <div id="jdkpi-date-options" class="max-h-56 overflow-y-auto space-y-0.5 px-1"></div>
                             </div>
-                            <div id="jdkpi-date-options" class="max-h-56 overflow-y-auto space-y-0.5 px-1"></div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Frozen Summary Cards -->
-            <div class="sticky top-[62px] z-30 bg-slate-50/95 backdrop-blur-xs py-1">
+                <!-- Frozen Summary Cards -->
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div class="bg-blue-50 p-4 rounded-xl shadow-sm border border-blue-200 border-t-4 border-t-blue-600">
                         <p class="text-xs font-bold text-blue-700 uppercase">Total Employees</p>
@@ -162,44 +164,48 @@
 
         <!-- SECTION 2: Daily Inbound -->
         <div id="section-inbound" class="dashboard-section hidden space-y-6">
-            <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-3">
-                <div class="flex flex-wrap items-center gap-2">
-                    <select id="inbound-month-select" onchange="switchInboundMonth(this.value)" class="px-3 py-2 text-xs font-extrabold rounded-xl bg-slate-50 text-slate-900 border border-slate-300 cursor-pointer">
-                        <option value="Nov'26" selected>Nov'26</option>
-                        <option value="Oct'26">Oct'26</option>
-                    </select>
-                    <button onclick="renderInboundWeek('Week 1 (1 - 7)', this)" class="inbound-wk-btn px-4 py-2 text-sm font-bold rounded-xl bg-blue-600 text-white shadow">Week 1 (1 - 7)</button>
-                    <button onclick="renderInboundWeek('Week 2 (8 - 14)', this)" class="inbound-wk-btn px-4 py-2 text-sm font-bold rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300">Week 2 (8 - 14)</button>
-                    <button onclick="renderInboundWeek('Week 3 (15 - 21)', this)" class="inbound-wk-btn px-4 py-2 text-sm font-bold rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300">Week 3 (15 - 21)</button>
-                    <button onclick="renderInboundWeek('Week 4 (22 - End)', this)" class="inbound-wk-btn px-4 py-2 text-sm font-bold rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300">Week 4 (22 - End)</button>
-                    <button onclick="renderInboundWeek('all-region', this)" class="inbound-wk-btn px-4 py-2 text-sm font-black rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300">All Region</button>
-                    <button onclick="renderInboundWeek('week-comparison', this)" class="inbound-wk-btn px-4 py-2 text-sm font-black rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300">Week Comparison</button>
+            <div class="sticky top-[58px] z-30 bg-slate-50/95 backdrop-blur-xs py-1 space-y-3">
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-3">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <select id="inbound-month-select" onchange="switchInboundMonth(this.value)" class="px-3 py-2 text-xs font-extrabold rounded-xl bg-slate-50 text-slate-900 border border-slate-300 cursor-pointer">
+                            <option value="Nov'26" selected>Nov'26</option>
+                            <option value="Oct'26">Oct'26</option>
+                        </select>
+                        <button onclick="renderInboundWeek('Week 1 (1 - 7)', this)" class="inbound-wk-btn px-4 py-2 text-sm font-bold rounded-xl bg-blue-600 text-white shadow">Week 1 (1 - 7)</button>
+                        <button onclick="renderInboundWeek('Week 2 (8 - 14)', this)" class="inbound-wk-btn px-4 py-2 text-sm font-bold rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300">Week 2 (8 - 14)</button>
+                        <button onclick="renderInboundWeek('Week 3 (15 - 21)', this)" class="inbound-wk-btn px-4 py-2 text-sm font-bold rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300">Week 3 (15 - 21)</button>
+                        <button onclick="renderInboundWeek('Week 4 (22 - End)', this)" class="inbound-wk-btn px-4 py-2 text-sm font-bold rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300">Week 4 (22 - End)</button>
+                        <button onclick="renderInboundWeek('all-region', this)" class="inbound-wk-btn px-4 py-2 text-sm font-black rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300">All Region</button>
+                        <button onclick="renderInboundWeek('week-comparison', this)" class="inbound-wk-btn px-4 py-2 text-sm font-black rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300">Week Comparison</button>
+                    </div>
                 </div>
+                <div id="inbound-sticky-kpi-container"></div>
             </div>
-            <div id="inbound-sticky-kpi-container"></div>
             <div id="inbound-dynamic-container" class="space-y-6"></div>
         </div>
 
         <!-- SECTION 3: Regional KPI -->
         <div id="section-regional-kpi" class="dashboard-section hidden space-y-6">
-            <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-3">
-                <div class="flex flex-wrap items-center gap-2">
-                    <button onclick="switchRegionalTab('ENUO', this)" class="reg-tab-btn px-4 py-2 text-xs font-black rounded-xl bg-blue-600 text-white shadow transition">ENUO</button>
-                    <button onclick="switchRegionalTab('HGAO', this)" class="reg-tab-btn px-4 py-2 text-xs font-black rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300 transition">HGAO</button>
-                    <button onclick="switchRegionalTab('MYFO', this)" class="reg-tab-btn px-4 py-2 text-xs font-black rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300 transition">MYFO</button>
-                </div>
-                <div class="relative flex items-center gap-1.5" id="regional-date-picker-wrapper">
-                    <button type="button" onclick="toggleDateDropdown('regional-date-dropdown', event)" id="regional-date-btn" class="px-3 py-1.5 text-xs font-extrabold rounded-xl bg-slate-50 text-slate-900 border border-slate-300 hover:bg-slate-100 cursor-pointer flex items-center gap-1.5">
-                        <span id="regional-date-label">All Dates</span>
-                        <span class="text-[10px]">▼</span>
-                    </button>
-                    <button type="button" onclick="clearDateFilter('regional')" class="px-2.5 py-1.5 text-xs font-extrabold rounded-xl bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 cursor-pointer transition">Clear Filters</button>
-                    <div id="regional-date-dropdown" class="hidden absolute right-0 top-full mt-1.5 w-64 bg-white rounded-xl shadow-xl border border-slate-200 z-50 p-2 space-y-1.5">
-                        <div class="flex justify-between items-center px-2 py-1 border-b border-slate-100 text-[11px] font-black">
-                            <button type="button" onclick="selectAllDates('regional', true)" class="text-blue-600 hover:underline cursor-pointer">Select All</button>
-                            <button type="button" onclick="clearDateFilter('regional')" class="text-rose-600 hover:underline cursor-pointer">Clear Filters</button>
+            <div class="sticky top-[58px] z-30 bg-slate-50/95 backdrop-blur-xs py-1">
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-3">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <button onclick="switchRegionalTab('ENUO', this)" class="reg-tab-btn px-4 py-2 text-xs font-black rounded-xl bg-blue-600 text-white shadow transition">ENUO</button>
+                        <button onclick="switchRegionalTab('HGAO', this)" class="reg-tab-btn px-4 py-2 text-xs font-black rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300 transition">HGAO</button>
+                        <button onclick="switchRegionalTab('MYFO', this)" class="reg-tab-btn px-4 py-2 text-xs font-black rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300 transition">MYFO</button>
+                    </div>
+                    <div class="relative flex items-center gap-1.5" id="regional-date-picker-wrapper">
+                        <button type="button" onclick="toggleDateDropdown('regional-date-dropdown', event)" id="regional-date-btn" class="px-3 py-1.5 text-xs font-extrabold rounded-xl bg-slate-50 text-slate-900 border border-slate-300 hover:bg-slate-100 cursor-pointer flex items-center gap-1.5">
+                            <span id="regional-date-label">All Dates</span>
+                            <span class="text-[10px]">▼</span>
+                        </button>
+                        <button type="button" onclick="clearDateFilter('regional')" class="px-2.5 py-1.5 text-xs font-extrabold rounded-xl bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 cursor-pointer transition">Clear Filters</button>
+                        <div id="regional-date-dropdown" class="hidden absolute right-0 top-full mt-1.5 w-64 bg-white rounded-xl shadow-xl border border-slate-200 z-50 p-2 space-y-1.5">
+                            <div class="flex justify-between items-center px-2 py-1 border-b border-slate-100 text-[11px] font-black">
+                                <button type="button" onclick="selectAllDates('regional', true)" class="text-blue-600 hover:underline cursor-pointer">Select All</button>
+                                <button type="button" onclick="clearDateFilter('regional')" class="text-rose-600 hover:underline cursor-pointer">Clear Filters</button>
+                            </div>
+                            <div id="regional-date-options" class="max-h-56 overflow-y-auto space-y-0.5 px-1"></div>
                         </div>
-                        <div id="regional-date-options" class="max-h-56 overflow-y-auto space-y-0.5 px-1"></div>
                     </div>
                 </div>
             </div>
@@ -208,42 +214,44 @@
 
         <!-- SECTION 4: ONU QC -->
         <div id="section-onu" class="dashboard-section hidden space-y-6">
-            <div class="bg-slate-900 p-4 rounded-2xl text-white flex flex-wrap items-center justify-between gap-3">
-                <div class="flex flex-wrap items-center gap-1.5">
-                    <button id="tab-first" onclick="switchTestType('first', this)" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition bg-white text-indigo-600 shadow whitespace-nowrap">First Test</button>
-                    <button id="tab-second" onclick="switchTestType('second', this)" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition text-white hover:bg-indigo-600 whitespace-nowrap">Second Test</button>
-                    <button id="tab-exchange" onclick="switchTestType('exchange', this)" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition text-white hover:bg-indigo-600 whitespace-nowrap">Exchange</button>
-                    <button id="tab-daily" onclick="switchTestType('daily', this)" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition text-white hover:bg-indigo-600 whitespace-nowrap">Daily</button>
-                    <button id="tab-monthly" onclick="switchTestType('monthly', this)" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition text-white hover:bg-indigo-600 whitespace-nowrap">Monthly</button>
+            <div class="sticky top-[58px] z-30 bg-slate-50/95 backdrop-blur-xs py-1 space-y-3">
+                <div class="bg-slate-900 p-4 rounded-2xl text-white flex flex-wrap items-center justify-between gap-3 shadow-sm">
+                    <div class="flex flex-wrap items-center gap-1.5">
+                        <button id="tab-first" onclick="switchTestType('first', this)" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition bg-white text-indigo-600 shadow whitespace-nowrap">First Test</button>
+                        <button id="tab-second" onclick="switchTestType('second', this)" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition text-white hover:bg-indigo-600 whitespace-nowrap">Second Test</button>
+                        <button id="tab-exchange" onclick="switchTestType('exchange', this)" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition text-white hover:bg-indigo-600 whitespace-nowrap">Exchange</button>
+                        <button id="tab-daily" onclick="switchTestType('daily', this)" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition text-white hover:bg-indigo-600 whitespace-nowrap">Daily</button>
+                        <button id="tab-monthly" onclick="switchTestType('monthly', this)" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition text-white hover:bg-indigo-600 whitespace-nowrap">Monthly</button>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-1.5">
+                        <button onclick="switchOnuRegion('All Region', this)" class="onu-region-btn px-3 py-1.5 text-xs font-bold rounded-xl bg-indigo-600 text-white shadow transition">All Region</button>
+                        <button onclick="switchOnuRegion('ENUO', this)" class="onu-region-btn px-3 py-1.5 text-xs font-bold rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300 transition">ENUO</button>
+                        <button onclick="switchOnuRegion('HGAO', this)" class="onu-region-btn px-3 py-1.5 text-xs font-bold rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300 transition">HGAO</button>
+                        <button onclick="switchOnuRegion('MYFO', this)" class="onu-region-btn px-3 py-1.5 text-xs font-bold rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300 transition">MYFO</button>
+                    </div>
                 </div>
-                <div class="flex flex-wrap items-center gap-1.5">
-                    <button onclick="switchOnuRegion('All Region', this)" class="onu-region-btn px-3 py-1.5 text-xs font-bold rounded-xl bg-indigo-600 text-white shadow transition">All Region</button>
-                    <button onclick="switchOnuRegion('ENUO', this)" class="onu-region-btn px-3 py-1.5 text-xs font-bold rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300 transition">ENUO</button>
-                    <button onclick="switchOnuRegion('HGAO', this)" class="onu-region-btn px-3 py-1.5 text-xs font-bold rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300 transition">HGAO</button>
-                    <button onclick="switchOnuRegion('MYFO', this)" class="onu-region-btn px-3 py-1.5 text-xs font-bold rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300 transition">MYFO</button>
-                </div>
-            </div>
 
-            <div class="grid grid-cols-2 sm:grid-cols-5 gap-4">
-                <div class="bg-white p-4 rounded-xl shadow-sm border-t-4 border-blue-600">
-                    <p class="text-xs font-bold text-slate-500 uppercase">Total Tested</p>
-                    <p id="kpi-total" class="mt-1.5 text-2xl font-black text-blue-900">0</p>
-                </div>
-                <div class="bg-white p-4 rounded-xl shadow-sm border-t-4 border-emerald-500">
-                    <p class="text-xs font-bold text-slate-500 uppercase">Passed</p>
-                    <p id="kpi-passed" class="mt-1.5 text-2xl font-black text-emerald-700">0</p>
-                </div>
-                <div class="bg-white p-4 rounded-xl shadow-sm border-t-4 border-rose-500">
-                    <p class="text-xs font-bold text-slate-500 uppercase">Failed</p>
-                    <p id="kpi-failed" class="mt-1.5 text-2xl font-black text-rose-700">0</p>
-                </div>
-                <div class="bg-white p-4 rounded-xl shadow-sm border-t-4 border-cyan-500">
-                    <p class="text-xs font-bold text-slate-500 uppercase">Pass Rate</p>
-                    <p id="kpi-pass-rate" class="mt-1.5 text-2xl font-black text-cyan-700">0.00%</p>
-                </div>
-                <div class="bg-white p-4 rounded-xl shadow-sm border-t-4 border-amber-500 col-span-2 sm:col-span-1">
-                    <p class="text-xs font-bold text-slate-500 uppercase">Fail Rate</p>
-                    <p id="kpi-fail-rate" class="mt-1.5 text-2xl font-black text-amber-700">0.00%</p>
+                <div class="grid grid-cols-2 sm:grid-cols-5 gap-4">
+                    <div class="bg-white p-4 rounded-xl shadow-sm border-t-4 border-blue-600">
+                        <p class="text-xs font-bold text-slate-500 uppercase">Total Tested</p>
+                        <p id="kpi-total" class="mt-1.5 text-2xl font-black text-blue-900">0</p>
+                    </div>
+                    <div class="bg-white p-4 rounded-xl shadow-sm border-t-4 border-emerald-500">
+                        <p class="text-xs font-bold text-slate-500 uppercase">Passed</p>
+                        <p id="kpi-passed" class="mt-1.5 text-2xl font-black text-emerald-700">0</p>
+                    </div>
+                    <div class="bg-white p-4 rounded-xl shadow-sm border-t-4 border-rose-500">
+                        <p class="text-xs font-bold text-slate-500 uppercase">Failed</p>
+                        <p id="kpi-failed" class="mt-1.5 text-2xl font-black text-rose-700">0</p>
+                    </div>
+                    <div class="bg-white p-4 rounded-xl shadow-sm border-t-4 border-cyan-500">
+                        <p class="text-xs font-bold text-slate-500 uppercase">Pass Rate</p>
+                        <p id="kpi-pass-rate" class="mt-1.5 text-2xl font-black text-cyan-700">0.00%</p>
+                    </div>
+                    <div class="bg-white p-4 rounded-xl shadow-sm border-t-4 border-amber-500 col-span-2 sm:col-span-1">
+                        <p class="text-xs font-bold text-slate-500 uppercase">Fail Rate</p>
+                        <p id="kpi-fail-rate" class="mt-1.5 text-2xl font-black text-amber-700">0.00%</p>
+                    </div>
                 </div>
             </div>
 
@@ -308,50 +316,52 @@
 
         <!-- SECTION 5: QC Test -->
         <div id="section-qc-test" class="dashboard-section hidden space-y-6">
-            <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-3">
-                <div class="relative flex items-center gap-1.5" id="qc-date-picker-wrapper">
-                    <button type="button" onclick="toggleDateDropdown('qc-date-dropdown', event)" id="qc-date-btn" class="px-3 py-1.5 text-xs font-extrabold rounded-xl bg-slate-50 text-slate-900 border border-slate-300 hover:bg-slate-100 cursor-pointer flex items-center gap-1.5">
-                        <span id="qc-date-label">All Dates</span>
-                        <span class="text-[10px]">▼</span>
-                    </button>
-                    <button type="button" onclick="clearDateFilter('qc')" class="px-2.5 py-1.5 text-xs font-extrabold rounded-xl bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 cursor-pointer transition">Clear Filters</button>
-                    <div id="qc-date-dropdown" class="hidden absolute left-0 top-full mt-1.5 w-64 bg-white rounded-xl shadow-xl border border-slate-200 z-50 p-2 space-y-1.5">
-                        <div class="flex justify-between items-center px-2 py-1 border-b border-slate-100 text-[11px] font-black">
-                            <button type="button" onclick="selectAllDates('qc', true)" class="text-blue-600 hover:underline cursor-pointer">Select All</button>
-                            <button type="button" onclick="clearDateFilter('qc')" class="text-rose-600 hover:underline cursor-pointer">Clear Filters</button>
+            <div class="sticky top-[58px] z-30 bg-slate-50/95 backdrop-blur-xs py-1 space-y-3">
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-3">
+                    <div class="relative flex items-center gap-1.5" id="qc-date-picker-wrapper">
+                        <button type="button" onclick="toggleDateDropdown('qc-date-dropdown', event)" id="qc-date-btn" class="px-3 py-1.5 text-xs font-extrabold rounded-xl bg-slate-50 text-slate-900 border border-slate-300 hover:bg-slate-100 cursor-pointer flex items-center gap-1.5">
+                            <span id="qc-date-label">All Dates</span>
+                            <span class="text-[10px]">▼</span>
+                        </button>
+                        <button type="button" onclick="clearDateFilter('qc')" class="px-2.5 py-1.5 text-xs font-extrabold rounded-xl bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 cursor-pointer transition">Clear Filters</button>
+                        <div id="qc-date-dropdown" class="hidden absolute left-0 top-full mt-1.5 w-64 bg-white rounded-xl shadow-xl border border-slate-200 z-50 p-2 space-y-1.5">
+                            <div class="flex justify-between items-center px-2 py-1 border-b border-slate-100 text-[11px] font-black">
+                                <button type="button" onclick="selectAllDates('qc', true)" class="text-blue-600 hover:underline cursor-pointer">Select All</button>
+                                <button type="button" onclick="clearDateFilter('qc')" class="text-rose-600 hover:underline cursor-pointer">Clear Filters</button>
+                            </div>
+                            <div id="qc-date-options" class="max-h-56 overflow-y-auto space-y-0.5 px-1"></div>
                         </div>
-                        <div id="qc-date-options" class="max-h-56 overflow-y-auto space-y-0.5 px-1"></div>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                        <button onclick="switchQcTestRegion('ALL', this)" id="qc-reg-all" class="qc-reg-btn px-4 py-2 text-xs font-black rounded-xl bg-indigo-700 text-white shadow transition">All Region</button>
+                        <button onclick="switchQcTestRegion('ENUO', this)" id="qc-reg-enuo" class="qc-reg-btn px-4 py-2 text-xs font-black rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300 transition">ENUO</button>
+                        <button onclick="switchQcTestRegion('HGAO', this)" id="qc-reg-hgao" class="qc-reg-btn px-4 py-2 text-xs font-black rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300 transition">HGAO</button>
+                        <button onclick="switchQcTestRegion('MDY', this)" id="qc-reg-mdy" class="qc-reg-btn px-4 py-2 text-xs font-black rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300 transition">MDY</button>
                     </div>
                 </div>
-                <div class="flex flex-wrap gap-2">
-                    <button onclick="switchQcTestRegion('ALL', this)" id="qc-reg-all" class="qc-reg-btn px-4 py-2 text-xs font-black rounded-xl bg-indigo-700 text-white shadow transition">All Region</button>
-                    <button onclick="switchQcTestRegion('ENUO', this)" id="qc-reg-enuo" class="qc-reg-btn px-4 py-2 text-xs font-black rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300 transition">ENUO</button>
-                    <button onclick="switchQcTestRegion('HGAO', this)" id="qc-reg-hgao" class="qc-reg-btn px-4 py-2 text-xs font-black rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300 transition">HGAO</button>
-                    <button onclick="switchQcTestRegion('MDY', this)" id="qc-reg-mdy" class="qc-reg-btn px-4 py-2 text-xs font-black rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300 transition">MDY</button>
-                </div>
-            </div>
 
-            <!-- QC KPI Cards -->
-            <div class="grid grid-cols-2 sm:grid-cols-5 gap-4">
-                <div class="bg-white p-4 rounded-xl shadow-sm border-t-4 border-cyan-600">
-                    <p class="text-xs font-bold text-slate-500 uppercase">QC INBOUND</p>
-                    <p id="qc-card-inbound" class="mt-1.5 text-2xl font-black text-cyan-800">0</p>
-                </div>
-                <div class="bg-white p-4 rounded-xl shadow-sm border-t-4 border-blue-600">
-                    <p class="text-xs font-bold text-slate-500 uppercase">TOTAL TEST</p>
-                    <p id="qc-card-total-test" class="mt-1.5 text-2xl font-black text-blue-800">0</p>
-                </div>
-                <div class="bg-white p-4 rounded-xl shadow-sm border-t-4 border-emerald-500">
-                    <p class="text-xs font-bold text-slate-500 uppercase">QC PASS</p>
-                    <p id="qc-card-pass" class="mt-1.5 text-2xl font-black text-emerald-700">0</p>
-                </div>
-                <div class="bg-white p-4 rounded-xl shadow-sm border-t-4 border-rose-500">
-                    <p class="text-xs font-bold text-slate-500 uppercase">QC FAIL</p>
-                    <p id="qc-card-fail" class="mt-1.5 text-2xl font-black text-rose-700">0</p>
-                </div>
-                <div class="bg-white p-4 rounded-xl shadow-sm border-t-4 border-purple-600 col-span-2 sm:col-span-1">
-                    <p class="text-xs font-bold text-slate-500 uppercase">AVG KPI</p>
-                    <p id="qc-card-kpi" class="mt-1.5 text-2xl font-black text-purple-800">0</p>
+                <!-- QC KPI Cards -->
+                <div class="grid grid-cols-2 sm:grid-cols-5 gap-4">
+                    <div class="bg-white p-4 rounded-xl shadow-sm border-t-4 border-cyan-600">
+                        <p class="text-xs font-bold text-slate-500 uppercase">QC INBOUND</p>
+                        <p id="qc-card-inbound" class="mt-1.5 text-2xl font-black text-cyan-800">0</p>
+                    </div>
+                    <div class="bg-white p-4 rounded-xl shadow-sm border-t-4 border-blue-600">
+                        <p class="text-xs font-bold text-slate-500 uppercase">TOTAL TEST</p>
+                        <p id="qc-card-total-test" class="mt-1.5 text-2xl font-black text-blue-800">0</p>
+                    </div>
+                    <div class="bg-white p-4 rounded-xl shadow-sm border-t-4 border-emerald-500">
+                        <p class="text-xs font-bold text-slate-500 uppercase">QC PASS</p>
+                        <p id="qc-card-pass" class="mt-1.5 text-2xl font-black text-emerald-700">0</p>
+                    </div>
+                    <div class="bg-white p-4 rounded-xl shadow-sm border-t-4 border-rose-500">
+                        <p class="text-xs font-bold text-slate-500 uppercase">QC FAIL</p>
+                        <p id="qc-card-fail" class="mt-1.5 text-2xl font-black text-rose-700">0</p>
+                    </div>
+                    <div class="bg-white p-4 rounded-xl shadow-sm border-t-4 border-purple-600 col-span-2 sm:col-span-1">
+                        <p class="text-xs font-bold text-slate-500 uppercase">AVG KPI</p>
+                        <p id="qc-card-kpi" class="mt-1.5 text-2xl font-black text-purple-800">0</p>
+                    </div>
                 </div>
             </div>
 
@@ -379,7 +389,7 @@
 
         <!-- SECTION 6: RMA View -->
         <div id="section-rma" class="dashboard-section hidden space-y-6">
-            <div class="sticky top-[68px] z-40 bg-slate-50 pt-1 pb-2 space-y-3">
+            <div class="sticky top-[58px] z-30 bg-slate-50/95 backdrop-blur-xs pt-1 pb-2 space-y-3">
                 <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-md space-y-3">
                     <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3 pb-3 border-b border-slate-100">
                         <div class="flex items-center space-x-3">
@@ -834,13 +844,14 @@
 
         function formatKpiScore(num) {
             let val = Number(num) || 0;
-            return val.toFixed(2);
+            let rounded = Math.round((val + Number.EPSILON) * 100) / 100;
+            return String(rounded);
         }
 
         function formatUnitScore(num) {
             let val = Number(num) || 0;
             let rounded = Math.round((val + Number.EPSILON) * 100) / 100;
-            return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(2);
+            return String(rounded);
         }
 
         async function loadAndRender1hcDailyJdKpi() {
@@ -934,7 +945,6 @@
 
             if (activeJdKpiMode === 'monthly') {
                 let monthEmpMap = {};
-                let monthTotals = {};
 
                 filteredItems.forEach(item => {
                     let mKey = item.monthKey || 'Unknown';
@@ -959,10 +969,6 @@
                     }
                     mEmp.tasks[item.task].units += item.units;
                     mEmp.tasks[item.task].kpi += item.kpiPoints;
-
-                    if (!monthTotals[mKey]) {
-                        monthTotals[mKey] = { monthKey: mKey, totalKpi: 0, totalUnits: 0, staffCount: 0, meetCount: 0, noMeetCount: 0 };
-                    }
                 });
 
                 let sortedMonths = Object.keys(monthEmpMap).sort((a, b) => {
@@ -981,8 +987,6 @@
                 sortedMonths.forEach(mKey => {
                     let empsObj = monthEmpMap[mKey];
                     let names = Object.keys(empsObj).sort();
-                    let mUnits = 0;
-                    let mKpi = 0;
                     let mMeet = 0;
                     let mNoMeet = 0;
 
@@ -994,9 +998,6 @@
                         let isMeet = avgDailyKpi >= DAILY_TARGET;
                         if (isMeet) mMeet++;
                         else mNoMeet++;
-
-                        mUnits += eObj.totalUnits;
-                        mKpi += eObj.totalKpi;
 
                         let taskChips = Object.values(eObj.tasks)
                             .sort((a, b) => b.kpi - a.kpi)
@@ -3903,80 +3904,65 @@
 
             regions.forEach(reg => {
                 let rData = data.filter(r => getRowRegion(r) === reg);
-                if (rData.length === 0) return;
-
                 let tot = rData.length;
+                if (tot === 0) return;
+
                 let pas = rData.filter(r => isStrictPass(r)).length;
                 let fai = tot - pas;
-                let pRate = tot > 0 ? ((pas / tot) * 100).toFixed(1) : "0.0";
-                let fRate = tot > 0 ? ((fai / tot) * 100).toFixed(1) : "0.0";
+                let pRate = tot > 0 ? ((pas / tot) * 100).toFixed(2) : "0.00";
+                let fRate = tot > 0 ? ((fai / tot) * 100).toFixed(2) : "0.00";
 
-                let badgeColor = reg === "ENUO" ? "bg-blue-600" : (reg === "HGAO" ? "bg-amber-500" : "bg-emerald-600");
-
-                let dateGroup = {};
+                let devMap = {};
                 rData.forEach(r => {
-                    let dt = parseLocalDate(r['_rawArray'][0] || getVal(r, ['Date'], 0)) || "Unknown Date";
                     let dev = getDeviceName(r);
-                    if (!dateGroup[dt]) dateGroup[dt] = { total: 0, passed: 0, failed: 0, devices: {} };
-                    dateGroup[dt].total++;
-                    if (isStrictPass(r)) dateGroup[dt].passed++;
-                    else dateGroup[dt].failed++;
-
-                    if (!dateGroup[dt].devices[dev]) dateGroup[dt].devices[dev] = { total: 0, passed: 0, failed: 0 };
-                    dateGroup[dt].devices[dev].total++;
-                    if (isStrictPass(r)) dateGroup[dt].devices[dev].passed++;
-                    else dateGroup[dt].devices[dev].failed++;
+                    if (!devMap[dev]) devMap[dev] = { total: 0, passed: 0, failed: 0 };
+                    devMap[dev].total++;
+                    if (isStrictPass(r)) devMap[dev].passed++;
+                    else devMap[dev].failed++;
                 });
 
-                let rowsHtml = "";
-                Object.keys(dateGroup).sort().forEach(dt => {
-                    let dg = dateGroup[dt];
-                    let dRate = dg.total > 0 ? ((dg.passed / dg.total) * 100).toFixed(1) : "0.0";
-                    let devBadge = Object.keys(dg.devices).map(d => {
-                        let dv = dg.devices[d];
-                        return `<span class="inline-block px-2 py-0.5 rounded bg-slate-100 text-slate-800 text-[11px] font-bold border border-slate-200 mr-1 mb-1">${d}: ${dv.total} (P:${dv.passed} / F:${dv.failed})</span>`;
-                    }).join('');
-
-                    rowsHtml += `
-                        <tr class="hover:bg-slate-50 border-b border-slate-200">
-                            <td class="p-3 border border-slate-200 font-bold text-slate-900 whitespace-nowrap">${dt}</td>
-                            <td class="p-3 border border-slate-200">${devBadge}</td>
-                            <td class="p-3 border border-slate-200 text-center font-black">${dg.total}</td>
-                            <td class="p-3 border border-slate-200 text-center font-black text-emerald-700">${dg.passed}</td>
-                            <td class="p-3 border border-slate-200 text-center font-black text-rose-600">${dg.failed > 0 ? dg.failed : '-'}</td>
-                            <td class="p-3 border border-slate-200 text-center font-black text-purple-700">${dRate}%</td>
+                let devRows = "";
+                Object.keys(devMap).sort().forEach(dev => {
+                    let m = devMap[dev];
+                    let dRate = m.total > 0 ? ((m.failed / m.total) * 100).toFixed(1) : "0.0";
+                    devRows += `
+                        <tr class="hover:bg-slate-50 border-b border-slate-200 text-xs font-bold">
+                            <td class="p-2.5 border border-slate-200 font-black text-slate-900">${dev}</td>
+                            <td class="p-2.5 border border-slate-200 text-center">${m.total.toLocaleString()}</td>
+                            <td class="p-2.5 border border-slate-200 text-center text-emerald-700">${m.passed.toLocaleString()}</td>
+                            <td class="p-2.5 border border-slate-200 text-center text-rose-600">${m.failed.toLocaleString()}</td>
+                            <td class="p-2.5 border border-slate-200 text-center">${dRate}%</td>
                         </tr>
                     `;
                 });
 
+                let badgeColor = reg === "ENUO" ? "bg-blue-600" : (reg === "HGAO" ? "bg-amber-500" : "bg-emerald-600");
+
                 html += `
                     <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-100 pb-4 gap-3">
-                            <div class="flex items-center space-x-3">
-                                <span class="px-3.5 py-1.5 rounded-xl text-xs font-black text-white ${badgeColor}">${reg}</span>
-                                <h3 class="text-base font-black text-slate-900">Regional Breakdown (${reg})</h3>
+                        <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
+                            <div class="flex items-center gap-3">
+                                <span class="px-3 py-1 rounded-lg text-xs font-black text-white ${badgeColor}">${reg}</span>
+                                <h3 class="text-sm font-black text-slate-900">${reg} Regional Breakdown</h3>
                             </div>
-                            <div class="flex flex-wrap gap-3 text-xs font-bold text-slate-700">
-                                <span>Total: <strong class="text-slate-950 font-black">${tot.toLocaleString()}</strong></span>
-                                <span>Passed: <strong class="text-emerald-700 font-black">${pas.toLocaleString()} (${pRate}%)</strong></span>
-                                <span>Failed: <strong class="text-rose-600 font-black">${fai.toLocaleString()} (${fRate}%)</strong></span>
+                            <div class="flex flex-wrap items-center gap-4 text-xs font-black">
+                                <span>Total: <strong class="text-blue-900">${tot.toLocaleString()}</strong></span>
+                                <span>Pass: <strong class="text-emerald-700">${pas.toLocaleString()} (${pRate}%)</strong></span>
+                                <span>Fail: <strong class="text-rose-600">${fai.toLocaleString()} (${fRate}%)</strong></span>
                             </div>
                         </div>
-                        <div class="overflow-x-auto rounded-xl border border-slate-300">
-                            <table class="w-full text-left border-collapse border border-slate-300 text-xs">
+                        <div class="overflow-x-auto rounded-xl border border-slate-200">
+                            <table class="w-full text-left border-collapse border border-slate-200 text-xs">
                                 <thead class="bg-slate-800 text-white uppercase font-black">
                                     <tr>
-                                        <th class="p-3 border border-slate-600">Date</th>
-                                        <th class="p-3 border border-slate-600">Devices (Pass / Fail)</th>
-                                        <th class="p-3 border border-slate-600 text-center">Total</th>
-                                        <th class="p-3 border border-slate-600 text-center">Passed</th>
-                                        <th class="p-3 border border-slate-600 text-center">Failed</th>
-                                        <th class="p-3 border border-slate-600 text-center">Pass %</th>
+                                        <th class="p-2.5 border border-slate-700">Device</th>
+                                        <th class="p-2.5 border border-slate-700 text-center">Total</th>
+                                        <th class="p-2.5 border border-slate-700 text-center">Passed</th>
+                                        <th class="p-2.5 border border-slate-700 text-center">Failed</th>
+                                        <th class="p-2.5 border border-slate-700 text-center">Fail Rate</th>
                                     </tr>
                                 </thead>
-                                <tbody>
-                                    ${rowsHtml}
-                                </tbody>
+                                <tbody>${devRows}</tbody>
                             </table>
                         </div>
                     </div>
@@ -3986,10 +3972,8 @@
             container.innerHTML = html;
         }
 
-        function startAutoReloadSchedule() {
-            if (autoReloadTimerId) {
-                clearInterval(autoReloadTimerId);
-            }
+        function startAutoReload() {
+            if (autoReloadTimerId) clearInterval(autoReloadTimerId);
             autoReloadTimerId = setInterval(() => {
                 loadAllData();
             }, AUTO_RELOAD_INTERVAL_MS);
@@ -3997,7 +3981,7 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             loadAllData();
-            startAutoReloadSchedule();
+            startAutoReload();
         });
     </script>
 </body>
