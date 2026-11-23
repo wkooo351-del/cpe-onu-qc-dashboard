@@ -100,15 +100,19 @@
         <!-- SECTION: 1HC DAILY JD & KPI -->
         <div id="section-1hc-jd-kpi" class="dashboard-section hidden space-y-5">
             <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3">
-                <div>
+                <div class="flex flex-wrap items-center gap-3">
                     <h2 class="text-base font-black text-slate-900">1HC Daily JD &amp; KPI Tracker (Target: 150)</h2>
+                    <div id="jdkpi-mode-tabs" class="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200">
+                        <button type="button" onclick="switchJdKpiMode('daily')" id="jdkpi-mode-daily" class="px-3 py-1 rounded-lg text-xs font-black transition bg-indigo-600 text-white shadow cursor-pointer">Daily Tab</button>
+                        <button type="button" onclick="switchJdKpiMode('monthly')" id="jdkpi-mode-monthly" class="px-3 py-1 rounded-lg text-xs font-black transition bg-white text-slate-700 hover:bg-slate-100 cursor-pointer">Monthly Tab</button>
+                    </div>
                 </div>
 
                 <div class="flex flex-wrap items-center gap-2">
-                    <div class="flex items-center gap-1 bg-slate-50 p-1 rounded-xl border border-slate-200">
-                        <button type="button" onclick="switchJdKpiSource('ALL')" class="px-3 py-1 rounded-lg text-xs font-black transition bg-blue-600 text-white shadow">ALL</button>
-                        <button type="button" onclick="switchJdKpiSource('YGN-2026')" class="px-3 py-1 rounded-lg text-xs font-black transition bg-white text-slate-700 hover:bg-slate-100">YGN-2026</button>
-                        <button type="button" onclick="switchJdKpiSource('MDY-2026')" class="px-3 py-1 rounded-lg text-xs font-black transition bg-white text-slate-700 hover:bg-slate-100">MDY-2026</button>
+                    <div id="jdkpi-source-tabs" class="flex items-center gap-1 bg-slate-50 p-1 rounded-xl border border-slate-200">
+                        <button type="button" data-source="ALL" onclick="switchJdKpiSource('ALL')" class="jdkpi-src-btn px-3 py-1 rounded-lg text-xs font-black transition bg-blue-600 text-white shadow cursor-pointer">ALL</button>
+                        <button type="button" data-source="YGN-2026" onclick="switchJdKpiSource('YGN-2026')" class="jdkpi-src-btn px-3 py-1 rounded-lg text-xs font-black transition bg-white text-slate-700 hover:bg-slate-100 cursor-pointer">YGN</button>
+                        <button type="button" data-source="MDY-2026" onclick="switchJdKpiSource('MDY-2026')" class="jdkpi-src-btn px-3 py-1 rounded-lg text-xs font-black transition bg-white text-slate-700 hover:bg-slate-100 cursor-pointer">MDY</button>
                     </div>
 
                     <div class="relative flex items-center gap-1.5" id="jdkpi-date-picker-wrapper">
@@ -128,19 +132,21 @@
                 </div>
             </div>
 
-            <!-- Summary Cards -->
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div class="bg-blue-50/70 p-4 rounded-xl shadow-sm border border-blue-200 border-t-4 border-t-blue-600">
-                    <p class="text-xs font-bold text-blue-700 uppercase">Total Employees</p>
-                    <p id="jdkpi-card-total" class="mt-1.5 text-2xl font-black text-blue-950">0</p>
-                </div>
-                <div class="bg-emerald-50/70 p-4 rounded-xl shadow-sm border border-emerald-200 border-t-4 border-t-emerald-500">
-                    <p class="text-xs font-bold text-emerald-700 uppercase">MEET KPI (&ge; 150)</p>
-                    <p id="jdkpi-card-meet" class="mt-1.5 text-2xl font-black text-emerald-800">0</p>
-                </div>
-                <div class="bg-rose-50/70 p-4 rounded-xl shadow-sm border border-rose-200 border-t-4 border-t-rose-500">
-                    <p class="text-xs font-bold text-rose-700 uppercase">NO MEET KPI (&lt; 150)</p>
-                    <p id="jdkpi-card-nomeet" class="mt-1.5 text-2xl font-black text-rose-800">0</p>
+            <!-- Frozen Summary Cards -->
+            <div class="sticky top-[62px] z-30 bg-slate-50/95 backdrop-blur-xs py-1">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div class="bg-blue-50 p-4 rounded-xl shadow-sm border border-blue-200 border-t-4 border-t-blue-600">
+                        <p class="text-xs font-bold text-blue-700 uppercase">Total Employees</p>
+                        <p id="jdkpi-card-total" class="mt-1.5 text-2xl font-black text-blue-950">0</p>
+                    </div>
+                    <div class="bg-emerald-50 p-4 rounded-xl shadow-sm border border-emerald-200 border-t-4 border-t-emerald-500">
+                        <p class="text-xs font-bold text-emerald-700 uppercase">MEET KPI (&ge; 150)</p>
+                        <p id="jdkpi-card-meet" class="mt-1.5 text-2xl font-black text-emerald-800">0</p>
+                    </div>
+                    <div class="bg-rose-50 p-4 rounded-xl shadow-sm border border-rose-200 border-t-4 border-t-rose-500">
+                        <p class="text-xs font-bold text-rose-700 uppercase">NO MEET KPI (&lt; 150)</p>
+                        <p id="jdkpi-card-nomeet" class="mt-1.5 text-2xl font-black text-rose-800">0</p>
+                    </div>
                 </div>
             </div>
 
@@ -150,7 +156,7 @@
             <!-- Compact Employee Name Cards -->
             <div id="jdkpi-cards-container" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3"></div>
 
-            <!-- Date-wise / Employee Breakdown Table -->
+            <!-- Date-wise / Employee / Monthly Breakdown Table -->
             <div id="jdkpi-detail-container" class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4"></div>
         </div>
 
@@ -448,6 +454,7 @@
         const INBOUND_SHEET_ID = "1PK1Bz7gRg8x3L8IOr7Xx8ntMADaznWWhYyEjchzuM6M";
         const ONU_SS_ID = "1EHtzUxAO1EuB_CxejyqBFiAjOsZQX4meYZqDcIRx9po";
         const DAILY_TARGET = 150;
+        const AUTO_RELOAD_INTERVAL_MS = 10 * 60 * 1000;
 
         let staffGroupedDataByMonth = {};
         let staffGroupedData = {};
@@ -457,6 +464,7 @@
 
         let jdKpiRawRowsBySource = { "YGN-2026": [], "MDY-2026": [] };
         let activeJdKpiSource = "ALL";
+        let activeJdKpiMode = "daily";
         let selectedJdKpiDates = [];
         let availableJdKpiDates = [];
         let selectedJdKpiEmployee = "";
@@ -491,6 +499,7 @@
         let oltChartInstance = null, failureChartInstance = null, pieChartInstance = null, multiBarChartInstance = null, deviceModelChartInstance = null, paramBarChartInstance = null;
         let currentTestType = 'first';
         let currentOnuRegion = 'All Region';
+        let autoReloadTimerId = null;
 
         const VALID_REGIONS = ["ENUO", "HGAO", "MYFO"];
         const MONTH_SHORT_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -743,7 +752,9 @@
                 { key: 'dbm', label: 'DBM' },
                 { key: 'accessories', label: 'Accessories' },
                 { key: 'accessory', label: 'Accessories' },
-                { key: 'mac', label: 'MAC' }
+                { key: 'mac', label: 'MAC' },
+                { key: 'cover change', label: 'Cover change' },
+                { key: 'cover changed', label: 'Cover change' }
             ];
             for (let item of group04) {
                 if (norm === item.key || norm.includes(item.key)) {
@@ -770,10 +781,49 @@
             return null;
         }
 
+        function updateJdKpiSourceButtonsUI() {
+            document.querySelectorAll('.jdkpi-src-btn').forEach(btn => {
+                let src = btn.getAttribute('data-source');
+                if (src === activeJdKpiSource) {
+                    if (src === 'ALL') {
+                        btn.className = 'jdkpi-src-btn px-3 py-1 rounded-lg text-xs font-black transition bg-blue-600 text-white shadow cursor-pointer';
+                    } else if (src === 'YGN-2026') {
+                        btn.className = 'jdkpi-src-btn px-3 py-1 rounded-lg text-xs font-black transition bg-emerald-600 text-white shadow cursor-pointer';
+                    } else {
+                        btn.className = 'jdkpi-src-btn px-3 py-1 rounded-lg text-xs font-black transition bg-amber-600 text-white shadow cursor-pointer';
+                    }
+                } else {
+                    btn.className = 'jdkpi-src-btn px-3 py-1 rounded-lg text-xs font-black transition bg-white text-slate-700 hover:bg-slate-100 cursor-pointer';
+                }
+            });
+        }
+
+        function updateJdKpiModeButtonsUI() {
+            let dailyBtn = document.getElementById('jdkpi-mode-daily');
+            let monthlyBtn = document.getElementById('jdkpi-mode-monthly');
+            if (dailyBtn) {
+                dailyBtn.className = activeJdKpiMode === 'daily'
+                    ? 'px-3 py-1 rounded-lg text-xs font-black transition bg-indigo-600 text-white shadow cursor-pointer'
+                    : 'px-3 py-1 rounded-lg text-xs font-black transition bg-white text-slate-700 hover:bg-slate-100 cursor-pointer';
+            }
+            if (monthlyBtn) {
+                monthlyBtn.className = activeJdKpiMode === 'monthly'
+                    ? 'px-3 py-1 rounded-lg text-xs font-black transition bg-indigo-600 text-white shadow cursor-pointer'
+                    : 'px-3 py-1 rounded-lg text-xs font-black transition bg-white text-slate-700 hover:bg-slate-100 cursor-pointer';
+            }
+        }
+
         function switchJdKpiSource(sourceVal) {
             activeJdKpiSource = sourceVal;
             selectedJdKpiDates = [];
             selectedJdKpiEmployee = "";
+            updateJdKpiSourceButtonsUI();
+            render1hcDailyJdKpiView();
+        }
+
+        function switchJdKpiMode(modeVal) {
+            activeJdKpiMode = modeVal;
+            updateJdKpiModeButtonsUI();
             render1hcDailyJdKpiView();
         }
 
@@ -783,17 +833,25 @@
         }
 
         function formatKpiScore(num) {
-            let rounded = Math.round((num + Number.EPSILON) * 100) / 100;
+            let val = Number(num) || 0;
+            return val.toFixed(2);
+        }
+
+        function formatUnitScore(num) {
+            let val = Number(num) || 0;
+            let rounded = Math.round((val + Number.EPSILON) * 100) / 100;
             return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(2);
         }
 
         async function loadAndRender1hcDailyJdKpi() {
-            let ygnRows = await fetchFlexibleSheet(STAFF_SHEET_ID, ["YGN-2026", "YGN 2026", "Nov 26", "Oct 26"]);
-            let mdyRows = await fetchFlexibleSheet(MDY_SHEET_ID, ["MDY-2026", "MDY 2026", "Nov 26", "Oct 26", "Sep 26", "Aug 26", "July 26"]);
+            let ygnRows = await fetchFlexibleSheet(STAFF_SHEET_ID, ["YGN-2026", "YGN 2026", "Dec 26", "Dec'26", "Nov 26", "Oct 26"]);
+            let mdyRows = await fetchFlexibleSheet(MDY_SHEET_ID, ["MDY-2026", "MDY 2026", "Dec 26", "Dec'26", "Nov 26", "Oct 26", "Sep 26", "Aug 26", "July 26"]);
 
             jdKpiRawRowsBySource["YGN-2026"] = ygnRows || [];
             jdKpiRawRowsBySource["MDY-2026"] = mdyRows || [];
 
+            updateJdKpiSourceButtonsUI();
+            updateJdKpiModeButtonsUI();
             render1hcDailyJdKpiView();
         }
 
@@ -802,6 +860,9 @@
             let cardsEl = document.getElementById('jdkpi-cards-container');
             let detailEl = document.getElementById('jdkpi-detail-container');
             if (!alertsEl || !cardsEl || !detailEl) return;
+
+            updateJdKpiSourceButtonsUI();
+            updateJdKpiModeButtonsUI();
 
             let sourceRows = [];
             if (activeJdKpiSource === "ALL") {
@@ -852,6 +913,7 @@
                 allDatesSet.add(dt);
                 parsedItems.push({
                     date: dt,
+                    monthKey: formatMonthKeyFromDate(dt),
                     employee: empName,
                     source: source,
                     task: taskLabel,
@@ -869,6 +931,139 @@
                 if (selectedJdKpiDates.length > 0 && !selectedJdKpiDates.includes(item.date)) return false;
                 return true;
             });
+
+            if (activeJdKpiMode === 'monthly') {
+                let monthEmpMap = {};
+                let monthTotals = {};
+
+                filteredItems.forEach(item => {
+                    let mKey = item.monthKey || 'Unknown';
+                    if (!monthEmpMap[mKey]) monthEmpMap[mKey] = {};
+                    if (!monthEmpMap[mKey][item.employee]) {
+                        monthEmpMap[mKey][item.employee] = {
+                            name: item.employee,
+                            monthKey: mKey,
+                            totalKpi: 0,
+                            totalUnits: 0,
+                            daysSet: new Set(),
+                            tasks: {}
+                        };
+                    }
+                    let mEmp = monthEmpMap[mKey][item.employee];
+                    mEmp.totalKpi += item.kpiPoints;
+                    mEmp.totalUnits += item.units;
+                    mEmp.daysSet.add(item.date);
+
+                    if (!mEmp.tasks[item.task]) {
+                        mEmp.tasks[item.task] = { task: item.task, units: 0, kpi: 0 };
+                    }
+                    mEmp.tasks[item.task].units += item.units;
+                    mEmp.tasks[item.task].kpi += item.kpiPoints;
+
+                    if (!monthTotals[mKey]) {
+                        monthTotals[mKey] = { monthKey: mKey, totalKpi: 0, totalUnits: 0, staffCount: 0, meetCount: 0, noMeetCount: 0 };
+                    }
+                });
+
+                let sortedMonths = Object.keys(monthEmpMap).sort((a, b) => {
+                    let [mA, yA] = a.split("'");
+                    let [mB, yB] = b.split("'");
+                    let idxA = MONTH_SHORT_NAMES.indexOf(mA);
+                    let idxB = MONTH_SHORT_NAMES.indexOf(mB);
+                    return (`20${yA || '00'}-${String(idxA + 1).padStart(2, '0')}`).localeCompare(`20${yB || '00'}-${String(idxB + 1).padStart(2, '0')}`);
+                });
+
+                let allUniqueStaff = new Set();
+                let totalMeetStaff = 0;
+                let totalNoMeetStaff = 0;
+                let monthlyRowsHtml = "";
+
+                sortedMonths.forEach(mKey => {
+                    let empsObj = monthEmpMap[mKey];
+                    let names = Object.keys(empsObj).sort();
+                    let mUnits = 0;
+                    let mKpi = 0;
+                    let mMeet = 0;
+                    let mNoMeet = 0;
+
+                    names.forEach(n => {
+                        allUniqueStaff.add(n);
+                        let eObj = empsObj[n];
+                        let activeDays = eObj.daysSet.size;
+                        let avgDailyKpi = activeDays > 0 ? (eObj.totalKpi / activeDays) : 0;
+                        let isMeet = avgDailyKpi >= DAILY_TARGET;
+                        if (isMeet) mMeet++;
+                        else mNoMeet++;
+
+                        mUnits += eObj.totalUnits;
+                        mKpi += eObj.totalKpi;
+
+                        let taskChips = Object.values(eObj.tasks)
+                            .sort((a, b) => b.kpi - a.kpi)
+                            .map(t => `<span class="inline-flex items-center px-2 py-0.5 rounded-md bg-slate-100 text-slate-800 text-[11px] font-bold border border-slate-200">${t.task}: <strong class="ml-1 text-blue-900">${formatUnitScore(t.units)}</strong></span>`)
+                            .join(' ');
+
+                        let badge = isMeet
+                            ? `<span class="px-2.5 py-0.5 rounded-full text-[11px] font-black bg-emerald-100 text-emerald-800">MEET KPI</span>`
+                            : `<span class="px-2.5 py-0.5 rounded-full text-[11px] font-black bg-rose-100 text-rose-800">NO MEET KPI</span>`;
+
+                        monthlyRowsHtml += `
+                            <tr class="hover:bg-slate-50 border-b border-slate-200 text-xs font-bold text-slate-800">
+                                <td class="p-3 border border-slate-200 text-center whitespace-nowrap font-black text-indigo-900 bg-indigo-50/40">${mKey}</td>
+                                <td class="p-3 border border-slate-200 whitespace-nowrap font-black text-slate-900 bg-slate-50">${n}</td>
+                                <td class="p-3 border border-slate-200 text-center whitespace-nowrap font-bold text-slate-700">${activeDays}d</td>
+                                <td class="p-3 border border-slate-200"><div class="flex flex-wrap gap-1.5">${taskChips}</div></td>
+                                <td class="p-3 border border-slate-200 text-center whitespace-nowrap font-black text-slate-900">${formatUnitScore(eObj.totalUnits)}</td>
+                                <td class="p-3 border border-slate-200 text-center whitespace-nowrap font-black text-blue-900">${formatKpiScore(eObj.totalKpi)}</td>
+                                <td class="p-3 border border-slate-200 text-center whitespace-nowrap font-black ${isMeet ? 'text-emerald-700' : 'text-rose-700'}">${formatKpiScore(avgDailyKpi)}</td>
+                                <td class="p-3 border border-slate-200 text-center whitespace-nowrap">${badge}</td>
+                            </tr>
+                        `;
+                    });
+
+                    totalMeetStaff += mMeet;
+                    totalNoMeetStaff += mNoMeet;
+                });
+
+                document.getElementById('jdkpi-card-total').innerText = allUniqueStaff.size;
+                document.getElementById('jdkpi-card-meet').innerText = totalMeetStaff;
+                document.getElementById('jdkpi-card-nomeet').innerText = totalNoMeetStaff;
+                alertsEl.innerHTML = '';
+                cardsEl.innerHTML = '';
+
+                if (!monthlyRowsHtml) {
+                    monthlyRowsHtml = `<tr><td colspan="8" class="p-8 text-center text-slate-400">No monthly 1HC JD &amp; KPI records found.</td></tr>`;
+                }
+
+                detailEl.innerHTML = `
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-100 pb-3 gap-2">
+                        <div>
+                            <h3 class="text-sm font-black text-slate-900">Monthly JD &amp; KPI Summary (${activeJdKpiSource === 'ALL' ? 'ALL' : (activeJdKpiSource === 'YGN-2026' ? 'YGN' : 'MDY')})</h3>
+                            <p class="text-xs text-slate-500 font-bold">Months: ${sortedMonths.join(', ') || 'None'}</p>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto rounded-xl border border-slate-300 shadow-sm">
+                        <table class="w-full text-left border-collapse border border-slate-300 text-xs">
+                            <thead class="bg-slate-800 text-white uppercase font-black">
+                                <tr>
+                                    <th class="p-3 border border-slate-700 text-center">Month</th>
+                                    <th class="p-3 border border-slate-700">Employee Name</th>
+                                    <th class="p-3 border border-slate-700 text-center">Days</th>
+                                    <th class="p-3 border border-slate-700">JD Done</th>
+                                    <th class="p-3 border border-slate-700 text-center">Total Units</th>
+                                    <th class="p-3 border border-slate-700 text-center">Monthly KPI</th>
+                                    <th class="p-3 border border-slate-700 text-center">Avg Daily KPI</th>
+                                    <th class="p-3 border border-slate-700 text-center">Status (150)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${monthlyRowsHtml}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+                return;
+            }
 
             let empMap = {};
             filteredItems.forEach(item => {
@@ -1020,8 +1215,8 @@
                     : formatKpiScore(emp.scoreForStatus);
 
                 let subScoreText = isSingleDayFilter
-                    ? `Units: ${formatKpiScore(emp.totalUnits)}`
-                    : `${formatKpiScore(emp.totalKpi)} • ${emp.activeDays}d • U:${formatKpiScore(emp.totalUnits)}`;
+                    ? `Units: ${formatUnitScore(emp.totalUnits)}`
+                    : `${formatKpiScore(emp.totalKpi)} • ${emp.activeDays}d • U:${formatUnitScore(emp.totalUnits)}`;
 
                 return `
                     <button type="button" onclick="selectJdKpiEmployeeCard('${emp.name.replace(/'/g, "\\'")}')" class="text-left p-3 rounded-xl border ${borderStyle} bg-white shadow-2xs transition cursor-pointer space-y-1.5">
@@ -1044,7 +1239,7 @@
                 let rowsHtml = empSummaryList.map(emp => {
                     let taskChips = Object.values(emp.tasks)
                         .sort((a, b) => b.kpi - a.kpi)
-                        .map(t => `<span class="inline-flex items-center px-2 py-0.5 rounded-md bg-slate-100 text-slate-800 text-[11px] font-bold border border-slate-200">${t.task}: <strong class="ml-1 text-blue-900">${formatKpiScore(t.units)}</strong></span>`)
+                        .map(t => `<span class="inline-flex items-center px-2 py-0.5 rounded-md bg-slate-100 text-slate-800 text-[11px] font-bold border border-slate-200">${t.task}: <strong class="ml-1 text-blue-900">${formatUnitScore(t.units)}</strong></span>`)
                         .join(' ');
 
                     let kpiValue = isSingleDayFilter ? emp.totalKpi : emp.scoreForStatus;
@@ -1059,7 +1254,7 @@
                             <td class="p-3 border border-slate-200">
                                 <div class="flex flex-wrap gap-1.5">${taskChips}</div>
                             </td>
-                            <td class="p-3 border border-slate-200 text-center whitespace-nowrap font-black text-slate-900">${formatKpiScore(emp.totalUnits)}</td>
+                            <td class="p-3 border border-slate-200 text-center whitespace-nowrap font-black text-slate-900">${formatUnitScore(emp.totalUnits)}</td>
                             <td class="p-3 border border-slate-200 text-center whitespace-nowrap font-black ${rowMeet ? 'text-emerald-700' : 'text-rose-700'}">${formatKpiScore(kpiValue)}</td>
                             <td class="p-3 border border-slate-200 text-center whitespace-nowrap">${badge}</td>
                         </tr>
@@ -1077,7 +1272,7 @@
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-100 pb-3 gap-2">
                         <div>
                             <h3 class="text-sm font-black text-slate-900">All Employees — ${dateFilterLabel}</h3>
-                            <p class="text-xs text-slate-500 font-bold">Total Staff: ${empSummaryList.length} • Total Units: ${formatKpiScore(grandUnits)} • Total KPI: ${formatKpiScore(grandKpi)}</p>
+                            <p class="text-xs text-slate-500 font-bold">Total Staff: ${empSummaryList.length} • Total Units: ${formatUnitScore(grandUnits)} • Total KPI: ${formatKpiScore(grandKpi)}</p>
                         </div>
                     </div>
                     <div class="overflow-x-auto rounded-xl border border-slate-300 shadow-sm">
@@ -1095,7 +1290,7 @@
                                 ${rowsHtml}
                                 <tr class="bg-slate-100 font-black text-slate-900 text-xs border-t-2 border-slate-300">
                                     <td colspan="2" class="p-3 border border-slate-300 text-right uppercase">TOTAL (${empSummaryList.length} Staff)</td>
-                                    <td class="p-3 border border-slate-300 text-center">${formatKpiScore(grandUnits)}</td>
+                                    <td class="p-3 border border-slate-300 text-center">${formatUnitScore(grandUnits)}</td>
                                     <td class="p-3 border border-slate-300 text-center text-blue-900">${formatKpiScore(grandKpi)}</td>
                                     <td class="p-3 border border-slate-300 text-center ${grandMeet ? 'text-emerald-800' : 'text-rose-800'}">${grandMeet ? 'MEET KPI' : 'NO MEET KPI'}</td>
                                 </tr>
@@ -1114,7 +1309,7 @@
                 let dayMeet = dObj.kpi >= DAILY_TARGET;
                 let taskSummary = Object.values(dObj.tasks)
                     .sort((a, b) => b.kpi - a.kpi)
-                    .map(t => `<span class="inline-flex items-center px-2 py-0.5 rounded-md bg-slate-100 text-slate-800 text-[11px] font-bold border border-slate-200">${t.task}: <strong class="ml-1 text-blue-900">${formatKpiScore(t.units)}</strong></span>`)
+                    .map(t => `<span class="inline-flex items-center px-2 py-0.5 rounded-md bg-slate-100 text-slate-800 text-[11px] font-bold border border-slate-200">${t.task}: <strong class="ml-1 text-blue-900">${formatUnitScore(t.units)}</strong></span>`)
                     .join(' ');
 
                 let dayBadge = dayMeet
@@ -1128,7 +1323,7 @@
                         <td class="p-3 border border-slate-200">
                             <div class="flex flex-wrap gap-1.5">${taskSummary}</div>
                         </td>
-                        <td class="p-3 border border-slate-200 text-center whitespace-nowrap font-black text-slate-900">${formatKpiScore(dObj.units)}</td>
+                        <td class="p-3 border border-slate-200 text-center whitespace-nowrap font-black text-slate-900">${formatUnitScore(dObj.units)}</td>
                         <td class="p-3 border border-slate-200 text-center whitespace-nowrap font-black ${dayMeet ? 'text-emerald-700' : 'text-rose-700'}">${formatKpiScore(dObj.kpi)}</td>
                         <td class="p-3 border border-slate-200 text-center whitespace-nowrap">${dayBadge}</td>
                     </tr>
@@ -1164,7 +1359,7 @@
                             ${detailRowsHtml}
                             <tr class="bg-slate-100 font-black text-slate-900 text-xs border-t-2 border-slate-300">
                                 <td colspan="3" class="p-3 border border-slate-300 text-right uppercase">TOTAL (${sortedEmpDates.length} Days)</td>
-                                <td class="p-3 border border-slate-300 text-center">${formatKpiScore(activeEmp.totalUnits)}</td>
+                                <td class="p-3 border border-slate-300 text-center">${formatUnitScore(activeEmp.totalUnits)}</td>
                                 <td class="p-3 border border-slate-300 text-center text-blue-900">${formatKpiScore(activeEmp.totalKpi)}</td>
                                 <td class="p-3 border border-slate-300 text-center ${empOverallMeet ? 'text-emerald-800' : 'text-rose-800'}">${empOverallMeet ? 'MEET KPI' : 'NO MEET KPI'}</td>
                             </tr>
@@ -3699,82 +3894,110 @@
             }, 100);
         }
 
-        function renderOnuRegionalBreakdown(filteredByPeriod) {
-            let dynContainer = document.getElementById('onu-dynamic-container');
-            if(!dynContainer) return;
+        function renderOnuRegionalBreakdown(data) {
+            let container = document.getElementById('onu-dynamic-container');
+            if(!container) return;
 
-            let targetRegions = currentOnuRegion === 'All Region' ? ['HGAO', 'ENUO', 'MYFO'] : [currentOnuRegion];
+            let regions = ["ENUO", "HGAO", "MYFO"];
             let html = "";
 
-            targetRegions.forEach(reg => {
-                let rData = filteredByPeriod.filter(r => getRowRegion(r) === reg);
+            regions.forEach(reg => {
+                let rData = data.filter(r => getRowRegion(r) === reg);
+                if (rData.length === 0) return;
+
                 let tot = rData.length;
                 let pas = rData.filter(r => isStrictPass(r)).length;
                 let fai = tot - pas;
-                let pRate = tot > 0 ? ((pas / tot) * 100).toFixed(2) : "0.00";
-                let fRate = tot > 0 ? ((fai / tot) * 100).toFixed(2) : "0.00";
+                let pRate = tot > 0 ? ((pas / tot) * 100).toFixed(1) : "0.0";
+                let fRate = tot > 0 ? ((fai / tot) * 100).toFixed(1) : "0.0";
 
-                let badgeClass = reg === 'HGAO' ? 'bg-amber-500 text-white' : (reg === 'ENUO' ? 'bg-blue-600 text-white' : 'bg-emerald-600 text-white');
+                let badgeColor = reg === "ENUO" ? "bg-blue-600" : (reg === "HGAO" ? "bg-amber-500" : "bg-emerald-600");
 
-                let regModelMap = {};
+                let dateGroup = {};
                 rData.forEach(r => {
-                    let m = getDeviceName(r);
-                    if(!regModelMap[m]) regModelMap[m] = { total: 0, passed: 0, failed: 0 };
-                    regModelMap[m].total++;
-                    if(isStrictPass(r)) regModelMap[m].passed++;
-                    else regModelMap[m].failed++;
+                    let dt = parseLocalDate(r['_rawArray'][0] || getVal(r, ['Date'], 0)) || "Unknown Date";
+                    let dev = getDeviceName(r);
+                    if (!dateGroup[dt]) dateGroup[dt] = { total: 0, passed: 0, failed: 0, devices: {} };
+                    dateGroup[dt].total++;
+                    if (isStrictPass(r)) dateGroup[dt].passed++;
+                    else dateGroup[dt].failed++;
+
+                    if (!dateGroup[dt].devices[dev]) dateGroup[dt].devices[dev] = { total: 0, passed: 0, failed: 0 };
+                    dateGroup[dt].devices[dev].total++;
+                    if (isStrictPass(r)) dateGroup[dt].devices[dev].passed++;
+                    else dateGroup[dt].devices[dev].failed++;
                 });
 
-                let regModelRowsHtml = Object.keys(regModelMap).sort().map(m => {
-                    let s = regModelMap[m];
-                    let fr = s.total > 0 ? ((s.failed / s.total) * 100).toFixed(2) : "0.00";
-                    return `
-                        <tr class="border-b border-slate-200 text-xs font-bold">
-                            <td class="p-2.5 border border-slate-200 font-black text-slate-900">${m}</td>
-                            <td class="p-2.5 border border-slate-200 text-center">${s.total.toLocaleString()}</td>
-                            <td class="p-2.5 border border-slate-200 text-center text-emerald-700">${s.passed.toLocaleString()}</td>
-                            <td class="p-2.5 border border-slate-200 text-center text-rose-600">${s.failed > 0 ? s.failed.toLocaleString() : '-'}</td>
-                            <td class="p-2.5 border border-slate-200 text-center font-black text-rose-600">${fr}%</td>
+                let rowsHtml = "";
+                Object.keys(dateGroup).sort().forEach(dt => {
+                    let dg = dateGroup[dt];
+                    let dRate = dg.total > 0 ? ((dg.passed / dg.total) * 100).toFixed(1) : "0.0";
+                    let devBadge = Object.keys(dg.devices).map(d => {
+                        let dv = dg.devices[d];
+                        return `<span class="inline-block px-2 py-0.5 rounded bg-slate-100 text-slate-800 text-[11px] font-bold border border-slate-200 mr-1 mb-1">${d}: ${dv.total} (P:${dv.passed} / F:${dv.failed})</span>`;
+                    }).join('');
+
+                    rowsHtml += `
+                        <tr class="hover:bg-slate-50 border-b border-slate-200">
+                            <td class="p-3 border border-slate-200 font-bold text-slate-900 whitespace-nowrap">${dt}</td>
+                            <td class="p-3 border border-slate-200">${devBadge}</td>
+                            <td class="p-3 border border-slate-200 text-center font-black">${dg.total}</td>
+                            <td class="p-3 border border-slate-200 text-center font-black text-emerald-700">${dg.passed}</td>
+                            <td class="p-3 border border-slate-200 text-center font-black text-rose-600">${dg.failed > 0 ? dg.failed : '-'}</td>
+                            <td class="p-3 border border-slate-200 text-center font-black text-purple-700">${dRate}%</td>
                         </tr>
                     `;
-                }).join('') || `<tr><td colspan="5" class="p-4 text-center text-slate-400">No devices for ${reg}</td></tr>`;
+                });
 
                 html += `
                     <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-100 pb-3 gap-2">
-                            <div class="flex items-center gap-3">
-                                <span class="px-3.5 py-1.5 rounded-xl text-xs font-black ${badgeClass}">${reg}</span>
-                                <h3 class="text-base font-black text-slate-900">${reg} Regional ONU Inspection Breakdown</h3>
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-100 pb-4 gap-3">
+                            <div class="flex items-center space-x-3">
+                                <span class="px-3.5 py-1.5 rounded-xl text-xs font-black text-white ${badgeColor}">${reg}</span>
+                                <h3 class="text-base font-black text-slate-900">Regional Breakdown (${reg})</h3>
                             </div>
-                            <div class="flex flex-wrap gap-3 text-xs font-black">
-                                <span class="px-3 py-1 rounded-lg bg-slate-100 text-slate-800">Total: ${tot.toLocaleString()}</span>
-                                <span class="px-3 py-1 rounded-lg bg-emerald-100 text-emerald-800">Pass: ${pas.toLocaleString()} (${pRate}%)</span>
-                                <span class="px-3 py-1 rounded-lg bg-rose-100 text-rose-700">Fail: ${fai.toLocaleString()} (${fRate}%)</span>
+                            <div class="flex flex-wrap gap-3 text-xs font-bold text-slate-700">
+                                <span>Total: <strong class="text-slate-950 font-black">${tot.toLocaleString()}</strong></span>
+                                <span>Passed: <strong class="text-emerald-700 font-black">${pas.toLocaleString()} (${pRate}%)</strong></span>
+                                <span>Failed: <strong class="text-rose-600 font-black">${fai.toLocaleString()} (${fRate}%)</strong></span>
                             </div>
                         </div>
                         <div class="overflow-x-auto rounded-xl border border-slate-300">
                             <table class="w-full text-left border-collapse border border-slate-300 text-xs">
                                 <thead class="bg-slate-800 text-white uppercase font-black">
                                     <tr>
-                                        <th class="p-2.5 border border-slate-600">MODEL</th>
-                                        <th class="p-2.5 border border-slate-600 text-center">TOTAL</th>
-                                        <th class="p-2.5 border border-slate-600 text-center">PASSED</th>
-                                        <th class="p-2.5 border border-slate-600 text-center">FAILED</th>
-                                        <th class="p-2.5 border border-slate-600 text-center">FAIL RATE</th>
+                                        <th class="p-3 border border-slate-600">Date</th>
+                                        <th class="p-3 border border-slate-600">Devices (Pass / Fail)</th>
+                                        <th class="p-3 border border-slate-600 text-center">Total</th>
+                                        <th class="p-3 border border-slate-600 text-center">Passed</th>
+                                        <th class="p-3 border border-slate-600 text-center">Failed</th>
+                                        <th class="p-3 border border-slate-600 text-center">Pass %</th>
                                     </tr>
                                 </thead>
-                                <tbody>${regModelRowsHtml}</tbody>
+                                <tbody>
+                                    ${rowsHtml}
+                                </tbody>
                             </table>
                         </div>
                     </div>
                 `;
             });
 
-            dynContainer.innerHTML = html;
+            container.innerHTML = html;
         }
 
-        window.addEventListener('DOMContentLoaded', () => {
+        function startAutoReloadSchedule() {
+            if (autoReloadTimerId) {
+                clearInterval(autoReloadTimerId);
+            }
+            autoReloadTimerId = setInterval(() => {
+                loadAllData();
+            }, AUTO_RELOAD_INTERVAL_MS);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
             loadAllData();
+            startAutoReloadSchedule();
         });
     </script>
 </body>
