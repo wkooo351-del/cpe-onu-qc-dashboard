@@ -98,11 +98,10 @@
         </div>
 
         <!-- SECTION: 1HC DAILY JD & KPI -->
-        <div id="section-1hc-jd-kpi" class="dashboard-section hidden space-y-6">
+        <div id="section-1hc-jd-kpi" class="dashboard-section hidden space-y-5">
             <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3">
                 <div>
                     <h2 class="text-base font-black text-slate-900">1HC Daily JD &amp; KPI Tracker (Target: 150)</h2>
-                    <p class="text-xs text-slate-500 font-bold">Run/Default = MAC (col F) &times; 1 • 1x = Run/Default/Battery/Cleaning/Speed Test/LAN • 0.4x = DBM/Accessories/MAC • 3.75x = RMA/12Vsoldering/Infra/Glue attach/Cpeupgrade</p>
                 </div>
 
                 <div class="flex flex-wrap items-center gap-2">
@@ -131,28 +130,28 @@
 
             <!-- Summary Cards -->
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div class="bg-white p-4 rounded-xl shadow-sm border-t-4 border-blue-600">
-                    <p class="text-xs font-bold text-slate-500 uppercase">Total Employees</p>
-                    <p id="jdkpi-card-total" class="mt-1.5 text-2xl font-black text-blue-900">0</p>
+                <div class="bg-blue-50/70 p-4 rounded-xl shadow-sm border border-blue-200 border-t-4 border-t-blue-600">
+                    <p class="text-xs font-bold text-blue-700 uppercase">Total Employees</p>
+                    <p id="jdkpi-card-total" class="mt-1.5 text-2xl font-black text-blue-950">0</p>
                 </div>
-                <div class="bg-white p-4 rounded-xl shadow-sm border-t-4 border-emerald-500">
-                    <p class="text-xs font-bold text-slate-500 uppercase">MEET KPI (&ge; 150)</p>
-                    <p id="jdkpi-card-meet" class="mt-1.5 text-2xl font-black text-emerald-700">0</p>
+                <div class="bg-emerald-50/70 p-4 rounded-xl shadow-sm border border-emerald-200 border-t-4 border-t-emerald-500">
+                    <p class="text-xs font-bold text-emerald-700 uppercase">MEET KPI (&ge; 150)</p>
+                    <p id="jdkpi-card-meet" class="mt-1.5 text-2xl font-black text-emerald-800">0</p>
                 </div>
-                <div class="bg-white p-4 rounded-xl shadow-sm border-t-4 border-rose-500">
-                    <p class="text-xs font-bold text-slate-500 uppercase">NO MEET KPI (&lt; 150)</p>
-                    <p id="jdkpi-card-nomeet" class="mt-1.5 text-2xl font-black text-rose-700">0</p>
+                <div class="bg-rose-50/70 p-4 rounded-xl shadow-sm border border-rose-200 border-t-4 border-t-rose-500">
+                    <p class="text-xs font-bold text-rose-700 uppercase">NO MEET KPI (&lt; 150)</p>
+                    <p id="jdkpi-card-nomeet" class="mt-1.5 text-2xl font-black text-rose-800">0</p>
                 </div>
             </div>
 
             <!-- NO MEET KPI Alert Box -->
             <div id="jdkpi-alerts-container"></div>
 
-            <!-- Employee Name Cards -->
-            <div id="jdkpi-cards-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"></div>
+            <!-- Compact Employee Name Cards -->
+            <div id="jdkpi-cards-container" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3"></div>
 
-            <!-- Selected Employee Date-wise Breakdown -->
-            <div id="jdkpi-detail-container" class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4"></div>
+            <!-- Date-wise / Employee Breakdown Table -->
+            <div id="jdkpi-detail-container" class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4"></div>
         </div>
 
         <!-- SECTION 2: Daily Inbound -->
@@ -830,6 +829,9 @@
                 let colEDailyJd = String(getVal(row, ['Daily JD', 'Daily (JD)', 'JD', 'Daily'], 4) || '').trim();
                 let normE = normalizeJdKey(colEDailyJd);
 
+                let qtyHeaderVal = parseFloat(getVal(row, ['QTY', 'Qty', 'Quantity', 'KPI', 'Total'], 3));
+                let hasQtyHeader = !isNaN(qtyHeaderVal) && qtyHeaderVal > 0;
+
                 let taskLabel = "";
                 let multiplier = 0;
                 let units = 0;
@@ -844,7 +846,7 @@
                     if (!matched) return;
                     taskLabel = matched.label;
                     multiplier = matched.multiplier;
-                    units = 1;
+                    units = hasQtyHeader ? qtyHeaderVal : 1;
                 }
 
                 allDatesSet.add(dt);
@@ -875,12 +877,24 @@
                         name: item.employee,
                         totalKpi: 0,
                         totalUnits: 0,
+                        tasks: {},
                         dates: {}
                     };
                 }
                 let eObj = empMap[item.employee];
                 eObj.totalKpi += item.kpiPoints;
                 eObj.totalUnits += item.units;
+
+                if (!eObj.tasks[item.task]) {
+                    eObj.tasks[item.task] = {
+                        task: item.task,
+                        multiplier: item.multiplier,
+                        units: 0,
+                        kpi: 0
+                    };
+                }
+                eObj.tasks[item.task].units += item.units;
+                eObj.tasks[item.task].kpi += item.kpiPoints;
 
                 if (!eObj.dates[item.date]) {
                     eObj.dates[item.date] = {
@@ -912,10 +926,10 @@
                 document.getElementById('jdkpi-card-meet').innerText = '0';
                 document.getElementById('jdkpi-card-nomeet').innerText = '0';
                 alertsEl.innerHTML = '';
-                cardsEl.innerHTML = `<div class="col-span-full py-6 text-center text-slate-400">No 1HC Daily JD &amp; KPI records found for the selected filter.</div>`;
+                cardsEl.innerHTML = `<div class="col-span-full py-5 text-center text-slate-400 text-xs font-bold">No 1HC Daily JD &amp; KPI records found for the selected filter.</div>`;
                 detailEl.innerHTML = `
-                    <div class="border-b border-slate-100 pb-3">
-                        <h3 class="text-base font-black text-slate-900">Employee Daily JD &amp; KPI Breakdown</h3>
+                    <div class="border-b border-slate-100 pb-2.5">
+                        <h3 class="text-sm font-black text-slate-900">Employee Daily JD &amp; KPI Breakdown</h3>
                         <p class="text-xs text-slate-500 font-bold">No records available to display.</p>
                     </div>
                 `;
@@ -964,18 +978,18 @@
 
             if (noMeetEmployees.length > 0) {
                 alertsEl.innerHTML = `
-                    <div class="bg-rose-50 border-l-4 border-rose-500 p-4 rounded-r-2xl shadow-sm space-y-2">
+                    <div class="bg-rose-50 border-l-4 border-rose-500 p-3 rounded-r-xl shadow-sm space-y-1.5">
                         <div class="flex items-center justify-between">
                             <span class="text-xs font-black uppercase tracking-wide text-rose-900">NO MEET KPI Alert (&lt; ${DAILY_TARGET})</span>
-                            <span class="px-2.5 py-0.5 rounded-full text-xs font-black bg-rose-200 text-rose-900">${noMeetEmployees.length} Staff</span>
+                            <span class="px-2 py-0.5 rounded-full text-[11px] font-black bg-rose-200 text-rose-900">${noMeetEmployees.length} Staff</span>
                         </div>
-                        <div class="flex flex-wrap gap-2 pt-1">
+                        <div class="flex flex-wrap gap-1.5 pt-0.5">
                             ${noMeetEmployees.map(emp => {
                                 let metricText = isSingleDayFilter
                                     ? `KPI: ${formatKpiScore(emp.totalKpi)}`
-                                    : `Avg KPI: ${formatKpiScore(emp.avgKpi)} (Total: ${formatKpiScore(emp.totalKpi)} / ${emp.activeDays}d)`;
+                                    : `Avg KPI: ${formatKpiScore(emp.avgKpi)} (${formatKpiScore(emp.totalKpi)} / ${emp.activeDays}d)`;
                                 return `
-                                    <button type="button" onclick="selectJdKpiEmployeeCard('${emp.name.replace(/'/g, "\\'")}')" class="px-3 py-1.5 rounded-xl bg-white border border-rose-300 text-rose-900 text-xs font-black hover:bg-rose-100 transition cursor-pointer">
+                                    <button type="button" onclick="selectJdKpiEmployeeCard('${emp.name.replace(/'/g, "\\'")}')" class="px-2.5 py-1 rounded-lg bg-white border border-rose-300 text-rose-900 text-[11px] font-black hover:bg-rose-100 transition cursor-pointer">
                                         ${emp.name} — ${metricText}
                                     </button>
                                 `;
@@ -985,7 +999,7 @@
                 `;
             } else {
                 alertsEl.innerHTML = `
-                    <div class="bg-emerald-50 border-l-4 border-emerald-500 p-3.5 rounded-r-2xl text-emerald-900 text-xs font-black">
+                    <div class="bg-emerald-50 border-l-4 border-emerald-500 p-3 rounded-r-xl text-emerald-900 text-xs font-black">
                         All ${empSummaryList.length} employees achieved MEET KPI (&ge; ${DAILY_TARGET}) for the selected filter.
                     </div>
                 `;
@@ -994,37 +1008,103 @@
             cardsEl.innerHTML = empSummaryList.map(emp => {
                 let isSelected = emp.name === selectedJdKpiEmployee;
                 let borderStyle = isSelected
-                    ? 'border-blue-600 ring-2 ring-blue-500/30 bg-blue-50/20'
+                    ? 'border-blue-600 ring-2 ring-blue-500/30 bg-blue-50/30'
                     : (emp.isMeet ? 'border-emerald-200 hover:border-emerald-400' : 'border-rose-200 hover:border-rose-400');
 
                 let statusBadge = emp.isMeet
-                    ? `<span class="px-2.5 py-1 rounded-full text-xs font-black bg-emerald-100 text-emerald-800">MEET KPI</span>`
-                    : `<span class="px-2.5 py-1 rounded-full text-xs font-black bg-rose-100 text-rose-800">NO MEET KPI</span>`;
+                    ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800">MEET</span>`
+                    : `<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-100 text-rose-800">NO MEET</span>`;
 
                 let primaryScore = isSingleDayFilter
                     ? formatKpiScore(emp.totalKpi)
                     : formatKpiScore(emp.scoreForStatus);
 
                 let subScoreText = isSingleDayFilter
-                    ? `Units: ${emp.totalUnits} • Daily KPI`
-                    : `Total KPI: ${formatKpiScore(emp.totalKpi)} • ${emp.activeDays}d • Units: ${emp.totalUnits}`;
+                    ? `Units: ${formatKpiScore(emp.totalUnits)}`
+                    : `${formatKpiScore(emp.totalKpi)} • ${emp.activeDays}d • U:${formatKpiScore(emp.totalUnits)}`;
 
                 return `
-                    <button type="button" onclick="selectJdKpiEmployeeCard('${emp.name.replace(/'/g, "\\'")}')" class="text-left p-4 rounded-2xl border-2 ${borderStyle} bg-white shadow-sm transition cursor-pointer space-y-2.5">
-                        <div class="flex items-start justify-between gap-2">
-                            <div>
-                                <p class="text-sm font-black text-slate-900">${emp.name}</p>
-                                <p class="text-[11px] text-slate-500 font-bold">${subScoreText}</p>
-                            </div>
+                    <button type="button" onclick="selectJdKpiEmployeeCard('${emp.name.replace(/'/g, "\\'")}')" class="text-left p-3 rounded-xl border ${borderStyle} bg-white shadow-2xs transition cursor-pointer space-y-1.5">
+                        <div class="flex items-start justify-between gap-1.5">
+                            <p class="text-xs font-black text-slate-900 truncate">${emp.name}</p>
                             ${statusBadge}
                         </div>
                         <div class="flex items-baseline justify-between pt-1 border-t border-slate-100">
-                            <span class="text-[11px] font-black uppercase text-slate-400">${isSingleDayFilter ? 'KPI Score' : 'Daily Avg KPI'}</span>
-                            <span class="text-2xl font-black ${emp.isMeet ? 'text-emerald-700' : 'text-rose-700'}">${primaryScore}</span>
+                            <span class="text-[10px] text-slate-500 font-bold truncate">${subScoreText}</span>
+                            <span class="text-lg font-black ${emp.isMeet ? 'text-emerald-700' : 'text-rose-700'}">${primaryScore}</span>
                         </div>
                     </button>
                 `;
             }).join('');
+
+            let isDateFiltered = selectedJdKpiDates.length > 0;
+
+            if (isDateFiltered) {
+                let dateFilterLabel = selectedJdKpiDates.join(', ');
+                let rowsHtml = empSummaryList.map(emp => {
+                    let taskChips = Object.values(emp.tasks)
+                        .sort((a, b) => b.kpi - a.kpi)
+                        .map(t => `<span class="inline-flex items-center px-2 py-0.5 rounded-md bg-slate-100 text-slate-800 text-[11px] font-bold border border-slate-200">${t.task}: <strong class="ml-1 text-blue-900">${formatKpiScore(t.units)}</strong></span>`)
+                        .join(' ');
+
+                    let kpiValue = isSingleDayFilter ? emp.totalKpi : emp.scoreForStatus;
+                    let rowMeet = emp.isMeet;
+                    let badge = rowMeet
+                        ? `<span class="px-2.5 py-0.5 rounded-full text-[11px] font-black bg-emerald-100 text-emerald-800">MEET KPI</span>`
+                        : `<span class="px-2.5 py-0.5 rounded-full text-[11px] font-black bg-rose-100 text-rose-800">NO MEET KPI</span>`;
+
+                    return `
+                        <tr class="hover:bg-slate-50 border-b border-slate-200 text-xs font-bold text-slate-800">
+                            <td class="p-3 border border-slate-200 whitespace-nowrap font-black text-slate-900 bg-slate-50">${emp.name}</td>
+                            <td class="p-3 border border-slate-200">
+                                <div class="flex flex-wrap gap-1.5">${taskChips}</div>
+                            </td>
+                            <td class="p-3 border border-slate-200 text-center whitespace-nowrap font-black text-slate-900">${formatKpiScore(emp.totalUnits)}</td>
+                            <td class="p-3 border border-slate-200 text-center whitespace-nowrap font-black ${rowMeet ? 'text-emerald-700' : 'text-rose-700'}">${formatKpiScore(kpiValue)}</td>
+                            <td class="p-3 border border-slate-200 text-center whitespace-nowrap">${badge}</td>
+                        </tr>
+                    `;
+                }).join('');
+
+                let grandUnits = empSummaryList.reduce((acc, e) => acc + e.totalUnits, 0);
+                let grandKpi = empSummaryList.reduce((acc, e) => acc + e.totalKpi, 0);
+                let grandStatusScore = isSingleDayFilter
+                    ? (empSummaryList.length > 0 ? grandKpi / empSummaryList.length : 0)
+                    : (empSummaryList.length > 0 ? empSummaryList.reduce((acc, e) => acc + e.scoreForStatus, 0) / empSummaryList.length : 0);
+                let grandMeet = grandStatusScore >= DAILY_TARGET;
+
+                detailEl.innerHTML = `
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-100 pb-3 gap-2">
+                        <div>
+                            <h3 class="text-sm font-black text-slate-900">All Employees — ${dateFilterLabel}</h3>
+                            <p class="text-xs text-slate-500 font-bold">Total Staff: ${empSummaryList.length} • Total Units: ${formatKpiScore(grandUnits)} • Total KPI: ${formatKpiScore(grandKpi)}</p>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto rounded-xl border border-slate-300 shadow-sm">
+                        <table class="w-full text-left border-collapse border border-slate-300 text-xs">
+                            <thead class="bg-slate-800 text-white uppercase font-black">
+                                <tr>
+                                    <th class="p-3 border border-slate-700">Employee Name</th>
+                                    <th class="p-3 border border-slate-700">JD Done</th>
+                                    <th class="p-3 border border-slate-700 text-center">Total Units</th>
+                                    <th class="p-3 border border-slate-700 text-center">${isSingleDayFilter ? 'Daily KPI' : 'Avg KPI'}</th>
+                                    <th class="p-3 border border-slate-700 text-center">Status (150)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${rowsHtml}
+                                <tr class="bg-slate-100 font-black text-slate-900 text-xs border-t-2 border-slate-300">
+                                    <td colspan="2" class="p-3 border border-slate-300 text-right uppercase">TOTAL (${empSummaryList.length} Staff)</td>
+                                    <td class="p-3 border border-slate-300 text-center">${formatKpiScore(grandUnits)}</td>
+                                    <td class="p-3 border border-slate-300 text-center text-blue-900">${formatKpiScore(grandKpi)}</td>
+                                    <td class="p-3 border border-slate-300 text-center ${grandMeet ? 'text-emerald-800' : 'text-rose-800'}">${grandMeet ? 'MEET KPI' : 'NO MEET KPI'}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+                return;
+            }
 
             let activeEmp = empMap[selectedJdKpiEmployee];
             let sortedEmpDates = Object.keys(activeEmp.dates).sort();
@@ -1034,20 +1114,21 @@
                 let dayMeet = dObj.kpi >= DAILY_TARGET;
                 let taskSummary = Object.values(dObj.tasks)
                     .sort((a, b) => b.kpi - a.kpi)
-                    .map(t => `<span class="inline-flex items-center px-2.5 py-1 rounded-lg bg-slate-100 text-slate-800 text-xs font-bold border border-slate-200">${t.task}: <strong class="ml-1 text-blue-900">${t.units}</strong> <span class="text-slate-500 ml-1">(&times;${t.multiplier} = ${formatKpiScore(t.kpi)})</span></span>`)
+                    .map(t => `<span class="inline-flex items-center px-2 py-0.5 rounded-md bg-slate-100 text-slate-800 text-[11px] font-bold border border-slate-200">${t.task}: <strong class="ml-1 text-blue-900">${formatKpiScore(t.units)}</strong></span>`)
                     .join(' ');
 
                 let dayBadge = dayMeet
-                    ? `<span class="px-2.5 py-1 rounded-full text-xs font-black bg-emerald-100 text-emerald-800">MEET KPI</span>`
-                    : `<span class="px-2.5 py-1 rounded-full text-xs font-black bg-rose-100 text-rose-800">NO MEET KPI</span>`;
+                    ? `<span class="px-2.5 py-0.5 rounded-full text-[11px] font-black bg-emerald-100 text-emerald-800">MEET KPI</span>`
+                    : `<span class="px-2.5 py-0.5 rounded-full text-[11px] font-black bg-rose-100 text-rose-800">NO MEET KPI</span>`;
 
                 return `
                     <tr class="hover:bg-slate-50 border-b border-slate-200 text-xs font-bold text-slate-800">
-                        <td class="p-3 border border-slate-200 text-center whitespace-nowrap font-black text-slate-900 bg-slate-50">${dt}</td>
+                        <td class="p-3 border border-slate-200 whitespace-nowrap font-black text-slate-900 bg-slate-50">${activeEmp.name}</td>
+                        <td class="p-3 border border-slate-200 text-center whitespace-nowrap font-black text-slate-900">${dt}</td>
                         <td class="p-3 border border-slate-200">
                             <div class="flex flex-wrap gap-1.5">${taskSummary}</div>
                         </td>
-                        <td class="p-3 border border-slate-200 text-center whitespace-nowrap font-black text-slate-900">${dObj.units}</td>
+                        <td class="p-3 border border-slate-200 text-center whitespace-nowrap font-black text-slate-900">${formatKpiScore(dObj.units)}</td>
                         <td class="p-3 border border-slate-200 text-center whitespace-nowrap font-black ${dayMeet ? 'text-emerald-700' : 'text-rose-700'}">${formatKpiScore(dObj.kpi)}</td>
                         <td class="p-3 border border-slate-200 text-center whitespace-nowrap">${dayBadge}</td>
                     </tr>
@@ -1055,12 +1136,12 @@
             }).join('');
 
             let empAvgScore = sortedEmpDates.length > 0 ? (activeEmp.totalKpi / sortedEmpDates.length) : 0;
-            let empOverallMeet = isSingleDayFilter ? (activeEmp.totalKpi >= DAILY_TARGET) : (empAvgScore >= DAILY_TARGET);
+            let empOverallMeet = empAvgScore >= DAILY_TARGET;
 
             detailEl.innerHTML = `
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-100 pb-3 gap-2">
                     <div>
-                        <h3 class="text-base font-black text-slate-900">${activeEmp.name} — Daily JD &amp; KPI Breakdown</h3>
+                        <h3 class="text-sm font-black text-slate-900">${activeEmp.name} — Daily JD &amp; KPI Breakdown</h3>
                         <p class="text-xs text-slate-500 font-bold">Total KPI: ${formatKpiScore(activeEmp.totalKpi)} • Active Days: ${sortedEmpDates.length} • Daily Avg KPI: ${formatKpiScore(empAvgScore)}</p>
                     </div>
                     <span class="px-3 py-1 rounded-full text-xs font-black ${empOverallMeet ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}">
@@ -1071,8 +1152,9 @@
                     <table class="w-full text-left border-collapse border border-slate-300 text-xs">
                         <thead class="bg-slate-800 text-white uppercase font-black">
                             <tr>
+                                <th class="p-3 border border-slate-700">Employee Name</th>
                                 <th class="p-3 border border-slate-700 text-center">Date</th>
-                                <th class="p-3 border border-slate-700">JD Done (Units &times; Weight = KPI)</th>
+                                <th class="p-3 border border-slate-700">JD Done</th>
                                 <th class="p-3 border border-slate-700 text-center">Total Units</th>
                                 <th class="p-3 border border-slate-700 text-center">Daily KPI</th>
                                 <th class="p-3 border border-slate-700 text-center">Status (150)</th>
@@ -1081,8 +1163,8 @@
                         <tbody>
                             ${detailRowsHtml}
                             <tr class="bg-slate-100 font-black text-slate-900 text-xs border-t-2 border-slate-300">
-                                <td colspan="2" class="p-3 border border-slate-300 text-right uppercase">TOTAL (${sortedEmpDates.length} Days)</td>
-                                <td class="p-3 border border-slate-300 text-center">${activeEmp.totalUnits}</td>
+                                <td colspan="3" class="p-3 border border-slate-300 text-right uppercase">TOTAL (${sortedEmpDates.length} Days)</td>
+                                <td class="p-3 border border-slate-300 text-center">${formatKpiScore(activeEmp.totalUnits)}</td>
                                 <td class="p-3 border border-slate-300 text-center text-blue-900">${formatKpiScore(activeEmp.totalKpi)}</td>
                                 <td class="p-3 border border-slate-300 text-center ${empOverallMeet ? 'text-emerald-800' : 'text-rose-800'}">${empOverallMeet ? 'MEET KPI' : 'NO MEET KPI'}</td>
                             </tr>
