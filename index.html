@@ -3,180 +3,169 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Provision Team — Operational & QC Dashboard</title>
+    <title>Provision Team KPI &amp; QC Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        body { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
-    </style>
 </head>
 <body class="bg-slate-50 text-slate-900 min-h-screen">
-    <header class="sticky top-0 z-50 bg-slate-900 text-white shadow-md border-b border-slate-800">
-        <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
-            <div class="flex items-center gap-3">
-                <h1 class="text-sm sm:text-base font-black tracking-wide text-white">Provision Team Dashboard</h1>
-                <span id="last-updated" class="text-[11px] font-bold text-slate-400"></span>
+    <header class="sticky top-0 z-40 bg-slate-900 text-white border-b border-slate-800 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 py-2.5 flex flex-wrap items-center justify-between gap-2">
+            <div class="flex flex-wrap items-center gap-1.5">
+                <button id="master-btn-hc" onclick="switchMasterTab('section-hc', this)" class="px-3 py-1.5 text-xs font-bold rounded-md bg-blue-600 text-white transition shadow">HC &amp; Attendance</button>
+                <button id="master-btn-1hc-jd-kpi" onclick="switchMasterTab('section-1hc-jd-kpi', this)" class="px-3 py-1.5 text-xs font-bold rounded-md text-slate-200 hover:text-white transition">1HC Daily JD &amp; KPI</button>
+                <button id="master-btn-inbound" onclick="switchMasterTab('section-inbound', this)" class="px-3 py-1.5 text-xs font-bold rounded-md text-slate-200 hover:text-white transition">Daily Inbound</button>
+                <button id="master-btn-regional-kpi" onclick="switchMasterTab('section-regional-kpi', this)" class="px-3 py-1.5 text-xs font-bold rounded-md text-slate-200 hover:text-white transition">Regional KPI</button>
+                <button id="master-btn-onu" onclick="switchMasterTab('section-onu', this)" class="px-3 py-1.5 text-xs font-bold rounded-md text-slate-200 hover:text-white transition">ONU QC</button>
+                <button id="master-btn-qc-test" onclick="switchMasterTab('section-qc-test', this)" class="px-3 py-1.5 text-xs font-bold rounded-md text-slate-200 hover:text-white transition">QC Test</button>
+                <button id="master-btn-rma" onclick="switchMasterTab('section-rma', this)" class="px-3 py-1.5 text-xs font-bold rounded-md text-slate-200 hover:text-white transition">RMA Repair</button>
             </div>
-            <nav class="flex flex-wrap items-center gap-1.5">
-                <button onclick="switchMasterTab('section-hc', this)" id="master-btn-hc" class="px-3 py-1.5 text-xs font-bold rounded-md bg-blue-600 text-white transition shadow">HC &amp; Attendance</button>
-                <button onclick="switchMasterTab('section-1hc-jd-kpi', this)" id="master-btn-1hc-jd-kpi" class="px-3 py-1.5 text-xs font-bold rounded-md text-slate-200 hover:text-white transition">1HC Daily JD &amp; KPI</button>
-                <button onclick="switchMasterTab('section-inbound', this)" id="master-btn-inbound" class="px-3 py-1.5 text-xs font-bold rounded-md text-slate-200 hover:text-white transition">Daily Inbound</button>
-                <button onclick="switchMasterTab('section-regional-kpi', this)" id="master-btn-regional-kpi" class="px-3 py-1.5 text-xs font-bold rounded-md text-slate-200 hover:text-white transition">Regional KPI</button>
-                <button onclick="switchMasterTab('section-onu', this)" id="master-btn-onu" class="px-3 py-1.5 text-xs font-bold rounded-md text-slate-200 hover:text-white transition">ONU QC</button>
-                <button onclick="switchMasterTab('section-qc-test', this)" id="master-btn-qc-test" class="px-3 py-1.5 text-xs font-bold rounded-md text-slate-200 hover:text-white transition">QC Test</button>
-                <button onclick="switchMasterTab('section-rma', this)" id="master-btn-rma" class="px-3 py-1.5 text-xs font-bold rounded-md text-slate-200 hover:text-white transition">RMA Repair</button>
-            </nav>
+            <div class="flex items-center gap-2 text-xs font-bold text-slate-300">
+                <span id="last-updated">Syncing...</span>
+                <button type="button" onclick="loadAllData()" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 cursor-pointer">Refresh</button>
+            </div>
         </div>
     </header>
 
     <main class="max-w-7xl mx-auto px-4 py-6 space-y-6">
         <!-- SECTION 1: HC & Attendance -->
         <div id="section-hc" class="dashboard-section space-y-6">
-            <div class="sticky top-[58px] z-30 bg-slate-50/95 backdrop-blur-xs py-1 space-y-3">
-                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-3">
-                    <div class="flex items-center gap-3">
-                        <h2 class="text-base font-black text-slate-900">Staff KPI &amp; Attendance</h2>
-                        <span id="staff-active-month-badge" class="px-3 py-1 rounded-full text-xs font-black bg-blue-100 text-blue-800">Active: Nov'26</span>
-                    </div>
-                    <div class="flex flex-wrap items-center gap-2">
-                        <select id="staff-month-select" onchange="switchStaffMonth(this.value)" class="px-3 py-1.5 text-xs font-extrabold rounded-xl bg-slate-50 text-slate-900 border border-slate-300 cursor-pointer">
-                            <option value="Nov'26" selected>Nov'26</option>
-                            <option value="Oct'26">Oct'26</option>
-                        </select>
-                        <div class="relative flex items-center gap-1.5" id="staff-date-picker-wrapper">
-                            <button type="button" onclick="toggleDateDropdown('staff-date-dropdown', event)" id="staff-date-btn" class="px-3 py-1.5 text-xs font-extrabold rounded-xl bg-slate-50 text-slate-900 border border-slate-300 hover:bg-slate-100 cursor-pointer flex items-center gap-1.5">
-                                <span id="staff-date-label">All Dates (Summary)</span>
-                                <span class="text-[10px]">▼</span>
-                            </button>
-                            <button type="button" onclick="clearDateFilter('staff')" class="px-2.5 py-1.5 text-xs font-extrabold rounded-xl bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 cursor-pointer transition">Clear Filters</button>
-                            <div id="staff-date-dropdown" class="hidden absolute right-0 top-full mt-1.5 w-64 bg-white rounded-xl shadow-xl border border-slate-200 z-50 p-2 space-y-1.5">
-                                <div class="flex justify-between items-center px-2 py-1 border-b border-slate-100 text-[11px] font-black">
-                                    <button type="button" onclick="selectAllDates('staff', true)" class="text-blue-600 hover:underline cursor-pointer">Select All</button>
-                                    <button type="button" onclick="clearDateFilter('staff')" class="text-rose-600 hover:underline cursor-pointer">Clear Filters</button>
-                                </div>
-                                <div id="staff-date-options" class="max-h-56 overflow-y-auto space-y-0.5 px-1"></div>
-                            </div>
+            <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-3">
+                <div class="flex flex-wrap items-center gap-2">
+                    <span class="px-3 py-1.5 rounded-xl text-xs font-black bg-slate-900 text-white">HC &amp; ATTENDANCE</span>
+                    <span id="staff-active-month-badge" class="px-3 py-1 rounded-lg text-xs font-black bg-blue-50 text-blue-800 border border-blue-200">Active: Nov'26</span>
+                    <select id="staff-month-select" onchange="switchStaffMonth(this.value)" class="px-3 py-1.5 text-xs font-extrabold rounded-xl bg-slate-50 text-slate-900 border border-slate-300 cursor-pointer">
+                        <option value="Oct'26">Oct'26</option>
+                        <option value="Nov'26" selected>Nov'26</option>
+                    </select>
+                </div>
+                <div class="relative flex items-center gap-1.5" id="staff-date-picker-wrapper">
+                    <button type="button" onclick="toggleDateDropdown('staff-date-dropdown', event)" id="staff-date-btn" class="px-3 py-1.5 text-xs font-extrabold rounded-xl bg-slate-50 text-slate-900 border border-slate-300 hover:bg-slate-100 cursor-pointer flex items-center gap-1.5">
+                        <span id="staff-date-label">All Dates (Summary)</span>
+                        <span class="text-[10px]">▼</span>
+                    </button>
+                    <button type="button" onclick="clearDateFilter('staff')" class="px-2.5 py-1.5 text-xs font-extrabold rounded-xl bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 cursor-pointer transition">Clear Filters</button>
+                    <div id="staff-date-dropdown" class="hidden absolute right-0 top-full mt-1.5 w-64 bg-white rounded-xl shadow-xl border border-slate-200 z-50 p-2 space-y-1.5">
+                        <div class="flex justify-between items-center px-2 py-1 border-b border-slate-100 text-[11px] font-black">
+                            <button type="button" onclick="selectAllDates('staff', true)" class="text-blue-600 hover:underline cursor-pointer">Select All</button>
+                            <button type="button" onclick="clearDateFilter('staff')" class="text-rose-600 hover:underline cursor-pointer">Clear Filters</button>
                         </div>
+                        <div id="staff-date-options" class="max-h-56 overflow-y-auto space-y-0.5 px-1"></div>
                     </div>
                 </div>
+            </div>
 
-                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div class="bg-white p-4 rounded-xl shadow-sm border-t-4 border-blue-600">
-                        <p class="text-xs font-bold text-slate-500 uppercase">Total Staff</p>
-                        <p id="card-total-staff" class="mt-1.5 text-2xl font-black text-blue-900">0</p>
-                    </div>
-                    <div class="bg-white p-4 rounded-xl shadow-sm border-t-4 border-emerald-500">
-                        <p class="text-xs font-bold text-slate-500 uppercase">Excellent</p>
-                        <p id="card-excellent-staff" class="mt-1.5 text-2xl font-black text-emerald-700">0</p>
-                    </div>
-                    <div class="bg-white p-4 rounded-xl shadow-sm border-t-4 border-amber-500">
-                        <p class="text-xs font-bold text-slate-500 uppercase">Needs Attention</p>
-                        <p id="card-attention-staff" class="mt-1.5 text-2xl font-black text-amber-700">0</p>
-                    </div>
-                    <div class="bg-white p-4 rounded-xl shadow-sm border-t-4 border-rose-500">
-                        <p class="text-xs font-bold text-slate-500 uppercase">KPI Issues</p>
-                        <p id="card-kpi-issue-staff" class="mt-1.5 text-2xl font-black text-rose-700">0</p>
-                    </div>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 font-bold">
+                <div class="bg-white p-4 rounded-xl border-t-4 border-blue-600 shadow-sm">
+                    <p class="text-xs uppercase text-slate-500">Total Staff</p>
+                    <h3 id="card-total-staff" class="text-2xl font-black text-blue-900 mt-1">0</h3>
+                </div>
+                <div class="bg-white p-4 rounded-xl border-t-4 border-emerald-500 shadow-sm">
+                    <p class="text-xs uppercase text-slate-500">Excellent</p>
+                    <h3 id="card-excellent-staff" class="text-2xl font-black text-emerald-700 mt-1">0</h3>
+                </div>
+                <div class="bg-white p-4 rounded-xl border-t-4 border-amber-500 shadow-sm">
+                    <p class="text-xs uppercase text-slate-500">Needs Attention</p>
+                    <h3 id="card-attention-staff" class="text-2xl font-black text-amber-700 mt-1">0</h3>
+                </div>
+                <div class="bg-white p-4 rounded-xl border-t-4 border-rose-500 shadow-sm">
+                    <p class="text-xs uppercase text-slate-500">KPI Issue</p>
+                    <h3 id="card-kpi-issue-staff" class="text-2xl font-black text-rose-700 mt-1">0</h3>
                 </div>
             </div>
 
             <div id="staff-alerts-container" class="space-y-2"></div>
 
-            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-x-auto">
-                <table class="w-full text-left border-collapse text-sm">
-                    <thead class="bg-slate-800 text-white uppercase text-xs font-black">
-                        <tr>
-                            <th class="py-3 px-6 border border-slate-700">Employee Name</th>
-                            <th class="py-3 px-6 text-center border border-slate-700">Attendance</th>
-                            <th class="py-3 px-6 text-center border border-slate-700">KPI</th>
-                            <th class="py-3 px-6 text-center border border-slate-700">Status</th>
-                        </tr>
-                    </thead>
-                    <tbody id="staff-table-body" class="font-bold text-slate-800">
-                        <tr><td colspan="4" class="py-6 text-center text-slate-400">Loading staff data...</td></tr>
-                    </tbody>
-                </table>
+            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                <div class="overflow-x-auto rounded-xl border border-slate-300">
+                    <table class="w-full text-left border-collapse border border-slate-300 text-xs">
+                        <thead class="bg-slate-800 text-white uppercase font-black">
+                            <tr>
+                                <th class="py-3 px-6 border border-slate-600">Employee</th>
+                                <th class="py-3 px-6 text-center border border-slate-600">Attendance</th>
+                                <th class="py-3 px-6 text-center border border-slate-600">KPI Score</th>
+                                <th class="py-3 px-6 text-center border border-slate-600">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="staff-table-body" class="font-bold text-slate-800">
+                            <tr><td colspan="4" class="py-6 text-center text-slate-400">Loading staff data...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
-        <!-- SECTION: 1HC DAILY JD & KPI -->
-        <div id="section-1hc-jd-kpi" class="dashboard-section hidden space-y-5">
-            <div class="sticky top-[58px] z-30 bg-slate-50/95 backdrop-blur-xs py-1 space-y-3">
-                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3">
-                    <div class="flex flex-wrap items-center gap-3">
-                        <h2 class="text-base font-black text-slate-900">1HC Daily JD &amp; KPI Tracker (Target: 150)</h2>
-                        <div id="jdkpi-mode-tabs" class="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200">
-                            <button type="button" onclick="switchJdKpiMode('daily')" id="jdkpi-mode-daily" class="px-3 py-1 rounded-lg text-xs font-black transition bg-indigo-600 text-white shadow cursor-pointer">Daily Tab</button>
-                            <button type="button" onclick="switchJdKpiMode('monthly')" id="jdkpi-mode-monthly" class="px-3 py-1 rounded-lg text-xs font-black transition bg-white text-slate-700 hover:bg-slate-100 cursor-pointer">Monthly Tab</button>
-                        </div>
-                    </div>
+        <!-- SECTION 2: 1HC Daily JD & KPI -->
+        <div id="section-1hc-jd-kpi" class="dashboard-section hidden space-y-6">
+            <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-3">
+                <div class="flex flex-wrap items-center gap-2">
+                    <button type="button" data-source="ALL" onclick="switchJdKpiSource('ALL')" class="jdkpi-src-btn px-3 py-1 rounded-lg text-xs font-black transition bg-blue-600 text-white shadow cursor-pointer">ALL</button>
+                    <button type="button" data-source="YGN-2026" onclick="switchJdKpiSource('YGN-2026')" class="jdkpi-src-btn px-3 py-1 rounded-lg text-xs font-black transition bg-white text-slate-700 hover:bg-slate-100 cursor-pointer">YGN</button>
+                    <button type="button" data-source="MDY-2026" onclick="switchJdKpiSource('MDY-2026')" class="jdkpi-src-btn px-3 py-1 rounded-lg text-xs font-black transition bg-white text-slate-700 hover:bg-slate-100 cursor-pointer">MDY</button>
 
-                    <div class="flex flex-wrap items-center gap-2">
-                        <div id="jdkpi-source-tabs" class="flex items-center gap-1 bg-slate-50 p-1 rounded-xl border border-slate-200">
-                            <button type="button" data-source="ALL" onclick="switchJdKpiSource('ALL')" class="jdkpi-src-btn px-3 py-1 rounded-lg text-xs font-black transition bg-blue-600 text-white shadow cursor-pointer">ALL</button>
-                            <button type="button" data-source="YGN-2026" onclick="switchJdKpiSource('YGN-2026')" class="jdkpi-src-btn px-3 py-1 rounded-lg text-xs font-black transition bg-white text-slate-700 hover:bg-slate-100 cursor-pointer">YGN</button>
-                            <button type="button" data-source="MDY-2026" onclick="switchJdKpiSource('MDY-2026')" class="jdkpi-src-btn px-3 py-1 rounded-lg text-xs font-black transition bg-white text-slate-700 hover:bg-slate-100 cursor-pointer">MDY</button>
-                        </div>
+                    <div class="h-5 w-px bg-slate-200 mx-1"></div>
 
-                        <div class="relative flex items-center gap-1.5" id="jdkpi-date-picker-wrapper">
-                            <button type="button" onclick="toggleDateDropdown('jdkpi-date-dropdown', event)" id="jdkpi-date-btn" class="px-3 py-1.5 text-xs font-extrabold rounded-xl bg-slate-50 text-slate-900 border border-slate-300 hover:bg-slate-100 focus:outline-none cursor-pointer flex items-center gap-1.5">
-                                <span id="jdkpi-date-label">All Dates</span>
-                                <span class="text-[10px]">▼</span>
-                            </button>
-                            <button type="button" onclick="clearDateFilter('jdkpi')" class="px-2.5 py-1.5 text-xs font-extrabold rounded-xl bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 cursor-pointer transition">Clear Filters</button>
-                            <div id="jdkpi-date-dropdown" class="hidden absolute right-0 top-full mt-1.5 w-64 bg-white rounded-xl shadow-xl border border-slate-200 z-50 p-2 space-y-1.5">
-                                <div class="flex justify-between items-center px-2 py-1 border-b border-slate-100 text-[11px] font-black">
-                                    <button type="button" onclick="selectAllDates('jdkpi', true)" class="text-blue-600 hover:underline cursor-pointer">Select All</button>
-                                    <button type="button" onclick="clearDateFilter('jdkpi')" class="text-rose-600 hover:underline cursor-pointer">Clear Filters</button>
-                                </div>
-                                <div id="jdkpi-date-options" class="max-h-56 overflow-y-auto space-y-0.5 px-1"></div>
-                            </div>
-                        </div>
+                    <button type="button" id="jdkpi-mode-daily" onclick="switchJdKpiMode('daily')" class="px-3 py-1 rounded-lg text-xs font-black transition bg-indigo-600 text-white shadow cursor-pointer">Daily</button>
+                    <button type="button" id="jdkpi-mode-monthly" onclick="switchJdKpiMode('monthly')" class="px-3 py-1 rounded-lg text-xs font-black transition bg-white text-slate-700 hover:bg-slate-100 cursor-pointer">Monthly</button>
+
+                    <div id="jdkpi-month-filter-wrapper" class="hidden flex items-center gap-1.5 ml-1">
+                        <label for="jdkpi-month-select" class="text-xs font-black text-slate-500 uppercase">Month:</label>
+                        <select id="jdkpi-month-select" onchange="switchJdKpiMonth(this.value)" class="px-2.5 py-1 text-xs font-extrabold rounded-lg bg-slate-50 text-slate-900 border border-slate-300 cursor-pointer">
+                            <option value="ALL">All Months</option>
+                        </select>
                     </div>
                 </div>
 
-                <!-- Frozen Summary Cards -->
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div class="bg-blue-50 p-4 rounded-xl shadow-sm border border-blue-200 border-t-4 border-t-blue-600">
-                        <p class="text-xs font-bold text-blue-700 uppercase">Total Employees</p>
-                        <p id="jdkpi-card-total" class="mt-1.5 text-2xl font-black text-blue-950">0</p>
-                    </div>
-                    <div class="bg-emerald-50 p-4 rounded-xl shadow-sm border border-emerald-200 border-t-4 border-t-emerald-500">
-                        <p class="text-xs font-bold text-emerald-700 uppercase">MEET KPI (&ge; 150)</p>
-                        <p id="jdkpi-card-meet" class="mt-1.5 text-2xl font-black text-emerald-800">0</p>
-                    </div>
-                    <div class="bg-rose-50 p-4 rounded-xl shadow-sm border border-rose-200 border-t-4 border-t-rose-500">
-                        <p class="text-xs font-bold text-rose-700 uppercase">NO MEET KPI (&lt; 150)</p>
-                        <p id="jdkpi-card-nomeet" class="mt-1.5 text-2xl font-black text-rose-800">0</p>
+                <div class="relative flex items-center gap-1.5" id="jdkpi-date-picker-wrapper">
+                    <button type="button" onclick="toggleDateDropdown('jdkpi-date-dropdown', event)" id="jdkpi-date-btn" class="px-3 py-1.5 text-xs font-extrabold rounded-xl bg-slate-50 text-slate-900 border border-slate-300 hover:bg-slate-100 cursor-pointer flex items-center gap-1.5">
+                        <span id="jdkpi-date-label">All Dates</span>
+                        <span class="text-[10px]">▼</span>
+                    </button>
+                    <button type="button" onclick="clearDateFilter('jdkpi')" class="px-2.5 py-1.5 text-xs font-extrabold rounded-xl bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 cursor-pointer transition">Clear Filters</button>
+                    <div id="jdkpi-date-dropdown" class="hidden absolute right-0 top-full mt-1.5 w-64 bg-white rounded-xl shadow-xl border border-slate-200 z-50 p-2 space-y-1.5">
+                        <div class="flex justify-between items-center px-2 py-1 border-b border-slate-100 text-[11px] font-black">
+                            <button type="button" onclick="selectAllDates('jdkpi', true)" class="text-blue-600 hover:underline cursor-pointer">Select All</button>
+                            <button type="button" onclick="clearDateFilter('jdkpi')" class="text-rose-600 hover:underline cursor-pointer">Clear Filters</button>
+                        </div>
+                        <div id="jdkpi-date-options" class="max-h-56 overflow-y-auto space-y-0.5 px-1"></div>
                     </div>
                 </div>
             </div>
 
-            <!-- NO MEET KPI Alert Box -->
-            <div id="jdkpi-alerts-container"></div>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 font-bold">
+                <div class="bg-white p-4 rounded-xl border-t-4 border-blue-600 shadow-sm">
+                    <p class="text-xs uppercase text-slate-500">Total Staff</p>
+                    <h3 id="jdkpi-card-total" class="text-2xl font-black text-blue-900 mt-1">0</h3>
+                </div>
+                <div class="bg-white p-4 rounded-xl border-t-4 border-emerald-500 shadow-sm">
+                    <p class="text-xs uppercase text-slate-500">Meet KPI (&ge; 150)</p>
+                    <h3 id="jdkpi-card-meet" class="text-2xl font-black text-emerald-700 mt-1">0</h3>
+                </div>
+                <div class="bg-white p-4 rounded-xl border-t-4 border-rose-500 shadow-sm">
+                    <p class="text-xs uppercase text-slate-500">No Meet KPI (&lt; 150)</p>
+                    <h3 id="jdkpi-card-nomeet" class="text-2xl font-black text-rose-700 mt-1">0</h3>
+                </div>
+            </div>
 
-            <!-- Compact Employee Name Cards -->
-            <div id="jdkpi-cards-container" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3"></div>
-
-            <!-- Date-wise / Employee / Monthly Breakdown Table -->
-            <div id="jdkpi-detail-container" class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4"></div>
+            <div id="jdkpi-alerts-container" class="space-y-2"></div>
+            <div id="jdkpi-cards-container" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3"></div>
+            <div id="jdkpi-detail-container" class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4"></div>
         </div>
 
-        <!-- SECTION 2: Daily Inbound -->
+        <!-- SECTION 2B: Daily Inbound -->
         <div id="section-inbound" class="dashboard-section hidden space-y-6">
             <div class="sticky top-[58px] z-30 bg-slate-50/95 backdrop-blur-xs py-1 space-y-3">
                 <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-3">
                     <div class="flex flex-wrap items-center gap-2">
                         <select id="inbound-month-select" onchange="switchInboundMonth(this.value)" class="px-3 py-2 text-xs font-extrabold rounded-xl bg-slate-50 text-slate-900 border border-slate-300 cursor-pointer">
-                            <option value="Nov'26" selected>Nov'26</option>
                             <option value="Oct'26">Oct'26</option>
+                            <option value="Nov'26" selected>Nov'26</option>
                         </select>
-                        <button onclick="renderInboundWeek('Week 1 (1 - 7)', this)" class="inbound-wk-btn px-4 py-2 text-sm font-bold rounded-xl bg-blue-600 text-white shadow">Week 1 (1 - 7)</button>
-                        <button onclick="renderInboundWeek('Week 2 (8 - 14)', this)" class="inbound-wk-btn px-4 py-2 text-sm font-bold rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300">Week 2 (8 - 14)</button>
-                        <button onclick="renderInboundWeek('Week 3 (15 - 21)', this)" class="inbound-wk-btn px-4 py-2 text-sm font-bold rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300">Week 3 (15 - 21)</button>
-                        <button onclick="renderInboundWeek('Week 4 (22 - End)', this)" class="inbound-wk-btn px-4 py-2 text-sm font-bold rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300">Week 4 (22 - End)</button>
-                        <button onclick="renderInboundWeek('all-region', this)" class="inbound-wk-btn px-4 py-2 text-sm font-black rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300">All Region</button>
-                        <button onclick="renderInboundWeek('week-comparison', this)" class="inbound-wk-btn px-4 py-2 text-sm font-black rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300">Week Comparison</button>
+                        <button type="button" onclick="renderInboundWeek('Week 1 (1 - 7)', this)" class="inbound-wk-btn px-4 py-2 text-sm font-bold rounded-xl bg-blue-600 text-white shadow">Week 1 (1 - 7)</button>
+                        <button type="button" onclick="renderInboundWeek('Week 2 (8 - 14)', this)" class="inbound-wk-btn px-4 py-2 text-sm font-bold rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300">Week 2 (8 - 14)</button>
+                        <button type="button" onclick="renderInboundWeek('Week 3 (15 - 21)', this)" class="inbound-wk-btn px-4 py-2 text-sm font-bold rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300">Week 3 (15 - 21)</button>
+                        <button type="button" onclick="renderInboundWeek('Week 4 (22 - End)', this)" class="inbound-wk-btn px-4 py-2 text-sm font-bold rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300">Week 4 (22 - End)</button>
+                        <button type="button" onclick="renderInboundWeek('all-region', this)" class="inbound-wk-btn px-4 py-2 text-sm font-bold rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300">All Region</button>
+                        <button type="button" onclick="renderInboundWeek('week-comparison', this)" class="inbound-wk-btn px-4 py-2 text-sm font-bold rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300">Week Comparison</button>
                     </div>
                 </div>
                 <div id="inbound-sticky-kpi-container"></div>
@@ -475,6 +464,7 @@
         let jdKpiRawRowsBySource = { "YGN-2026": [], "MDY-2026": [] };
         let activeJdKpiSource = "ALL";
         let activeJdKpiMode = "daily";
+        let activeJdKpiMonth = "ALL";
         let selectedJdKpiDates = [];
         let availableJdKpiDates = [];
         let selectedJdKpiEmployee = "";
@@ -811,6 +801,7 @@
         function updateJdKpiModeButtonsUI() {
             let dailyBtn = document.getElementById('jdkpi-mode-daily');
             let monthlyBtn = document.getElementById('jdkpi-mode-monthly');
+            let monthFilterWrap = document.getElementById('jdkpi-month-filter-wrapper');
             if (dailyBtn) {
                 dailyBtn.className = activeJdKpiMode === 'daily'
                     ? 'px-3 py-1 rounded-lg text-xs font-black transition bg-indigo-600 text-white shadow cursor-pointer'
@@ -820,6 +811,10 @@
                 monthlyBtn.className = activeJdKpiMode === 'monthly'
                     ? 'px-3 py-1 rounded-lg text-xs font-black transition bg-indigo-600 text-white shadow cursor-pointer'
                     : 'px-3 py-1 rounded-lg text-xs font-black transition bg-white text-slate-700 hover:bg-slate-100 cursor-pointer';
+            }
+            if (monthFilterWrap) {
+                if (activeJdKpiMode === 'monthly') monthFilterWrap.classList.remove('hidden');
+                else monthFilterWrap.classList.add('hidden');
             }
         }
 
@@ -837,6 +832,12 @@
             render1hcDailyJdKpiView();
         }
 
+        function switchJdKpiMonth(monthVal) {
+            activeJdKpiMonth = monthVal;
+            selectedJdKpiDates = [];
+            render1hcDailyJdKpiView();
+        }
+
         function selectJdKpiEmployeeCard(empName) {
             selectedJdKpiEmployee = empName;
             render1hcDailyJdKpiView();
@@ -844,19 +845,17 @@
 
         function formatKpiScore(num) {
             let val = Number(num) || 0;
-            let rounded = Math.round((val + Number.EPSILON) * 100) / 100;
-            return String(rounded);
+            return String(Math.round(val));
         }
 
         function formatUnitScore(num) {
             let val = Number(num) || 0;
-            let rounded = Math.round((val + Number.EPSILON) * 100) / 100;
-            return String(rounded);
+            return String(Math.round(val));
         }
 
         async function loadAndRender1hcDailyJdKpi() {
-            let ygnRows = await fetchFlexibleSheet(STAFF_SHEET_ID, ["YGN-2026", "YGN 2026", "Dec 26", "Dec'26", "Nov 26", "Oct 26"]);
-            let mdyRows = await fetchFlexibleSheet(MDY_SHEET_ID, ["MDY-2026", "MDY 2026", "Dec 26", "Dec'26", "Nov 26", "Oct 26", "Sep 26", "Aug 26", "July 26"]);
+            let ygnRows = await fetchFlexibleSheet(STAFF_SHEET_ID, ["YGN-2026", "YGN 2026", "Dec 26", "Dec'26", "December 26", "Nov 26", "Oct 26"]);
+            let mdyRows = await fetchFlexibleSheet(MDY_SHEET_ID, ["MDY-2026", "MDY 2026", "Dec 26", "Dec'26", "December 26", "Nov 26", "Oct 26", "Sep 26", "Aug 26", "July 26"]);
 
             jdKpiRawRowsBySource["YGN-2026"] = ygnRows || [];
             jdKpiRawRowsBySource["MDY-2026"] = mdyRows || [];
@@ -886,7 +885,7 @@
             }
 
             let parsedItems = [];
-            let allDatesSet = new Set();
+            let allMonthsSet = new Set(["Dec'26"]);
 
             sourceRows.forEach(({ row, source }) => {
                 let dt = parseLocalDate(getVal(row, ['Date'], 0));
@@ -921,10 +920,12 @@
                     units = hasQtyHeader ? qtyHeaderVal : 1;
                 }
 
-                allDatesSet.add(dt);
+                let mKey = formatMonthKeyFromDate(dt);
+                if (mKey) allMonthsSet.add(mKey);
+
                 parsedItems.push({
                     date: dt,
-                    monthKey: formatMonthKeyFromDate(dt),
+                    monthKey: mKey,
                     employee: empName,
                     source: source,
                     task: taskLabel,
@@ -934,11 +935,36 @@
                 });
             });
 
-            availableJdKpiDates = Array.from(allDatesSet).sort();
+            let sortedMonthOptions = Array.from(allMonthsSet).sort((a, b) => {
+                let [mA, yA] = a.split("'");
+                let [mB, yB] = b.split("'");
+                let idxA = MONTH_SHORT_NAMES.indexOf(mA);
+                let idxB = MONTH_SHORT_NAMES.indexOf(mB);
+                return (`20${yA || '00'}-${String(idxA + 1).padStart(2, '0')}`).localeCompare(`20${yB || '00'}-${String(idxB + 1).padStart(2, '0')}`);
+            });
+
+            if (activeJdKpiMonth !== 'ALL' && !sortedMonthOptions.includes(activeJdKpiMonth)) {
+                activeJdKpiMonth = 'ALL';
+            }
+
+            let monthSelectEl = document.getElementById('jdkpi-month-select');
+            if (monthSelectEl) {
+                let optsHtml = `<option value="ALL" ${activeJdKpiMonth === 'ALL' ? 'selected' : ''}>All Months</option>`;
+                sortedMonthOptions.forEach(mKey => {
+                    optsHtml += `<option value="${mKey}" ${activeJdKpiMonth === mKey ? 'selected' : ''}>${mKey}</option>`;
+                });
+                monthSelectEl.innerHTML = optsHtml;
+            }
+
+            let monthScopedItems = (activeJdKpiMode === 'monthly' && activeJdKpiMonth !== 'ALL')
+                ? parsedItems.filter(item => item.monthKey === activeJdKpiMonth)
+                : parsedItems;
+
+            availableJdKpiDates = Array.from(new Set(monthScopedItems.map(i => i.date))).sort();
             selectedJdKpiDates = selectedJdKpiDates.filter(d => availableJdKpiDates.includes(d));
             renderDateCheckboxList('jdkpi', availableJdKpiDates, selectedJdKpiDates, 'All Dates');
 
-            let filteredItems = parsedItems.filter(item => {
+            let filteredItems = monthScopedItems.filter(item => {
                 if (selectedJdKpiDates.length > 0 && !selectedJdKpiDates.includes(item.date)) return false;
                 return true;
             });
@@ -995,7 +1021,7 @@
                         let eObj = empsObj[n];
                         let activeDays = eObj.daysSet.size;
                         let avgDailyKpi = activeDays > 0 ? (eObj.totalKpi / activeDays) : 0;
-                        let isMeet = avgDailyKpi >= DAILY_TARGET;
+                        let isMeet = Math.round(avgDailyKpi) >= DAILY_TARGET;
                         if (isMeet) mMeet++;
                         else mNoMeet++;
 
@@ -1032,15 +1058,17 @@
                 alertsEl.innerHTML = '';
                 cardsEl.innerHTML = '';
 
+                let activeMonthHeading = activeJdKpiMonth === 'ALL' ? (sortedMonths.join(', ') || 'None') : activeJdKpiMonth;
+
                 if (!monthlyRowsHtml) {
-                    monthlyRowsHtml = `<tr><td colspan="8" class="p-8 text-center text-slate-400">No monthly 1HC JD &amp; KPI records found.</td></tr>`;
+                    monthlyRowsHtml = `<tr><td colspan="8" class="p-8 text-center text-slate-400">No monthly 1HC JD &amp; KPI records found for ${activeMonthHeading}.</td></tr>`;
                 }
 
                 detailEl.innerHTML = `
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-100 pb-3 gap-2">
                         <div>
                             <h3 class="text-sm font-black text-slate-900">Monthly JD &amp; KPI Summary (${activeJdKpiSource === 'ALL' ? 'ALL' : (activeJdKpiSource === 'YGN-2026' ? 'YGN' : 'MDY')})</h3>
-                            <p class="text-xs text-slate-500 font-bold">Months: ${sortedMonths.join(', ') || 'None'}</p>
+                            <p class="text-xs text-slate-500 font-bold">Months: ${activeMonthHeading}</p>
                         </div>
                     </div>
                     <div class="overflow-x-auto rounded-xl border border-slate-300 shadow-sm">
@@ -1147,7 +1175,7 @@
                 let scoreForStatus = isSingleDayFilter
                     ? eObj.totalKpi
                     : (activeDays > 0 ? (eObj.totalKpi / activeDays) : 0);
-                let isMeet = scoreForStatus >= DAILY_TARGET;
+                let isMeet = Math.round(scoreForStatus) >= DAILY_TARGET;
 
                 if (isMeet) meetCount++;
                 else {
@@ -1267,7 +1295,7 @@
                 let grandStatusScore = isSingleDayFilter
                     ? (empSummaryList.length > 0 ? grandKpi / empSummaryList.length : 0)
                     : (empSummaryList.length > 0 ? empSummaryList.reduce((acc, e) => acc + e.scoreForStatus, 0) / empSummaryList.length : 0);
-                let grandMeet = grandStatusScore >= DAILY_TARGET;
+                let grandMeet = Math.round(grandStatusScore) >= DAILY_TARGET;
 
                 detailEl.innerHTML = `
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-100 pb-3 gap-2">
@@ -1307,7 +1335,7 @@
 
             let detailRowsHtml = sortedEmpDates.map(dt => {
                 let dObj = activeEmp.dates[dt];
-                let dayMeet = dObj.kpi >= DAILY_TARGET;
+                let dayMeet = Math.round(dObj.kpi) >= DAILY_TARGET;
                 let taskSummary = Object.values(dObj.tasks)
                     .sort((a, b) => b.kpi - a.kpi)
                     .map(t => `<span class="inline-flex items-center px-2 py-0.5 rounded-md bg-slate-100 text-slate-800 text-[11px] font-bold border border-slate-200">${t.task}: <strong class="ml-1 text-blue-900">${formatUnitScore(t.units)}</strong></span>`)
@@ -1332,7 +1360,7 @@
             }).join('');
 
             let empAvgScore = sortedEmpDates.length > 0 ? (activeEmp.totalKpi / sortedEmpDates.length) : 0;
-            let empOverallMeet = empAvgScore >= DAILY_TARGET;
+            let empOverallMeet = Math.round(empAvgScore) >= DAILY_TARGET;
 
             detailEl.innerHTML = `
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-100 pb-3 gap-2">
@@ -2475,7 +2503,7 @@
                 });
 
                 let avgTime = activeDaysCount > 0 ? (staffSumTime >= activeDaysCount ? 1 : 0) : 1;
-                let finalKpi = staffSumKpi;
+                let finalKpi = Math.round(staffSumKpi);
                 let attendancePct = activeDaysCount > 0 ? Math.round((staffSumTime / activeDaysCount) * 100) : 100;
                 let kpiPct = Math.round((finalKpi / DAILY_TARGET) * 100);
 
@@ -2587,8 +2615,8 @@
             }
             let sheetId = regionName === 'MYFO' ? MDY_SHEET_ID : STAFF_SHEET_ID;
             let candidateSheets = regionName === 'MYFO'
-                ? ["Nov 26", "Oct 26", "Sep 26", "Aug 26", "July 26"]
-                : ["Nov 26", "Oct 26", "YGN-2026", "YGN 2026"];
+                ? ["Dec 26", "Dec'26", "December 26", "Nov 26", "Oct 26", "Sep 26", "Aug 26", "July 26"]
+                : ["Dec 26", "Dec'26", "December 26", "Nov 26", "Oct 26", "YGN-2026", "YGN 2026"];
 
             let rows = await fetchFlexibleSheet(sheetId, candidateSheets);
             regionalRawRowsCache[regionName] = rows || [];
@@ -3845,46 +3873,44 @@
                             <td class="p-3 border border-slate-200 text-center font-black">${m.total.toLocaleString()}</td>
                             <td class="p-3 border border-slate-200 text-center font-black text-emerald-700">${m.passed.toLocaleString()}</td>
                             <td class="p-3 border border-slate-200 text-center font-black text-rose-600">${m.failed > 0 ? m.failed.toLocaleString() : '-'}</td>
-                            <td class="p-3 border border-slate-200 text-center font-black">${rateBadge}</td>
+                            <td class="p-3 border border-slate-200 text-center">${rateBadge}</td>
                         </tr>
                     `;
                 });
 
-                let overallFRate = sumTot > 0 ? ((sumFai / sumTot) * 100).toFixed(2) : "0.00";
+                let grandFailRate = sumTot > 0 ? ((sumFai / sumTot) * 100).toFixed(2) : "0.00";
                 modelRowsHtml += `
                     <tr class="bg-slate-900 text-white font-black border-t-2 border-slate-700">
                         <td class="p-3 border border-slate-700 uppercase">TOTAL</td>
                         <td class="p-3 border border-slate-700 text-center text-white">${sumTot.toLocaleString()}</td>
                         <td class="p-3 border border-slate-700 text-center text-emerald-400">${sumPas.toLocaleString()}</td>
-                        <td class="p-3 border border-slate-700 text-center text-rose-400">${sumFai > 0 ? sumFai.toLocaleString() : '-'}</td>
-                        <td class="p-3 border border-slate-700 text-center text-amber-400">${overallFRate}%</td>
+                        <td class="p-3 border border-slate-700 text-center text-rose-400">${sumFai.toLocaleString()}</td>
+                        <td class="p-3 border border-slate-700 text-center text-amber-400">${grandFailRate}%</td>
                     </tr>
                 `;
             }
             modelTbody.innerHTML = modelRowsHtml;
 
             setTimeout(() => {
-                let ctxModel = document.getElementById('deviceModelBarChart');
-                if (ctxModel) {
+                let ctxDevBar = document.getElementById('deviceModelBarChart');
+                if (ctxDevBar) {
                     if (deviceModelChartInstance) deviceModelChartInstance.destroy();
-                    let mLabels = modelsSorted;
-                    let mFailCounts = mLabels.map(m => modelSummary[m].failed);
+                    let passedModels = modelsSorted.map(d => modelSummary[d].passed);
+                    let failedModels = modelsSorted.map(d => modelSummary[d].failed);
 
-                    deviceModelChartInstance = new Chart(ctxModel, {
+                    deviceModelChartInstance = new Chart(ctxDevBar, {
                         type: 'bar',
                         data: {
-                            labels: mLabels,
-                            datasets: [{
-                                label: 'Failed Units',
-                                data: mFailCounts,
-                                backgroundColor: '#ef4444',
-                                borderRadius: 4
-                            }]
+                            labels: modelsSorted,
+                            datasets: [
+                                { label: 'Passed', data: passedModels, backgroundColor: '#10b981', borderRadius: 4 },
+                                { label: 'Failed', data: failedModels, backgroundColor: '#ef4444', borderRadius: 4 }
+                            ]
                         },
                         options: {
                             responsive: true,
                             maintainAspectRatio: false,
-                            plugins: { legend: { display: false } },
+                            plugins: { legend: { position: 'top', labels: { font: { weight: 'bold' }, color: '#0f172a' } } },
                             scales: {
                                 x: { ticks: { font: { weight: 'bold' }, color: '#0f172a' } },
                                 y: { ticks: { font: { weight: 'bold' }, color: '#0f172a' } }
@@ -3895,75 +3921,53 @@
             }, 100);
         }
 
-        function renderOnuRegionalBreakdown(data) {
+        function renderOnuRegionalBreakdown(filteredByPeriod) {
             let container = document.getElementById('onu-dynamic-container');
             if(!container) return;
 
-            let regions = ["ENUO", "HGAO", "MYFO"];
+            let regionsToRender = currentOnuRegion === 'All Region' ? ['ENUO', 'HGAO', 'MYFO'] : [currentOnuRegion];
             let html = "";
 
-            regions.forEach(reg => {
-                let rData = data.filter(r => getRowRegion(r) === reg);
-                let tot = rData.length;
-                if (tot === 0) return;
-
-                let pas = rData.filter(r => isStrictPass(r)).length;
+            regionsToRender.forEach(regName => {
+                let regData = filteredByPeriod.filter(r => getRowRegion(r) === regName);
+                let tot = regData.length;
+                let pas = regData.filter(r => isStrictPass(r)).length;
                 let fai = tot - pas;
                 let pRate = tot > 0 ? ((pas / tot) * 100).toFixed(2) : "0.00";
                 let fRate = tot > 0 ? ((fai / tot) * 100).toFixed(2) : "0.00";
 
-                let devMap = {};
-                rData.forEach(r => {
-                    let dev = getDeviceName(r);
-                    if (!devMap[dev]) devMap[dev] = { total: 0, passed: 0, failed: 0 };
-                    devMap[dev].total++;
-                    if (isStrictPass(r)) devMap[dev].passed++;
-                    else devMap[dev].failed++;
-                });
-
-                let devRows = "";
-                Object.keys(devMap).sort().forEach(dev => {
-                    let m = devMap[dev];
-                    let dRate = m.total > 0 ? ((m.failed / m.total) * 100).toFixed(1) : "0.0";
-                    devRows += `
-                        <tr class="hover:bg-slate-50 border-b border-slate-200 text-xs font-bold">
-                            <td class="p-2.5 border border-slate-200 font-black text-slate-900">${dev}</td>
-                            <td class="p-2.5 border border-slate-200 text-center">${m.total.toLocaleString()}</td>
-                            <td class="p-2.5 border border-slate-200 text-center text-emerald-700">${m.passed.toLocaleString()}</td>
-                            <td class="p-2.5 border border-slate-200 text-center text-rose-600">${m.failed.toLocaleString()}</td>
-                            <td class="p-2.5 border border-slate-200 text-center">${dRate}%</td>
-                        </tr>
-                    `;
-                });
-
-                let badgeColor = reg === "ENUO" ? "bg-blue-600" : (reg === "HGAO" ? "bg-amber-500" : "bg-emerald-600");
+                let badgeColor = regName === 'ENUO' ? 'bg-blue-600' : (regName === 'HGAO' ? 'bg-amber-500' : 'bg-emerald-600');
 
                 html += `
                     <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-                        <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
-                            <div class="flex items-center gap-3">
-                                <span class="px-3 py-1 rounded-lg text-xs font-black text-white ${badgeColor}">${reg}</span>
-                                <h3 class="text-sm font-black text-slate-900">${reg} Regional Breakdown</h3>
-                            </div>
-                            <div class="flex flex-wrap items-center gap-4 text-xs font-black">
-                                <span>Total: <strong class="text-blue-900">${tot.toLocaleString()}</strong></span>
-                                <span>Pass: <strong class="text-emerald-700">${pas.toLocaleString()} (${pRate}%)</strong></span>
-                                <span>Fail: <strong class="text-rose-600">${fai.toLocaleString()} (${fRate}%)</strong></span>
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-100 pb-3 gap-2">
+                            <div class="flex items-center space-x-3">
+                                <span class="px-3.5 py-1.5 rounded-xl text-xs font-black text-white ${badgeColor}">${regName} REGION BREAKDOWN</span>
+                                <span class="text-xs font-bold text-slate-500">Test Type: ${currentTestType.toUpperCase()}</span>
                             </div>
                         </div>
-                        <div class="overflow-x-auto rounded-xl border border-slate-200">
-                            <table class="w-full text-left border-collapse border border-slate-200 text-xs">
-                                <thead class="bg-slate-800 text-white uppercase font-black">
-                                    <tr>
-                                        <th class="p-2.5 border border-slate-700">Device</th>
-                                        <th class="p-2.5 border border-slate-700 text-center">Total</th>
-                                        <th class="p-2.5 border border-slate-700 text-center">Passed</th>
-                                        <th class="p-2.5 border border-slate-700 text-center">Failed</th>
-                                        <th class="p-2.5 border border-slate-700 text-center">Fail Rate</th>
-                                    </tr>
-                                </thead>
-                                <tbody>${devRows}</tbody>
-                            </table>
+
+                        <div class="grid grid-cols-2 md:grid-cols-5 gap-3 text-center font-bold">
+                            <div class="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                                <span class="block text-[10px] text-slate-500 uppercase">Total Tested</span>
+                                <span class="text-lg font-black text-slate-900">${tot.toLocaleString()}</span>
+                            </div>
+                            <div class="p-3 bg-emerald-50/60 rounded-xl border border-emerald-200">
+                                <span class="block text-[10px] text-emerald-700 uppercase">Passed</span>
+                                <span class="text-lg font-black text-emerald-700">${pas.toLocaleString()}</span>
+                            </div>
+                            <div class="p-3 bg-rose-50/60 rounded-xl border border-rose-200">
+                                <span class="block text-[10px] text-rose-700 uppercase">Failed</span>
+                                <span class="text-lg font-black text-rose-700">${fai.toLocaleString()}</span>
+                            </div>
+                            <div class="p-3 bg-blue-50/60 rounded-xl border border-blue-200">
+                                <span class="block text-[10px] text-blue-700 uppercase">Pass Rate</span>
+                                <span class="text-lg font-black text-blue-700">${pRate}%</span>
+                            </div>
+                            <div class="p-3 bg-amber-50/60 rounded-xl border border-amber-200 col-span-2 md:col-span-1">
+                                <span class="block text-[10px] text-amber-700 uppercase">Fail Rate</span>
+                                <span class="text-lg font-black text-amber-700">${fRate}%</span>
+                            </div>
                         </div>
                     </div>
                 `;
@@ -3979,7 +3983,8 @@
             }, AUTO_RELOAD_INTERVAL_MS);
         }
 
-        document.addEventListener('DOMContentLoaded', () => {
+        window.addEventListener('DOMContentLoaded', () => {
+            switchMasterTab('section-1hc-jd-kpi', document.getElementById('master-btn-1hc-jd-kpi'));
             loadAllData();
             startAutoReload();
         });
