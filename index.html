@@ -1397,6 +1397,7 @@
                         </table>
                     </div>
                 `;
+                renderAttendanceTable(monthScopedItems);
                 return;
             }
 
@@ -1588,8 +1589,6 @@
                     if (formatMonthKeyFromDate(dt) !== activeJdKpiMonth) return;
                 }
 
-                if (selectedJdKpiDates.length > 0 && !selectedJdKpiDates.includes(dt)) return;
-
                 let cls = classifyAttendanceRecord(row);
                 baseRecords.push({
                     date: dt,
@@ -1620,18 +1619,42 @@
             if (records.length === 0) {
                 rowsHtml = `<tr><td colspan="6" class="p-6 text-center text-slate-400">No Attendance records found in Team KPI and Attendance for the selected filter.</td></tr>`;
             } else {
-                rowsHtml = records.map(rec => `
-                    <tr class="hover:bg-slate-50 border-b border-slate-200 text-xs font-bold text-slate-800">
-                        <td class="p-2.5 border border-slate-200 text-center whitespace-nowrap font-black text-slate-900">${rec.date}</td>
-                        <td class="p-2.5 border border-slate-200 whitespace-nowrap font-black text-slate-900">${rec.name}</td>
-                        <td class="p-2.5 border border-slate-200 text-center whitespace-nowrap font-bold text-slate-700">${rec.rawCategory}</td>
-                        <td class="p-2.5 border border-slate-200 text-center whitespace-nowrap font-black ${rec.textClass}">${rec.code}</td>
-                        <td class="p-2.5 border border-slate-200 text-center whitespace-nowrap font-black text-indigo-900">${rec.region}</td>
-                        <td class="p-2.5 border border-slate-200 text-center whitespace-nowrap">
-                            <span class="px-2.5 py-0.5 rounded-full text-[11px] font-black ${rec.badgeClass}">${rec.status}</span>
-                        </td>
-                    </tr>
-                `).join('');
+                rowsHtml = records.map(rec => {
+                    let rowBg = rec.status === 'On Time'
+                        ? 'bg-emerald-50/45 hover:bg-emerald-100/50'
+                        : (rec.status === 'Late'
+                            ? 'bg-rose-50/55 hover:bg-rose-100/55'
+                            : 'bg-amber-50/55 hover:bg-amber-100/55');
+
+                    let regionBadge = rec.region === 'ENUO'
+                        ? 'bg-blue-100 text-blue-800 border border-blue-200'
+                        : (rec.region === 'HGAO'
+                            ? 'bg-amber-100 text-amber-800 border border-amber-200'
+                            : (rec.region === 'MYFO' || rec.region === 'MDY'
+                                ? 'bg-purple-100 text-purple-800 border border-purple-200'
+                                : 'bg-slate-100 text-slate-700 border border-slate-200'));
+
+                    let codePill = rec.code === '1'
+                        ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                        : 'bg-rose-100 text-rose-800 border border-rose-200';
+
+                    return `
+                        <tr class="${rowBg} border-b border-slate-200 text-xs font-bold text-slate-800 transition-colors">
+                            <td class="p-2.5 border border-slate-200 text-center whitespace-nowrap font-black text-slate-900 bg-white/60">${rec.date}</td>
+                            <td class="p-2.5 border border-slate-200 whitespace-nowrap font-black text-slate-900">${rec.name}</td>
+                            <td class="p-2.5 border border-slate-200 text-center whitespace-nowrap font-bold text-slate-700">${rec.rawCategory}</td>
+                            <td class="p-2.5 border border-slate-200 text-center whitespace-nowrap">
+                                <span class="inline-flex items-center justify-center w-6 h-6 rounded-md text-xs font-black ${codePill}">${rec.code}</span>
+                            </td>
+                            <td class="p-2.5 border border-slate-200 text-center whitespace-nowrap">
+                                <span class="px-2.5 py-0.5 rounded-md text-[11px] font-black ${regionBadge}">${rec.region}</span>
+                            </td>
+                            <td class="p-2.5 border border-slate-200 text-center whitespace-nowrap">
+                                <span class="px-2.5 py-0.5 rounded-full text-[11px] font-black ${rec.badgeClass}">${rec.status}</span>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
             }
 
             attContainer.innerHTML = `
@@ -1658,16 +1681,16 @@
                         </div>
                     </div>
                 </div>
-                <div class="overflow-x-auto max-h-[420px] overflow-y-auto rounded-xl border border-slate-300 shadow-sm">
+                <div class="overflow-x-auto rounded-xl border border-slate-300 shadow-sm">
                     <table class="w-full text-left border-collapse border border-slate-300 text-xs">
-                        <thead class="bg-slate-800 text-white uppercase font-black sticky top-0 z-10">
+                        <thead class="bg-slate-800 text-white uppercase font-black">
                             <tr>
-                                <th class="p-2.5 border border-slate-700 text-center whitespace-nowrap">Date</th>
-                                <th class="p-2.5 border border-slate-700 whitespace-nowrap">Name</th>
-                                <th class="p-2.5 border border-slate-700 text-center whitespace-nowrap">Categories</th>
-                                <th class="p-2.5 border border-slate-700 text-center whitespace-nowrap">Value (1/0)</th>
-                                <th class="p-2.5 border border-slate-700 text-center whitespace-nowrap">Region</th>
-                                <th class="p-2.5 border border-slate-700 text-center whitespace-nowrap">Attendance</th>
+                                <th class="p-2.5 border border-slate-700 bg-slate-900 text-center whitespace-nowrap">Date</th>
+                                <th class="p-2.5 border border-slate-700 bg-slate-800 whitespace-nowrap">Name</th>
+                                <th class="p-2.5 border border-slate-700 bg-indigo-900 text-center whitespace-nowrap">Categories</th>
+                                <th class="p-2.5 border border-slate-700 bg-blue-900 text-center whitespace-nowrap">Value (1/0)</th>
+                                <th class="p-2.5 border border-slate-700 bg-purple-900 text-center whitespace-nowrap">Region</th>
+                                <th class="p-2.5 border border-slate-700 bg-emerald-900 text-center whitespace-nowrap">Attendance</th>
                             </tr>
                         </thead>
                         <tbody>
