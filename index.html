@@ -843,16 +843,34 @@
         }
 
 
-        function parseAttendanceStatusColC(rawVal) {
+        function parseAttendanceColC(rawVal) {
             if (rawVal === undefined || rawVal === null) return null;
             let s = String(rawVal).trim();
             if (!s || s === '-') return null;
             let lower = s.toLowerCase();
-            if (lower.includes('leave')) return 'leave';
+            if (lower.includes('leave')) return { kind: 'leave', rawText: s };
             let num = Number(s);
-            if (num === 0 || lower === '0' || lower === 'late' || lower === 'false') return 'late';
-            if (num === 1 || lower === '1' || lower === 'ontime' || lower === 'on time' || lower === 'true') return 'ontime';
+            if (num === 0 || lower === '0' || lower === 'late' || lower === 'false') return { kind: 'late', rawText: '0' };
+            if (num === 1 || lower === '1' || lower === 'ontime' || lower === 'on time' || lower === 'true') return { kind: 'ontime', rawText: '1' };
             return null;
+        }
+
+        function detectAttendanceRegion(row) {
+            let regRaw = String(getVal(row, ['Region', 'Regional', 'Area', 'Hub'], -1) || '').trim().toUpperCase();
+            if (regRaw.includes('ENUO')) return 'ENUO';
+            if (regRaw.includes('HGAO')) return 'HGAO';
+            if (regRaw.includes('MYFO') || regRaw.includes('MDY') || regRaw.includes('MANDALAY')) return 'MYFO';
+
+            let rawArr = row['_rawArray'] || [];
+            for (let i = 0; i < rawArr.length; i++) {
+                if (i === 0 || i === 1 || i === 2) continue;
+                let cellUpper = String(rawArr[i] || '').trim().toUpperCase();
+                if (!cellUpper) continue;
+                if (cellUpper.includes('ENUO')) return 'ENUO';
+                if (cellUpper.includes('HGAO')) return 'HGAO';
+                if (cellUpper.includes('MYFO') || cellUpper.includes('MDY') || cellUpper.includes('MANDALAY')) return 'MYFO';
+            }
+            return '-';
         }
 
         function render1hcAttendanceTable(scopedDatesArr) {
@@ -863,8 +881,10 @@
                 ? new Set(scopedDatesArr)
                 : null;
 
-            let byEmp = {};
-            let datesSeen = new Set();
+            let records = [];
+            let onTimeCount = 0;
+            let lateCount = 0;
+            let leaveCount = 0;
 
             (jdKpiAttendanceRawRows || []).forEach(row => {
                 let dt = parseLocalDate(getVal(row, ['Date'], 0));
@@ -875,109 +895,94 @@
                 if (!empName || empName.toLowerCase() === 'name' || empName.toLowerCase() === 'grand total') return;
 
                 let colCRaw = getVal(row, ['After 8:30 AM/Leave', 'After 8:30 AM / Leave', 'After 8:30 AM', '8:30 AM', 'Attendance', 'Status'], 2);
-                let statusType = parseAttendanceStatusColC(colCRaw);
-                if (!statusType) return;
+                let parsedC = parseAttendanceColC(colCRaw);
+                if (!parsedC) return;
 
-                datesSeen.add(dt);
-                if (!byEmp[empName]) {
-                    byEmp[empName] = {
-                        name: empName,
-                        onTimeCount: 0,
-                        lateCount: 0,
-                        leaveCount: 0,
-                        records: []
-                    };
+                let region = detectAttendanceRegion(row);
+                let colCDisplay = '';
+                let statusBadge = '';
+
+                if (parsedC.kind === 'leave') {
+                    leaveCount += 1;
+                    colCDisplay = `<span class="px-2 py-0.5 rounded bg-amber-100 text-amber-900 font-black">0 (Leave)</span>`;
+                    statusBadge = `<span class="px-2.5 py-0.5 rounded-full text-[11px] font-black bg-amber-100 text-amber-900">Leave</span>`;
+                } else if (parsedC.kind === 'late') {
+                    lateCount += 1;
+                    colCDisplay = `<span class="px-2 py-0.5 rounded bg-rose-100 text-rose-800 font-black">0</span>`;
+                    statusBadge = `<span class="px-2.5 py-0.5 rounded-full text-[11px] font-black bg-rose-100 text-rose-800">Late</span>`;
+                } else {
+                    onTimeCount += 1;
+                    colCDisplay = `<span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-black">1</span>`;
+                    statusBadge = `<span class="px-2.5 py-0.5 rounded-full text-[11px] font-black bg-emerald-100 text-emerald-800">On Time</span>`;
                 }
-                if (statusType === 'ontime') byEmp[empName].onTimeCount += 1;
-                else if (statusType === 'late') byEmp[empName].lateCount += 1;
-                else if (statusType === 'leave') byEmp[empName].leaveCount += 1;
 
-                byEmp[empName].records.push({
+                let regBadge = region === 'ENUO'
+                    ? `<span class="px-2 py-0.5 rounded bg-blue-100 text-blue-900 font-black">ENUO</span>`
+                    : (region === 'HGAO'
+                        ? `<span class="px-2 py-0.5 rounded bg-amber-100 text-amber-900 font-black">HGAO</span>`
+                        : (region === 'MYFO'
+                            ? `<span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-900 font-black">MYFO</span>`
+                            : `<span class="text-slate-400 font-bold">-</span>`));
+
+                records.push({
                     date: dt,
-                    rawVal: String(colCRaw).trim(),
-                    statusType: statusType
+                    name: empName,
+                    colCDisplay,
+                    regBadge,
+                    statusBadge,
+                    isSelected: selectedJdKpiEmployee && selectedJdKpiEmployee === empName
                 });
             });
 
-            let empNames = Object.keys(byEmp).sort();
-            let totOnTime = 0, totLate = 0, totLeave = 0;
+            records.sort((a, b) => a.date.localeCompare(b.date) || a.name.localeCompare(b.name));
 
             let rowsHtml = "";
-            if (empNames.length === 0) {
-                rowsHtml = `<tr><td colspan="6" class="p-6 text-center text-slate-400">No Attendance records found for the selected date filter.</td></tr>`;
+            if (records.length === 0) {
+                rowsHtml = `<tr><td colspan="5" class="p-6 text-center text-slate-400">No Attendance records found for the selected date filter.</td></tr>`;
             } else {
-                empNames.forEach(name => {
-                    let e = byEmp[name];
-                    totOnTime += e.onTimeCount;
-                    totLate += e.lateCount;
-                    totLeave += e.leaveCount;
-
-                    let isSelected = selectedJdKpiEmployee && selectedJdKpiEmployee === name;
-                    let rowCls = isSelected ? 'bg-blue-50/40' : 'hover:bg-slate-50';
-
-                    let detailChips = [...e.records]
-                        .sort((a, b) => a.date.localeCompare(b.date))
-                        .map(rec => {
-                            if (rec.statusType === 'ontime') {
-                                return `<span class="inline-flex items-center px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[11px] font-black">${rec.date}: 1 (On Time)</span>`;
-                            } else if (rec.statusType === 'late') {
-                                return `<span class="inline-flex items-center px-2 py-0.5 rounded bg-rose-100 text-rose-800 text-[11px] font-black">${rec.date}: 0 (Late)</span>`;
-                            }
-                            return `<span class="inline-flex items-center px-2 py-0.5 rounded bg-amber-100 text-amber-800 text-[11px] font-black">${rec.date}: ${rec.rawVal || 'Leave'}</span>`;
-                        }).join(' ');
-
-                    let summaryBadge = e.lateCount > 0
-                        ? `<span class="px-2.5 py-0.5 rounded-full text-[11px] font-black bg-rose-100 text-rose-800">${e.lateCount} Late</span>`
-                        : `<span class="px-2.5 py-0.5 rounded-full text-[11px] font-black bg-emerald-100 text-emerald-800">On Time</span>`;
-
-                    rowsHtml += `
+                rowsHtml = records.map(r => {
+                    let rowCls = r.isSelected ? 'bg-blue-50/40' : 'hover:bg-slate-50';
+                    return `
                         <tr class="${rowCls} border-b border-slate-200 text-xs font-bold text-slate-800">
-                            <td class="p-2.5 border border-slate-200 whitespace-nowrap font-black text-slate-900 bg-slate-50">${e.name}</td>
-                            <td class="p-2.5 border border-slate-200 text-center whitespace-nowrap font-black text-emerald-700 bg-emerald-50/30">${e.onTimeCount}</td>
-                            <td class="p-2.5 border border-slate-200 text-center whitespace-nowrap font-black text-rose-700 bg-rose-50/30">${e.lateCount}</td>
-                            <td class="p-2.5 border border-slate-200 text-center whitespace-nowrap font-black text-amber-700 bg-amber-50/30">${e.leaveCount}</td>
-                            <td class="p-2.5 border border-slate-200"><div class="flex flex-wrap gap-1">${detailChips}</div></td>
-                            <td class="p-2.5 border border-slate-200 text-center whitespace-nowrap">${summaryBadge}</td>
+                            <td class="p-2.5 border border-slate-200 text-center whitespace-nowrap font-black text-slate-900 bg-slate-50">${r.date}</td>
+                            <td class="p-2.5 border border-slate-200 whitespace-nowrap font-black text-slate-900">${r.name}</td>
+                            <td class="p-2.5 border border-slate-200 text-center whitespace-nowrap">${r.colCDisplay}</td>
+                            <td class="p-2.5 border border-slate-200 text-center whitespace-nowrap">${r.regBadge}</td>
+                            <td class="p-2.5 border border-slate-200 text-center whitespace-nowrap">${r.statusBadge}</td>
                         </tr>
                     `;
-                });
+                }).join('');
             }
-
-            let filterDesc = dateSetFilter ? Array.from(dateSetFilter).sort().join(', ') : 'All Dates';
 
             attEl.innerHTML = `
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-100 pb-3 gap-2">
                     <div>
-                        <h3 class="text-sm font-black text-slate-900">Attendance — After 8:30 AM / Leave</h3>
-                        <p class="text-xs text-slate-500 font-bold">Source: Daily Inbound KPI 2026 &rarr; Team KPI and Attendance (Column C) • Dates: ${filterDesc} • 1 = On Time, 0 = Late</p>
+                        <h3 class="text-sm font-black text-slate-900">Attendance</h3>
                     </div>
                     <div class="flex items-center gap-2 text-xs font-black">
-                        <span class="px-2.5 py-1 rounded-lg bg-emerald-100 text-emerald-800">On Time (1): ${totOnTime}</span>
-                        <span class="px-2.5 py-1 rounded-lg bg-rose-100 text-rose-800">Late (0): ${totLate}</span>
-                        <span class="px-2.5 py-1 rounded-lg bg-amber-100 text-amber-800">Leave: ${totLeave}</span>
+                        <span class="px-2.5 py-1 rounded-lg bg-emerald-100 text-emerald-800">On Time (1): ${onTimeCount}</span>
+                        <span class="px-2.5 py-1 rounded-lg bg-rose-100 text-rose-800">Late (0): ${lateCount}</span>
+                        <span class="px-2.5 py-1 rounded-lg bg-amber-100 text-amber-800">Leave (0): ${leaveCount}</span>
                     </div>
                 </div>
                 <div class="overflow-x-auto max-h-[460px] overflow-y-auto rounded-xl border border-slate-300 shadow-sm">
                     <table class="w-full text-left border-collapse border border-slate-300 text-xs">
                         <thead class="bg-slate-800 text-white uppercase font-black sticky top-0 z-10">
                             <tr>
-                                <th class="p-2.5 border border-slate-700 whitespace-nowrap">Employee Name</th>
-                                <th class="p-2.5 border border-slate-700 text-center whitespace-nowrap bg-emerald-900">On Time (1)</th>
-                                <th class="p-2.5 border border-slate-700 text-center whitespace-nowrap bg-rose-900">Late (0)</th>
-                                <th class="p-2.5 border border-slate-700 text-center whitespace-nowrap bg-amber-900">Leave</th>
-                                <th class="p-2.5 border border-slate-700">Date Status (Col C)</th>
-                                <th class="p-2.5 border border-slate-700 text-center whitespace-nowrap">Status</th>
+                                <th class="p-2.5 border border-slate-700 text-center whitespace-nowrap">Date</th>
+                                <th class="p-2.5 border border-slate-700 whitespace-nowrap">Name</th>
+                                <th class="p-2.5 border border-slate-700 text-center whitespace-nowrap">After 8:30 AM/Leave</th>
+                                <th class="p-2.5 border border-slate-700 text-center whitespace-nowrap">Region</th>
+                                <th class="p-2.5 border border-slate-700 text-center whitespace-nowrap">Attendance</th>
                             </tr>
                         </thead>
                         <tbody>
                             ${rowsHtml}
                             <tr class="bg-slate-200 font-black text-slate-900 text-xs border-t-2 border-slate-400">
-                                <td class="p-2.5 border border-slate-300 text-right uppercase bg-slate-200">TOTAL (${empNames.length} Staff)</td>
-                                <td class="p-2.5 border border-slate-300 text-center text-emerald-800 bg-emerald-100/70">${totOnTime}</td>
-                                <td class="p-2.5 border border-slate-300 text-center text-rose-800 bg-rose-100/70">${totLate}</td>
-                                <td class="p-2.5 border border-slate-300 text-center text-amber-800 bg-amber-100/70">${totLeave}</td>
-                                <td class="p-2.5 border border-slate-300 text-slate-600">${datesSeen.size} Date(s)</td>
-                                <td class="p-2.5 border border-slate-300 text-center">${totLate > 0 ? `<span class="text-rose-800">${totLate} Late</span>` : `<span class="text-emerald-800">All On Time</span>`}</td>
+                                <td colspan="2" class="p-2.5 border border-slate-300 text-right uppercase bg-slate-200">TOTAL (${records.length} Records)</td>
+                                <td class="p-2.5 border border-slate-300 text-center text-emerald-800 bg-emerald-100/70">1: ${onTimeCount} / 0: ${lateCount} / Leave (0): ${leaveCount}</td>
+                                <td class="p-2.5 border border-slate-300 text-center text-slate-600">-</td>
+                                <td class="p-2.5 border border-slate-300 text-center text-slate-900">On Time ${onTimeCount} • Late ${lateCount} • Leave ${leaveCount}</td>
                             </tr>
                         </tbody>
                     </table>
