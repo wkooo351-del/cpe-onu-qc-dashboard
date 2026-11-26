@@ -413,6 +413,8 @@
 
         let jdKpiRawRowsBySource = { "YGN-2026": [], "MDY-2026": [] };
         let teamAttendanceRawRows = [];
+        let selectedAttendanceDates = [];
+        let availableAttendanceDates = [];
         let activeJdKpiSource = "ALL";
         let activeJdKpiMode = "daily";
         let activeJdKpiMonth = "ALL";
@@ -464,6 +466,7 @@
                 scope === 'staff' ? 'All Dates (Summary)' : 'All Dates'
             );
             if (scope === 'jdkpi') render1hcDailyJdKpiView();
+            else if (scope === 'attendance') renderAttendanceTable();
             else if (scope === 'regional') renderRegionalKpiView();
             else if (scope === 'inbound') renderInboundWeek(activeInboundWeek);
             else if (scope === 'qc') renderQcTestView();
@@ -489,6 +492,7 @@
         function updateDatePickerButtonLabel(scope, defaultText) {
             let list = [];
             if (scope === 'staff') list = selectedStaffDates;
+            else if (scope === 'attendance') list = selectedAttendanceDates;
             else if (scope === 'regional') list = selectedRegionalDates;
             else if (scope === 'inbound') list = selectedInboundReportDates;
             else if (scope === 'rma') list = selectedRmaDates;
@@ -585,6 +589,15 @@
                 selectedJdKpiDates.sort();
                 updateDatePickerButtonLabel('jdkpi', 'All Dates');
                 render1hcDailyJdKpiView();
+            } else if (scope === 'attendance') {
+                if (isChecked) {
+                    if (!selectedAttendanceDates.includes(dateVal)) selectedAttendanceDates.push(dateVal);
+                } else {
+                    selectedAttendanceDates = selectedAttendanceDates.filter(d => d !== dateVal);
+                }
+                selectedAttendanceDates.sort();
+                updateDatePickerButtonLabel('attendance', 'All Dates');
+                renderAttendanceTable();
             }
         }
 
@@ -613,6 +626,10 @@
                 selectedJdKpiDates = selectAll ? [...availableJdKpiDates] : [];
                 renderDateCheckboxList('jdkpi', availableJdKpiDates, selectedJdKpiDates, 'All Dates');
                 render1hcDailyJdKpiView();
+            } else if (scope === 'attendance') {
+                selectedAttendanceDates = selectAll ? [...availableAttendanceDates] : [];
+                renderDateCheckboxList('attendance', availableAttendanceDates, selectedAttendanceDates, 'All Dates');
+                renderAttendanceTable();
             }
         }
 
@@ -641,6 +658,10 @@
                 selectedJdKpiDates = [];
                 renderDateCheckboxList('jdkpi', availableJdKpiDates, selectedJdKpiDates, 'All Dates');
                 render1hcDailyJdKpiView();
+            } else if (scope === 'attendance') {
+                selectedAttendanceDates = [];
+                renderDateCheckboxList('attendance', availableAttendanceDates, selectedAttendanceDates, 'All Dates');
+                renderAttendanceTable();
             }
         }
 
@@ -1521,7 +1542,14 @@
             };
         }
 
+        let lastScopedJdItems = [];
+
         function renderAttendanceTable(scopedJdItems) {
+            if (Array.isArray(scopedJdItems)) {
+                lastScopedJdItems = scopedJdItems;
+            } else {
+                scopedJdItems = lastScopedJdItems;
+            }
             let attContainer = document.getElementById('jdkpi-attendance-container');
             if (!attContainer) return;
 
@@ -1533,7 +1561,7 @@
                 }
             });
 
-            let records = [];
+            let baseRecords = [];
             (teamAttendanceRawRows || []).forEach(row => {
                 let dt = parseLocalDate(getVal(row, ['Date'], 0));
                 if (!dt || !/^\d{4}-\d{2}-\d{2}$/.test(dt)) return;
@@ -1563,7 +1591,7 @@
                 if (selectedJdKpiDates.length > 0 && !selectedJdKpiDates.includes(dt)) return;
 
                 let cls = classifyAttendanceRecord(row);
-                records.push({
+                baseRecords.push({
                     date: dt,
                     name: name,
                     region: region,
@@ -1574,6 +1602,13 @@
                     textClass: cls.textClass
                 });
             });
+
+            availableAttendanceDates = Array.from(new Set(baseRecords.map(r => r.date))).sort();
+            selectedAttendanceDates = selectedAttendanceDates.filter(d => availableAttendanceDates.includes(d));
+
+            let records = selectedAttendanceDates.length > 0
+                ? baseRecords.filter(r => selectedAttendanceDates.includes(r.date))
+                : baseRecords;
 
             records.sort((a, b) => a.date.localeCompare(b.date) || a.name.localeCompare(b.name));
 
@@ -1605,6 +1640,23 @@
                         <h3 class="text-sm font-black text-slate-900">Attendance Summary (Team KPI and Attendance)</h3>
                         <p class="text-xs text-slate-500 font-bold">Total: ${records.length} • On Time (1): <span class="text-emerald-700">${onTimeCount}</span> • Late (0): <span class="text-rose-700">${lateCount}</span> • Leave: <span class="text-amber-700">${leaveCount}</span></p>
                     </div>
+                    <div class="relative flex items-center gap-1.5" id="attendance-date-picker-wrapper">
+                        <button type="button" onclick="toggleDateDropdown('attendance-date-dropdown', event)" id="attendance-date-btn" class="px-3 py-1.5 text-xs font-extrabold rounded-xl bg-slate-50 text-slate-900 border border-slate-300 hover:bg-slate-100 cursor-pointer flex items-center gap-1.5">
+                            <span id="attendance-date-label">All Dates</span>
+                            <span class="text-[10px]">▼</span>
+                        </button>
+                        <button type="button" onclick="clearDateFilter('attendance')" class="px-2.5 py-1.5 text-xs font-extrabold rounded-xl bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 cursor-pointer transition">Clear Filters</button>
+                        <div id="attendance-date-dropdown" class="hidden absolute right-0 top-full mt-1.5 w-64 bg-white rounded-xl shadow-xl border border-slate-200 z-50 p-2 space-y-1.5">
+                            <div class="flex justify-between items-center px-2 py-1 border-b border-slate-100 text-[11px] font-black">
+                                <button type="button" onclick="selectAllDates('attendance', true)" class="text-blue-600 hover:underline cursor-pointer">Select All</button>
+                                <button type="button" onclick="clearDateFilter('attendance')" class="text-rose-600 hover:underline cursor-pointer">Clear Filters</button>
+                            </div>
+                            <div id="attendance-date-options" class="max-h-56 overflow-y-auto space-y-0.5 px-1"></div>
+                            <div class="flex justify-end pt-1.5 px-1 border-t border-slate-100">
+                                <button type="button" onclick="confirmDateFilter('attendance')" class="px-3 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-black cursor-pointer shadow-2xs transition">OK</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <div class="overflow-x-auto max-h-[420px] overflow-y-auto rounded-xl border border-slate-300 shadow-sm">
                     <table class="w-full text-left border-collapse border border-slate-300 text-xs">
@@ -1624,6 +1676,7 @@
                     </table>
                 </div>
             `;
+            renderDateCheckboxList('attendance', availableAttendanceDates, selectedAttendanceDates, 'All Dates');
         }
 
         function switchStaffMonth(monthKey) {
