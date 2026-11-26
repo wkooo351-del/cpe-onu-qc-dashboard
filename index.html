@@ -60,6 +60,9 @@
                             <button type="button" onclick="clearDateFilter('jdkpi')" class="text-rose-600 hover:underline cursor-pointer">Clear Filters</button>
                         </div>
                         <div id="jdkpi-date-options" class="max-h-56 overflow-y-auto space-y-0.5 px-1"></div>
+                        <div class="flex justify-end pt-1.5 px-1 border-t border-slate-100">
+                            <button type="button" onclick="confirmDateFilter('jdkpi')" class="px-3 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-black cursor-pointer shadow-2xs transition">OK</button>
+                        </div>
                     </div>
                 </div>
 
@@ -86,6 +89,7 @@
             <div id="jdkpi-alerts-container" class="space-y-2"></div>
             <div id="jdkpi-cards-container" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3"></div>
             <div id="jdkpi-detail-container" class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4"></div>
+            <div id="jdkpi-attendance-container" class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4"></div>
         </div>
 
         <!-- SECTION 2B: Daily Inbound -->
@@ -131,6 +135,9 @@
                                 <button type="button" onclick="clearDateFilter('regional')" class="text-rose-600 hover:underline cursor-pointer">Clear Filters</button>
                             </div>
                             <div id="regional-date-options" class="max-h-56 overflow-y-auto space-y-0.5 px-1"></div>
+                            <div class="flex justify-end pt-1.5 px-1 border-t border-slate-100">
+                                <button type="button" onclick="confirmDateFilter('regional')" class="px-3 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-black cursor-pointer shadow-2xs transition">OK</button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -256,6 +263,9 @@
                                 <button type="button" onclick="clearDateFilter('qc')" class="text-rose-600 hover:underline cursor-pointer">Clear Filters</button>
                             </div>
                             <div id="qc-date-options" class="max-h-56 overflow-y-auto space-y-0.5 px-1"></div>
+                            <div class="flex justify-end pt-1.5 px-1 border-t border-slate-100">
+                                <button type="button" onclick="confirmDateFilter('qc')" class="px-3 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-black cursor-pointer shadow-2xs transition">OK</button>
+                            </div>
                         </div>
                     </div>
                     <div class="flex flex-wrap gap-2">
@@ -345,6 +355,9 @@
                                         <button type="button" onclick="clearDateFilter('rma')" class="text-rose-600 hover:underline cursor-pointer">Clear Filters</button>
                                     </div>
                                     <div id="rma-date-options" class="max-h-56 overflow-y-auto space-y-0.5 px-1"></div>
+                                    <div class="flex justify-end pt-1.5 px-1 border-t border-slate-100">
+                                        <button type="button" onclick="confirmDateFilter('rma')" class="px-3 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-black cursor-pointer shadow-2xs transition">OK</button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -399,6 +412,7 @@
         let availableStaffDates = [];
 
         let jdKpiRawRowsBySource = { "YGN-2026": [], "MDY-2026": [] };
+        let teamAttendanceRawRows = [];
         let activeJdKpiSource = "ALL";
         let activeJdKpiMode = "daily";
         let activeJdKpiMonth = "ALL";
@@ -441,6 +455,21 @@
         const VALID_REGIONS = ["ENUO", "HGAO", "MYFO"];
         const MONTH_SHORT_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
         const HC_STEP_OPTIONS = [0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5];
+
+        function confirmDateFilter(scope) {
+            let dd = document.getElementById(`${scope}-date-dropdown`);
+            if (dd) dd.classList.add('hidden');
+            updateDatePickerButtonLabel(
+                scope,
+                scope === 'staff' ? 'All Dates (Summary)' : 'All Dates'
+            );
+            if (scope === 'jdkpi') render1hcDailyJdKpiView();
+            else if (scope === 'regional') renderRegionalKpiView();
+            else if (scope === 'inbound') renderInboundWeek(activeInboundWeek);
+            else if (scope === 'qc') renderQcTestView();
+            else if (scope === 'rma') renderRmaRepairView();
+            else if (scope === 'staff') renderStaffModernDashboard();
+        }
 
         function toggleDateDropdown(dropdownId, event) {
             if (event) event.stopPropagation();
@@ -822,6 +851,9 @@
             jdKpiRawRowsBySource["YGN-2026"] = ygnRows || [];
             jdKpiRawRowsBySource["MDY-2026"] = mdyRows || [];
 
+            let attRows = await fetchFlexibleSheet(INBOUND_SHEET_ID, ["Team KPI and Attendance", "Team KPI and Attendence", "Attendance"]);
+            teamAttendanceRawRows = attRows || [];
+
             updateJdKpiSourceButtonsUI();
             updateJdKpiModeButtonsUI();
             render1hcDailyJdKpiView();
@@ -1160,6 +1192,7 @@
                         <p class="text-xs text-slate-500 font-bold">No records available to display.</p>
                     </div>
                 `;
+                renderAttendanceTable(monthScopedItems);
                 return;
             }
 
@@ -1424,6 +1457,169 @@
                                 <td class="p-2.5 border border-slate-300 text-center text-blue-950 bg-blue-100/80 whitespace-nowrap">${formatKpiScore(activeEmp.totalKpi)}</td>
                                 <td class="p-2.5 border border-slate-300 text-center ${empOverallMeet ? 'text-emerald-800 bg-emerald-100/80' : 'text-rose-800 bg-rose-100/80'} whitespace-nowrap">${empOverallMeet ? 'MEET KPI' : 'NO MEET KPI'}</td>
                             </tr>
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            renderAttendanceTable(filteredItems);
+        }
+
+        function classifyAttendanceRecord(row) {
+            let catRaw = String(getVal(row, ['Categories', 'Category', 'After 8:30 AM/Leave', 'After 8:30 AM'], 2) || '').trim();
+            let kpiRaw = getVal(row, ['KPI', 'Status'], 3);
+            let kpiStr = String(kpiRaw === undefined || kpiRaw === null ? '' : kpiRaw).trim();
+            let catLower = catRaw.toLowerCase();
+
+            if (catLower.includes('leave') || kpiStr.toLowerCase() === 'leave') {
+                return {
+                    status: 'Leave',
+                    code: '0',
+                    rawCategory: catRaw || 'Leave',
+                    badgeClass: 'bg-amber-100 text-amber-800',
+                    textClass: 'text-amber-700'
+                };
+            }
+
+            let numVal = parseFloat(kpiStr);
+            if (!isNaN(numVal)) {
+                if (numVal === 1) {
+                    return {
+                        status: 'On Time',
+                        code: '1',
+                        rawCategory: catRaw || 'After 8:30 AM',
+                        badgeClass: 'bg-emerald-100 text-emerald-800',
+                        textClass: 'text-emerald-700'
+                    };
+                }
+                if (numVal === 0) {
+                    return {
+                        status: 'Late',
+                        code: '0',
+                        rawCategory: catRaw || 'After 8:30 AM',
+                        badgeClass: 'bg-rose-100 text-rose-800',
+                        textClass: 'text-rose-700'
+                    };
+                }
+            }
+
+            if (catLower.includes('on time') || kpiStr === '1') {
+                return {
+                    status: 'On Time',
+                    code: '1',
+                    rawCategory: catRaw || 'After 8:30 AM',
+                    badgeClass: 'bg-emerald-100 text-emerald-800',
+                    textClass: 'text-emerald-700'
+                };
+            }
+
+            return {
+                status: 'Late',
+                code: '0',
+                rawCategory: catRaw || 'After 8:30 AM',
+                badgeClass: 'bg-rose-100 text-rose-800',
+                textClass: 'text-rose-700'
+            };
+        }
+
+        function renderAttendanceTable(scopedJdItems) {
+            let attContainer = document.getElementById('jdkpi-attendance-container');
+            if (!attContainer) return;
+
+            let jdEmpRegionMap = {};
+            (scopedJdItems || []).forEach(it => {
+                if (it.employee && it.source) {
+                    if (!jdEmpRegionMap[it.employee]) jdEmpRegionMap[it.employee] = new Set();
+                    jdEmpRegionMap[it.employee].add(it.source === 'YGN-2026' ? 'YGN' : 'MDY');
+                }
+            });
+
+            let records = [];
+            (teamAttendanceRawRows || []).forEach(row => {
+                let dt = parseLocalDate(getVal(row, ['Date'], 0));
+                if (!dt || !/^\d{4}-\d{2}-\d{2}$/.test(dt)) return;
+
+                let name = String(getVal(row, ['Name', 'Employee', 'Staff Name'], 1) || '').trim();
+                if (!name || name.toLowerCase() === 'name' || name.toLowerCase() === 'grand total') return;
+
+                let region = String(getVal(row, ['Region', 'Regional'], 4) || '').trim().toUpperCase() || '-';
+
+                if (activeJdKpiSource !== 'ALL') {
+                    let expectedSrc = activeJdKpiSource === 'YGN-2026' ? 'YGN' : 'MDY';
+                    let mappedSrcs = jdEmpRegionMap[name];
+                    let matchesRegion = activeJdKpiSource === 'YGN-2026'
+                        ? (region === 'ENUO' || region === 'HGAO' || region === 'YGN')
+                        : (region === 'MYFO' || region === 'MDY' || region === 'PI44');
+                    if (mappedSrcs && mappedSrcs.size > 0) {
+                        if (!mappedSrcs.has(expectedSrc)) return;
+                    } else if (!matchesRegion) {
+                        return;
+                    }
+                }
+
+                if (activeJdKpiMode === 'monthly' && activeJdKpiMonth !== 'ALL') {
+                    if (formatMonthKeyFromDate(dt) !== activeJdKpiMonth) return;
+                }
+
+                if (selectedJdKpiDates.length > 0 && !selectedJdKpiDates.includes(dt)) return;
+
+                let cls = classifyAttendanceRecord(row);
+                records.push({
+                    date: dt,
+                    name: name,
+                    region: region,
+                    rawCategory: cls.rawCategory,
+                    code: cls.code,
+                    status: cls.status,
+                    badgeClass: cls.badgeClass,
+                    textClass: cls.textClass
+                });
+            });
+
+            records.sort((a, b) => a.date.localeCompare(b.date) || a.name.localeCompare(b.name));
+
+            let onTimeCount = records.filter(r => r.status === 'On Time').length;
+            let lateCount = records.filter(r => r.status === 'Late').length;
+            let leaveCount = records.filter(r => r.status === 'Leave').length;
+
+            let rowsHtml = "";
+            if (records.length === 0) {
+                rowsHtml = `<tr><td colspan="6" class="p-6 text-center text-slate-400">No Attendance records found in Team KPI and Attendance for the selected filter.</td></tr>`;
+            } else {
+                rowsHtml = records.map(rec => `
+                    <tr class="hover:bg-slate-50 border-b border-slate-200 text-xs font-bold text-slate-800">
+                        <td class="p-2.5 border border-slate-200 text-center whitespace-nowrap font-black text-slate-900">${rec.date}</td>
+                        <td class="p-2.5 border border-slate-200 whitespace-nowrap font-black text-slate-900">${rec.name}</td>
+                        <td class="p-2.5 border border-slate-200 text-center whitespace-nowrap font-bold text-slate-700">${rec.rawCategory}</td>
+                        <td class="p-2.5 border border-slate-200 text-center whitespace-nowrap font-black ${rec.textClass}">${rec.code}</td>
+                        <td class="p-2.5 border border-slate-200 text-center whitespace-nowrap font-black text-indigo-900">${rec.region}</td>
+                        <td class="p-2.5 border border-slate-200 text-center whitespace-nowrap">
+                            <span class="px-2.5 py-0.5 rounded-full text-[11px] font-black ${rec.badgeClass}">${rec.status}</span>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+
+            attContainer.innerHTML = `
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-100 pb-3 gap-2">
+                    <div>
+                        <h3 class="text-sm font-black text-slate-900">Attendance Summary (Team KPI and Attendance)</h3>
+                        <p class="text-xs text-slate-500 font-bold">Total: ${records.length} • On Time (1): <span class="text-emerald-700">${onTimeCount}</span> • Late (0): <span class="text-rose-700">${lateCount}</span> • Leave: <span class="text-amber-700">${leaveCount}</span></p>
+                    </div>
+                </div>
+                <div class="overflow-x-auto max-h-[420px] overflow-y-auto rounded-xl border border-slate-300 shadow-sm">
+                    <table class="w-full text-left border-collapse border border-slate-300 text-xs">
+                        <thead class="bg-slate-800 text-white uppercase font-black sticky top-0 z-10">
+                            <tr>
+                                <th class="p-2.5 border border-slate-700 text-center whitespace-nowrap">Date</th>
+                                <th class="p-2.5 border border-slate-700 whitespace-nowrap">Name</th>
+                                <th class="p-2.5 border border-slate-700 text-center whitespace-nowrap">Categories</th>
+                                <th class="p-2.5 border border-slate-700 text-center whitespace-nowrap">Value (1/0)</th>
+                                <th class="p-2.5 border border-slate-700 text-center whitespace-nowrap">Region</th>
+                                <th class="p-2.5 border border-slate-700 text-center whitespace-nowrap">Attendance</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${rowsHtml}
                         </tbody>
                     </table>
                 </div>
@@ -3520,6 +3716,9 @@
                                         <button type="button" onclick="clearDateFilter('inbound')" class="text-rose-600 hover:underline cursor-pointer">Clear Filters</button>
                                     </div>
                                     <div id="inbound-date-options" class="max-h-56 overflow-y-auto space-y-0.5 px-1"></div>
+                                    <div class="flex justify-end pt-1.5 px-1 border-t border-slate-100">
+                                        <button type="button" onclick="confirmDateFilter('inbound')" class="px-3 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-black cursor-pointer shadow-2xs transition">OK</button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
