@@ -11,8 +11,7 @@
     <header class="sticky top-0 z-40 bg-slate-900 text-white border-b border-slate-800 shadow-sm">
         <div class="max-w-7xl mx-auto px-4 py-2.5 flex flex-wrap items-center justify-between gap-2">
             <div class="flex flex-wrap items-center gap-1.5">
-                <button id="master-btn-hc" onclick="switchMasterTab('section-hc', this)" class="px-3 py-1.5 text-xs font-bold rounded-md bg-blue-600 text-white transition shadow">HC &amp; Attendance</button>
-                <button id="master-btn-1hc-jd-kpi" onclick="switchMasterTab('section-1hc-jd-kpi', this)" class="px-3 py-1.5 text-xs font-bold rounded-md text-slate-200 hover:text-white transition">1HC Daily JD &amp; KPI</button>
+                <button id="master-btn-1hc-jd-kpi" onclick="switchMasterTab('section-1hc-jd-kpi', this)" class="px-3 py-1.5 text-xs font-bold rounded-md bg-blue-600 text-white transition shadow">1HC Daily JD &amp; KPI</button>
                 <button id="master-btn-inbound" onclick="switchMasterTab('section-inbound', this)" class="px-3 py-1.5 text-xs font-bold rounded-md text-slate-200 hover:text-white transition">Daily Inbound</button>
                 <button id="master-btn-regional-kpi" onclick="switchMasterTab('section-regional-kpi', this)" class="px-3 py-1.5 text-xs font-bold rounded-md text-slate-200 hover:text-white transition">Regional KPI</button>
                 <button id="master-btn-onu" onclick="switchMasterTab('section-onu', this)" class="px-3 py-1.5 text-xs font-bold rounded-md text-slate-200 hover:text-white transition">ONU QC</button>
@@ -27,75 +26,9 @@
     </header>
 
     <main class="max-w-7xl mx-auto px-4 py-6 space-y-6">
-        <!-- SECTION 1: HC & Attendance -->
-        <div id="section-hc" class="dashboard-section space-y-6">
-            <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-3">
-                <div class="flex flex-wrap items-center gap-2">
-                    <span class="px-3 py-1.5 rounded-xl text-xs font-black bg-slate-900 text-white">HC &amp; ATTENDANCE</span>
-                    <span id="staff-active-month-badge" class="px-3 py-1 rounded-lg text-xs font-black bg-blue-50 text-blue-800 border border-blue-200">Active: Nov'26</span>
-                    <select id="staff-month-select" onchange="switchStaffMonth(this.value)" class="px-3 py-1.5 text-xs font-extrabold rounded-xl bg-slate-50 text-slate-900 border border-slate-300 cursor-pointer">
-                        <option value="Oct'26">Oct'26</option>
-                        <option value="Nov'26" selected>Nov'26</option>
-                    </select>
-                </div>
-                <div class="relative flex items-center gap-1.5" id="staff-date-picker-wrapper">
-                    <button type="button" onclick="toggleDateDropdown('staff-date-dropdown', event)" id="staff-date-btn" class="px-3 py-1.5 text-xs font-extrabold rounded-xl bg-slate-50 text-slate-900 border border-slate-300 hover:bg-slate-100 cursor-pointer flex items-center gap-1.5">
-                        <span id="staff-date-label">All Dates (Summary)</span>
-                        <span class="text-[10px]">▼</span>
-                    </button>
-                    <button type="button" onclick="clearDateFilter('staff')" class="px-2.5 py-1.5 text-xs font-extrabold rounded-xl bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 cursor-pointer transition">Clear Filters</button>
-                    <div id="staff-date-dropdown" class="hidden absolute right-0 top-full mt-1.5 w-64 bg-white rounded-xl shadow-xl border border-slate-200 z-50 p-2 space-y-1.5">
-                        <div class="flex justify-between items-center px-2 py-1 border-b border-slate-100 text-[11px] font-black">
-                            <button type="button" onclick="selectAllDates('staff', true)" class="text-blue-600 hover:underline cursor-pointer">Select All</button>
-                            <button type="button" onclick="clearDateFilter('staff')" class="text-rose-600 hover:underline cursor-pointer">Clear Filters</button>
-                        </div>
-                        <div id="staff-date-options" class="max-h-56 overflow-y-auto space-y-0.5 px-1"></div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 font-bold">
-                <div class="bg-white p-4 rounded-xl border-t-4 border-blue-600 shadow-sm">
-                    <p class="text-xs uppercase text-slate-500">Total Staff</p>
-                    <h3 id="card-total-staff" class="text-2xl font-black text-blue-900 mt-1">0</h3>
-                </div>
-                <div class="bg-white p-4 rounded-xl border-t-4 border-emerald-500 shadow-sm">
-                    <p class="text-xs uppercase text-slate-500">Excellent</p>
-                    <h3 id="card-excellent-staff" class="text-2xl font-black text-emerald-700 mt-1">0</h3>
-                </div>
-                <div class="bg-white p-4 rounded-xl border-t-4 border-amber-500 shadow-sm">
-                    <p class="text-xs uppercase text-slate-500">Needs Attention</p>
-                    <h3 id="card-attention-staff" class="text-2xl font-black text-amber-700 mt-1">0</h3>
-                </div>
-                <div class="bg-white p-4 rounded-xl border-t-4 border-rose-500 shadow-sm">
-                    <p class="text-xs uppercase text-slate-500">KPI Issue</p>
-                    <h3 id="card-kpi-issue-staff" class="text-2xl font-black text-rose-700 mt-1">0</h3>
-                </div>
-            </div>
-
-            <div id="staff-alerts-container" class="space-y-2"></div>
-
-            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-                <div class="overflow-x-auto rounded-xl border border-slate-300">
-                    <table class="w-full text-left border-collapse border border-slate-300 text-xs">
-                        <thead class="bg-slate-800 text-white uppercase font-black">
-                            <tr>
-                                <th class="py-3 px-6 border border-slate-600">Employee</th>
-                                <th class="py-3 px-6 text-center border border-slate-600">Attendance</th>
-                                <th class="py-3 px-6 text-center border border-slate-600">KPI Score</th>
-                                <th class="py-3 px-6 text-center border border-slate-600">Status</th>
-                            </tr>
-                        </thead>
-                        <tbody id="staff-table-body" class="font-bold text-slate-800">
-                            <tr><td colspan="4" class="py-6 text-center text-slate-400">Loading staff data...</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
         <!-- SECTION 2: 1HC Daily JD & KPI -->
-        <div id="section-1hc-jd-kpi" class="dashboard-section hidden space-y-6">
+        <div id="section-1hc-jd-kpi" class="dashboard-section space-y-6">
+            <div class="sticky top-[54px] z-30 bg-slate-50/95 backdrop-blur-xs py-1 space-y-3">
             <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-3">
                 <div class="flex flex-wrap items-center gap-2">
                     <button type="button" data-source="ALL" onclick="switchJdKpiSource('ALL')" class="jdkpi-src-btn px-3 py-1 rounded-lg text-xs font-black transition bg-blue-600 text-white shadow cursor-pointer">ALL</button>
@@ -130,10 +63,7 @@
                     </div>
                 </div>
 
-                <div id="jdkpi-quick-dates-bar" class="w-full pt-2.5 mt-1 border-t border-slate-100 flex items-center gap-1.5 overflow-x-auto pb-1">
-                    <span class="text-[11px] font-black uppercase text-slate-400 shrink-0 mr-1">Date (All Staff JD):</span>
-                    <div id="jdkpi-quick-dates-list" class="flex items-center gap-1.5"></div>
-                </div>
+
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 font-bold">
@@ -151,7 +81,8 @@
                 </div>
             </div>
 
-            <div id="jdkpi-quick-dates-container" class="bg-white px-4 py-2.5 rounded-2xl border border-slate-200 shadow-2xs flex flex-wrap items-center gap-1.5 hidden"></div>
+            </div>
+
             <div id="jdkpi-alerts-container" class="space-y-2"></div>
             <div id="jdkpi-cards-container" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3"></div>
             <div id="jdkpi-detail-container" class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4"></div>
@@ -710,7 +641,7 @@
             document.querySelectorAll('.dashboard-section').forEach(el => el.classList.add('hidden'));
             document.getElementById(sectionId).classList.remove('hidden');
 
-            ['master-btn-hc', 'master-btn-1hc-jd-kpi', 'master-btn-inbound', 'master-btn-regional-kpi', 'master-btn-onu', 'master-btn-qc-test', 'master-btn-rma'].forEach(id => {
+            ['master-btn-1hc-jd-kpi', 'master-btn-inbound', 'master-btn-regional-kpi', 'master-btn-onu', 'master-btn-qc-test', 'master-btn-rma'].forEach(id => {
                 let el = document.getElementById(id);
                 if(el) el.className = 'px-3 py-1.5 text-xs font-bold rounded-md text-slate-200 hover:text-white transition';
             });
@@ -907,7 +838,7 @@
         }
 
         function render1hcDailyJdKpiView() {
-            let quickDatesEl = document.getElementById('jdkpi-quick-dates-container');
+            let quickDatesEl = null;
             let alertsEl = document.getElementById('jdkpi-alerts-container');
             let cardsEl = document.getElementById('jdkpi-cards-container');
             let detailEl = document.getElementById('jdkpi-detail-container');
@@ -4119,10 +4050,7 @@
         }
 
         window.addEventListener('DOMContentLoaded', () => {
-            let staffSelect = document.getElementById('staff-month-select');
-            if (staffSelect) staffSelect.value = activeStaffMonth;
-            let staffBadge = document.getElementById('staff-active-month-badge');
-            if (staffBadge) staffBadge.innerText = `Active: ${activeStaffMonth}`;
+
 
             let inboundSelect = document.getElementById('inbound-month-select');
             if (inboundSelect) inboundSelect.value = activeInboundMonth;
