@@ -301,7 +301,7 @@
                 </div>
             </div>
 
-            <div id="qc-test-container" class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+            <div id="qc-test-container" class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-6">
                 <div class="overflow-x-auto rounded-xl border border-slate-300 shadow-sm">
                     <table class="w-full text-left border-collapse border border-slate-300 text-xs">
                         <thead>
@@ -319,6 +319,40 @@
                             <tr><td colspan="7" class="p-8 text-center text-slate-400">Loading QC Test data...</td></tr>
                         </tbody>
                     </table>
+                </div>
+
+                <div class="space-y-3 pt-2 border-t border-slate-100">
+                    <h3 class="text-sm font-black text-slate-900 uppercase tracking-wide">Region Breakdown (ENUO / HGAO / MDY)</h3>
+                    <div class="overflow-x-auto rounded-xl border border-slate-300 shadow-sm">
+                        <table class="w-full text-left border-collapse border border-slate-300 text-xs">
+                            <thead>
+                                <tr class="uppercase font-black text-center text-white">
+                                    <th rowspan="2" class="p-3 border border-slate-700 bg-slate-800 align-middle">DATE</th>
+                                    <th colspan="3" class="p-2 border border-blue-800 bg-blue-700">ENUO</th>
+                                    <th colspan="3" class="p-2 border border-amber-800 bg-amber-600">HGAO</th>
+                                    <th colspan="3" class="p-2 border border-emerald-800 bg-emerald-700">MDY</th>
+                                    <th colspan="3" class="p-2 border border-purple-800 bg-purple-800">TOTAL</th>
+                                </tr>
+                                <tr class="uppercase font-black text-center text-white text-[11px]">
+                                    <th class="p-2 border border-blue-800 bg-blue-600">TOTAL TEST</th>
+                                    <th class="p-2 border border-emerald-800 bg-emerald-600">PASS</th>
+                                    <th class="p-2 border border-rose-800 bg-rose-600">FAIL</th>
+                                    <th class="p-2 border border-blue-800 bg-blue-600">TOTAL TEST</th>
+                                    <th class="p-2 border border-emerald-800 bg-emerald-600">PASS</th>
+                                    <th class="p-2 border border-rose-800 bg-rose-600">FAIL</th>
+                                    <th class="p-2 border border-blue-800 bg-blue-600">TOTAL TEST</th>
+                                    <th class="p-2 border border-emerald-800 bg-emerald-600">PASS</th>
+                                    <th class="p-2 border border-rose-800 bg-rose-600">FAIL</th>
+                                    <th class="p-2 border border-blue-800 bg-blue-700">TOTAL TEST</th>
+                                    <th class="p-2 border border-emerald-800 bg-emerald-700">PASS</th>
+                                    <th class="p-2 border border-rose-800 bg-rose-700">FAIL</th>
+                                </tr>
+                            </thead>
+                            <tbody id="qc-region-breakdown-tbody" class="font-bold text-slate-800 text-center">
+                                <tr><td colspan="13" class="p-6 text-center text-slate-400">Loading Region Breakdown...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1818,6 +1852,7 @@
 
         async function renderQcTestView() {
             let tbody = document.getElementById('qc-test-tbody');
+            let regionTbody = document.getElementById('qc-region-breakdown-tbody');
             if (!tbody) return;
 
             let ygnRows = await getRegionalSheetRows('ENUO');
@@ -1826,18 +1861,15 @@
 
             let inboundByDate = {};
             let testByDate = {};
+            let regionTestByDate = {};
             let testDatesSet = new Set();
 
             allRows.forEach(row => {
-                if (!rowMatchesQcRegion(row, activeQcTestRegion)) return;
-
                 let dt = parseLocalDate(getVal(row, ['Date'], 0));
                 if (!dt || !/^\d{4}-\d{2}-\d{2}$/.test(dt)) return;
 
                 let jd = String(getVal(row, ['Daily (JD)', 'JD', 'Daily'], 4) || '').trim().toLowerCase();
                 let qtyRaw = parseFloat(getVal(row, ['KPI', 'Qty', 'Quantity', 'Total'], 3));
-                let mac = String(getVal(row, ['MAC', 'Mac Address'], 5) || '').trim();
-                let hasValidMac = isValidRegionalMac(mac);
 
                 let isCleaningJd = jd.includes('clean');
                 let isRunJd = jd === 'run' || jd.includes('terminal') || jd.includes('term') || jd === 'use' || jd.includes('reprovision');
@@ -1850,20 +1882,42 @@
                 let isFfoDevice = deviceNameText.includes('FFO');
                 let isFfoCleaningJd = isCleaningJd && isFfoDevice;
 
-                if (isFfoCleaningJd || isRunJd) {
-                    let inboundUnit = (!isNaN(qtyRaw) && qtyRaw > 0) ? qtyRaw : 1;
-                    inboundByDate[dt] = (inboundByDate[dt] || 0) + inboundUnit;
+                if (rowMatchesQcRegion(row, activeQcTestRegion)) {
+                    if (isFfoCleaningJd || isRunJd) {
+                        let inboundUnit = (!isNaN(qtyRaw) && qtyRaw > 0) ? qtyRaw : 1;
+                        inboundByDate[dt] = (inboundByDate[dt] || 0) + inboundUnit;
+                    }
+
+                    if (isTestJd) {
+                        let testQty = (!isNaN(qtyRaw) && qtyRaw > 0) ? qtyRaw : 1;
+                        testDatesSet.add(dt);
+                        if (!testByDate[dt]) {
+                            testByDate[dt] = { total: 0, fail: 0 };
+                        }
+                        testByDate[dt].total += testQty;
+                        if (isQcColKRma(row)) {
+                            testByDate[dt].fail += testQty;
+                        }
+                    }
                 }
 
                 if (isTestJd) {
-                    let testQty = (!isNaN(qtyRaw) && qtyRaw > 0) ? qtyRaw : 1;
-                    testDatesSet.add(dt);
-                    if (!testByDate[dt]) {
-                        testByDate[dt] = { total: 0, fail: 0 };
-                    }
-                    testByDate[dt].total += testQty;
-                    if (isQcColKRma(row)) {
-                        testByDate[dt].fail += testQty;
+                    let rKey = rowMatchesQcRegion(row, 'ENUO') ? 'ENUO'
+                        : (rowMatchesQcRegion(row, 'HGAO') ? 'HGAO'
+                        : (rowMatchesQcRegion(row, 'MDY') ? 'MDY' : null));
+                    if (rKey) {
+                        let testQty = (!isNaN(qtyRaw) && qtyRaw > 0) ? qtyRaw : 1;
+                        let isFail = isQcColKRma(row);
+                        if (!regionTestByDate[dt]) {
+                            regionTestByDate[dt] = {
+                                ENUO: { total: 0, pass: 0, fail: 0 },
+                                HGAO: { total: 0, pass: 0, fail: 0 },
+                                MDY:  { total: 0, pass: 0, fail: 0 }
+                            };
+                        }
+                        regionTestByDate[dt][rKey].total += testQty;
+                        if (isFail) regionTestByDate[dt][rKey].fail += testQty;
+                        else regionTestByDate[dt][rKey].pass += testQty;
                     }
                 }
             });
@@ -1876,6 +1930,9 @@
 
             if (displayDates.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="7" class="p-8 text-center text-slate-400">No QC Test records found for ${activeQcTestRegion === 'ALL' ? 'All Region' : activeQcTestRegion}.</td></tr>`;
+                if (regionTbody) {
+                    regionTbody.innerHTML = `<tr><td colspan="13" class="p-6 text-center text-slate-400">No Region Breakdown records found.</td></tr>`;
+                }
                 document.getElementById('qc-card-inbound').innerText = '0';
                 document.getElementById('qc-card-total-test').innerText = '0';
                 document.getElementById('qc-card-pass').innerText = '0';
@@ -1945,6 +2002,77 @@
             `;
 
             tbody.innerHTML = rowsHtml;
+
+            if (regionTbody) {
+                let regTotals = {
+                    ENUO: { total: 0, pass: 0, fail: 0 },
+                    HGAO: { total: 0, pass: 0, fail: 0 },
+                    MDY:  { total: 0, pass: 0, fail: 0 }
+                };
+                let regionRowsHtml = "";
+
+                displayDates.forEach(dt => {
+                    let dayReg = regionTestByDate[dt] || {
+                        ENUO: { total: 0, pass: 0, fail: 0 },
+                        HGAO: { total: 0, pass: 0, fail: 0 },
+                        MDY:  { total: 0, pass: 0, fail: 0 }
+                    };
+
+                    let enuoT = dayReg.ENUO.total, enuoP = dayReg.ENUO.pass, enuoF = dayReg.ENUO.fail;
+                    let hgaoT = dayReg.HGAO.total, hgaoP = dayReg.HGAO.pass, hgaoF = dayReg.HGAO.fail;
+                    let mdyT  = dayReg.MDY.total,  mdyP  = dayReg.MDY.pass,  mdyF  = dayReg.MDY.fail;
+
+                    let rowTot = enuoT + hgaoT + mdyT;
+                    let rowPas = enuoP + hgaoP + mdyP;
+                    let rowFai = enuoF + hgaoF + mdyF;
+
+                    regTotals.ENUO.total += enuoT; regTotals.ENUO.pass += enuoP; regTotals.ENUO.fail += enuoF;
+                    regTotals.HGAO.total += hgaoT; regTotals.HGAO.pass += hgaoP; regTotals.HGAO.fail += hgaoF;
+                    regTotals.MDY.total  += mdyT;  regTotals.MDY.pass  += mdyP;  regTotals.MDY.fail  += mdyF;
+
+                    regionRowsHtml += `
+                        <tr class="hover:bg-slate-50 border-b border-slate-200 text-center text-xs font-bold text-slate-800">
+                            <td class="p-3 border border-slate-200 font-black text-slate-900 bg-slate-50">${dt}</td>
+                            <td class="p-3 border border-slate-200 font-black text-blue-800 bg-blue-50/40">${enuoT.toLocaleString()}</td>
+                            <td class="p-3 border border-slate-200 font-black text-emerald-700 bg-emerald-50/40">${enuoP.toLocaleString()}</td>
+                            <td class="p-3 border border-slate-200 font-black text-rose-700 bg-rose-50/40">${enuoF.toLocaleString()}</td>
+                            <td class="p-3 border border-slate-200 font-black text-blue-800 bg-blue-50/40">${hgaoT.toLocaleString()}</td>
+                            <td class="p-3 border border-slate-200 font-black text-emerald-700 bg-emerald-50/40">${hgaoP.toLocaleString()}</td>
+                            <td class="p-3 border border-slate-200 font-black text-rose-700 bg-rose-50/40">${hgaoF.toLocaleString()}</td>
+                            <td class="p-3 border border-slate-200 font-black text-blue-800 bg-blue-50/40">${mdyT.toLocaleString()}</td>
+                            <td class="p-3 border border-slate-200 font-black text-emerald-700 bg-emerald-50/40">${mdyP.toLocaleString()}</td>
+                            <td class="p-3 border border-slate-200 font-black text-rose-700 bg-rose-50/40">${mdyF.toLocaleString()}</td>
+                            <td class="p-3 border border-slate-200 font-black text-purple-900 bg-purple-50/50">${rowTot.toLocaleString()}</td>
+                            <td class="p-3 border border-slate-200 font-black text-emerald-800 bg-emerald-50/50">${rowPas.toLocaleString()}</td>
+                            <td class="p-3 border border-slate-200 font-black text-rose-800 bg-rose-50/50">${rowFai.toLocaleString()}</td>
+                        </tr>
+                    `;
+                });
+
+                let grandRegTot = regTotals.ENUO.total + regTotals.HGAO.total + regTotals.MDY.total;
+                let grandRegPas = regTotals.ENUO.pass + regTotals.HGAO.pass + regTotals.MDY.pass;
+                let grandRegFai = regTotals.ENUO.fail + regTotals.HGAO.fail + regTotals.MDY.fail;
+
+                regionRowsHtml += `
+                    <tr class="bg-slate-100 font-black text-slate-900 text-center text-xs border-t-2 border-slate-300">
+                        <td class="p-3 border border-slate-300 text-left uppercase tracking-wider bg-slate-200">TOTAL</td>
+                        <td class="p-3 border border-slate-300 text-blue-900 bg-blue-100/70">${regTotals.ENUO.total.toLocaleString()}</td>
+                        <td class="p-3 border border-slate-300 text-emerald-800 bg-emerald-100/70">${regTotals.ENUO.pass.toLocaleString()}</td>
+                        <td class="p-3 border border-slate-300 text-rose-800 bg-rose-100/70">${regTotals.ENUO.fail.toLocaleString()}</td>
+                        <td class="p-3 border border-slate-300 text-blue-900 bg-blue-100/70">${regTotals.HGAO.total.toLocaleString()}</td>
+                        <td class="p-3 border border-slate-300 text-emerald-800 bg-emerald-100/70">${regTotals.HGAO.pass.toLocaleString()}</td>
+                        <td class="p-3 border border-slate-300 text-rose-800 bg-rose-100/70">${regTotals.HGAO.fail.toLocaleString()}</td>
+                        <td class="p-3 border border-slate-300 text-blue-900 bg-blue-100/70">${regTotals.MDY.total.toLocaleString()}</td>
+                        <td class="p-3 border border-slate-300 text-emerald-800 bg-emerald-100/70">${regTotals.MDY.pass.toLocaleString()}</td>
+                        <td class="p-3 border border-slate-300 text-rose-800 bg-rose-100/70">${regTotals.MDY.fail.toLocaleString()}</td>
+                        <td class="p-3 border border-slate-300 text-purple-950 bg-purple-100/70">${grandRegTot.toLocaleString()}</td>
+                        <td class="p-3 border border-slate-300 text-emerald-900 bg-emerald-100/70">${grandRegPas.toLocaleString()}</td>
+                        <td class="p-3 border border-slate-300 text-rose-900 bg-rose-100/70">${grandRegFai.toLocaleString()}</td>
+                    </tr>
+                `;
+
+                regionTbody.innerHTML = regionRowsHtml;
+            }
         }
 
         function switchTestType(type, btn) {
