@@ -1843,8 +1843,15 @@
                 let isRunJd = jd === 'run' || jd.includes('terminal') || jd.includes('term') || jd === 'use' || jd.includes('reprovision');
                 let isTestJd = jd.includes('speed test') || jd.includes('speed') || jd.includes('dbm') || jd.includes('lan port') || jd.includes('lan');
 
-                if (isCleaningJd || isRunJd) {
-                    let inboundUnit = (!isNaN(qtyRaw) && qtyRaw > 0) ? qtyRaw : (hasValidMac ? 1 : 1);
+                let rawArr = row['_rawArray'] || [];
+                let deviceNameText = String(
+                    getVal(row, ['Device Name', 'Device', 'Model', 'CPE Type'], 2) || rawArr[2] || ''
+                ).trim().toUpperCase();
+                let isFfoDevice = deviceNameText.includes('FFO');
+                let isFfoCleaningJd = isCleaningJd && isFfoDevice;
+
+                if (isFfoCleaningJd || isRunJd) {
+                    let inboundUnit = (!isNaN(qtyRaw) && qtyRaw > 0) ? qtyRaw : 1;
                     inboundByDate[dt] = (inboundByDate[dt] || 0) + inboundUnit;
                 }
 
