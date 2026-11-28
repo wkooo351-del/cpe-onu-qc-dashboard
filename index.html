@@ -20,7 +20,7 @@
             </div>
             <div class="flex items-center gap-2 text-xs font-bold text-slate-300">
                 <span id="last-updated">Syncing...</span>
-                <button type="button" onclick="loadAllData()" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 cursor-pointer">Refresh</button>
+                <button type="button" id="refresh-btn" onclick="handleManualRefresh()" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 cursor-pointer transition">Refresh</button>
             </div>
         </div>
     </header>
@@ -29,61 +29,58 @@
         <!-- SECTION 2: 1HC Daily JD & KPI -->
         <div id="section-1hc-jd-kpi" class="dashboard-section space-y-6">
             <div class="sticky top-[54px] z-30 bg-slate-50/95 backdrop-blur-xs py-1 space-y-3">
-            <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-3">
-                <div class="flex flex-wrap items-center gap-2">
-                    <button type="button" data-source="ALL" onclick="switchJdKpiSource('ALL')" class="jdkpi-src-btn px-3 py-1 rounded-lg text-xs font-black transition bg-blue-600 text-white shadow cursor-pointer">ALL</button>
-                    <button type="button" data-source="YGN-2026" onclick="switchJdKpiSource('YGN-2026')" class="jdkpi-src-btn px-3 py-1 rounded-lg text-xs font-black transition bg-white text-slate-700 hover:bg-slate-100 cursor-pointer">YGN</button>
-                    <button type="button" data-source="MDY-2026" onclick="switchJdKpiSource('MDY-2026')" class="jdkpi-src-btn px-3 py-1 rounded-lg text-xs font-black transition bg-white text-slate-700 hover:bg-slate-100 cursor-pointer">MDY</button>
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-3">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <button type="button" data-source="ALL" onclick="switchJdKpiSource('ALL')" class="jdkpi-src-btn px-3 py-1 rounded-lg text-xs font-black transition bg-blue-600 text-white shadow cursor-pointer">ALL</button>
+                        <button type="button" data-source="YGN-2026" onclick="switchJdKpiSource('YGN-2026')" class="jdkpi-src-btn px-3 py-1 rounded-lg text-xs font-black transition bg-white text-slate-700 hover:bg-slate-100 cursor-pointer">YGN</button>
+                        <button type="button" data-source="MDY-2026" onclick="switchJdKpiSource('MDY-2026')" class="jdkpi-src-btn px-3 py-1 rounded-lg text-xs font-black transition bg-white text-slate-700 hover:bg-slate-100 cursor-pointer">MDY</button>
 
-                    <div class="h-5 w-px bg-slate-200 mx-1"></div>
+                        <div class="h-5 w-px bg-slate-200 mx-1"></div>
 
-                    <button type="button" id="jdkpi-mode-daily" onclick="switchJdKpiMode('daily')" class="px-3 py-1 rounded-lg text-xs font-black transition bg-indigo-600 text-white shadow cursor-pointer">Daily</button>
-                    <button type="button" id="jdkpi-mode-monthly" onclick="switchJdKpiMode('monthly')" class="px-3 py-1 rounded-lg text-xs font-black transition bg-white text-slate-700 hover:bg-slate-100 cursor-pointer">Monthly</button>
+                        <button type="button" id="jdkpi-mode-daily" onclick="switchJdKpiMode('daily')" class="px-3 py-1 rounded-lg text-xs font-black transition bg-indigo-600 text-white shadow cursor-pointer">Daily</button>
+                        <button type="button" id="jdkpi-mode-monthly" onclick="switchJdKpiMode('monthly')" class="px-3 py-1 rounded-lg text-xs font-black transition bg-white text-slate-700 hover:bg-slate-100 cursor-pointer">Monthly</button>
 
-                    <div id="jdkpi-month-filter-wrapper" class="hidden flex items-center gap-1.5 ml-1">
-                        <label for="jdkpi-month-select" class="text-xs font-black text-slate-500 uppercase">Month:</label>
-                        <select id="jdkpi-month-select" onchange="switchJdKpiMonth(this.value)" class="px-2.5 py-1 text-xs font-extrabold rounded-lg bg-slate-50 text-slate-900 border border-slate-300 cursor-pointer">
-                            <option value="ALL">All Months</option>
-                        </select>
+                        <div id="jdkpi-month-filter-wrapper" class="hidden flex items-center gap-1.5 ml-1">
+                            <label for="jdkpi-month-select" class="text-xs font-black text-slate-500 uppercase">Month:</label>
+                            <select id="jdkpi-month-select" onchange="switchJdKpiMonth(this.value)" class="px-2.5 py-1 text-xs font-extrabold rounded-lg bg-slate-50 text-slate-900 border border-slate-300 cursor-pointer">
+                                <option value="ALL">All Months</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="relative flex items-center gap-1.5" id="jdkpi-date-picker-wrapper">
+                        <button type="button" onclick="toggleDateDropdown('jdkpi-date-dropdown', event)" id="jdkpi-date-btn" class="px-3 py-1.5 text-xs font-extrabold rounded-xl bg-slate-50 text-slate-900 border border-slate-300 hover:bg-slate-100 cursor-pointer flex items-center gap-1.5">
+                            <span id="jdkpi-date-label">All Dates</span>
+                            <span class="text-[10px]">▼</span>
+                        </button>
+                        <button type="button" onclick="clearDateFilter('jdkpi')" class="px-2.5 py-1.5 text-xs font-extrabold rounded-xl bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 cursor-pointer transition">Clear Filters</button>
+                        <div id="jdkpi-date-dropdown" class="hidden absolute right-0 top-full mt-1.5 w-64 bg-white rounded-xl shadow-xl border border-slate-200 z-50 p-2 space-y-1.5">
+                            <div class="flex justify-between items-center px-2 py-1 border-b border-slate-100 text-[11px] font-black">
+                                <button type="button" onclick="selectAllDates('jdkpi', true)" class="text-blue-600 hover:underline cursor-pointer">Select All</button>
+                                <button type="button" onclick="clearDateFilter('jdkpi')" class="text-rose-600 hover:underline cursor-pointer">Clear Filters</button>
+                            </div>
+                            <div id="jdkpi-date-options" class="max-h-56 overflow-y-auto space-y-0.5 px-1"></div>
+                            <div class="flex justify-end pt-1.5 px-1 border-t border-slate-100">
+                                <button type="button" onclick="confirmDateFilter('jdkpi')" class="px-3 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-black cursor-pointer shadow-2xs transition">OK</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <div class="relative flex items-center gap-1.5" id="jdkpi-date-picker-wrapper">
-                    <button type="button" onclick="toggleDateDropdown('jdkpi-date-dropdown', event)" id="jdkpi-date-btn" class="px-3 py-1.5 text-xs font-extrabold rounded-xl bg-slate-50 text-slate-900 border border-slate-300 hover:bg-slate-100 cursor-pointer flex items-center gap-1.5">
-                        <span id="jdkpi-date-label">All Dates</span>
-                        <span class="text-[10px]">▼</span>
-                    </button>
-                    <button type="button" onclick="clearDateFilter('jdkpi')" class="px-2.5 py-1.5 text-xs font-extrabold rounded-xl bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 cursor-pointer transition">Clear Filters</button>
-                    <div id="jdkpi-date-dropdown" class="hidden absolute right-0 top-full mt-1.5 w-64 bg-white rounded-xl shadow-xl border border-slate-200 z-50 p-2 space-y-1.5">
-                        <div class="flex justify-between items-center px-2 py-1 border-b border-slate-100 text-[11px] font-black">
-                            <button type="button" onclick="selectAllDates('jdkpi', true)" class="text-blue-600 hover:underline cursor-pointer">Select All</button>
-                            <button type="button" onclick="clearDateFilter('jdkpi')" class="text-rose-600 hover:underline cursor-pointer">Clear Filters</button>
-                        </div>
-                        <div id="jdkpi-date-options" class="max-h-56 overflow-y-auto space-y-0.5 px-1"></div>
-                        <div class="flex justify-end pt-1.5 px-1 border-t border-slate-100">
-                            <button type="button" onclick="confirmDateFilter('jdkpi')" class="px-3 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-black cursor-pointer shadow-2xs transition">OK</button>
-                        </div>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 font-bold">
+                    <div class="bg-white p-4 rounded-xl border-t-4 border-blue-600 shadow-sm">
+                        <p class="text-xs uppercase text-slate-500">Total Staff</p>
+                        <h3 id="jdkpi-card-total" class="text-2xl font-black text-blue-900 mt-1">0</h3>
+                    </div>
+                    <div class="bg-white p-4 rounded-xl border-t-4 border-emerald-500 shadow-sm">
+                        <p class="text-xs uppercase text-slate-500">Meet KPI (&ge; 150)</p>
+                        <h3 id="jdkpi-card-meet" class="text-2xl font-black text-emerald-700 mt-1">0</h3>
+                    </div>
+                    <div class="bg-white p-4 rounded-xl border-t-4 border-rose-500 shadow-sm">
+                        <p class="text-xs uppercase text-slate-500">No Meet KPI (&lt; 150)</p>
+                        <h3 id="jdkpi-card-nomeet" class="text-2xl font-black text-rose-700 mt-1">0</h3>
                     </div>
                 </div>
-
-
-            </div>
-
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 font-bold">
-                <div class="bg-white p-4 rounded-xl border-t-4 border-blue-600 shadow-sm">
-                    <p class="text-xs uppercase text-slate-500">Total Staff</p>
-                    <h3 id="jdkpi-card-total" class="text-2xl font-black text-blue-900 mt-1">0</h3>
-                </div>
-                <div class="bg-white p-4 rounded-xl border-t-4 border-emerald-500 shadow-sm">
-                    <p class="text-xs uppercase text-slate-500">Meet KPI (&ge; 150)</p>
-                    <h3 id="jdkpi-card-meet" class="text-2xl font-black text-emerald-700 mt-1">0</h3>
-                </div>
-                <div class="bg-white p-4 rounded-xl border-t-4 border-rose-500 shadow-sm">
-                    <p class="text-xs uppercase text-slate-500">No Meet KPI (&lt; 150)</p>
-                    <h3 id="jdkpi-card-nomeet" class="text-2xl font-black text-rose-700 mt-1">0</h3>
-                </div>
-            </div>
-
             </div>
 
             <div id="jdkpi-alerts-container" class="space-y-2"></div>
@@ -492,13 +489,50 @@
         const MONTH_SHORT_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
         const HC_STEP_OPTIONS = [0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5];
 
-        function confirmDateFilter(scope) {
-            let dd = document.getElementById(`${scope}-date-dropdown`);
-            if (dd) dd.classList.add('hidden');
-            updateDatePickerButtonLabel(
-                scope,
-                scope === 'staff' ? 'All Dates (Summary)' : 'All Dates'
-            );
+        let pendingDateSelections = {
+            staff: null,
+            regional: null,
+            inbound: null,
+            rma: null,
+            qc: null,
+            jdkpi: null,
+            attendance: null
+        };
+
+        function getSelectedDatesForScope(scope) {
+            if (scope === 'staff') return selectedStaffDates;
+            if (scope === 'regional') return selectedRegionalDates;
+            if (scope === 'inbound') return selectedInboundReportDates;
+            if (scope === 'rma') return selectedRmaDates;
+            if (scope === 'qc') return selectedQcDates;
+            if (scope === 'jdkpi') return selectedJdKpiDates;
+            if (scope === 'attendance') return selectedAttendanceDates;
+            return [];
+        }
+
+        function setSelectedDatesForScope(scope, arr) {
+            let sorted = [...(arr || [])].sort();
+            if (scope === 'staff') selectedStaffDates = sorted;
+            else if (scope === 'regional') selectedRegionalDates = sorted;
+            else if (scope === 'inbound') selectedInboundReportDates = sorted;
+            else if (scope === 'rma') selectedRmaDates = sorted;
+            else if (scope === 'qc') selectedQcDates = sorted;
+            else if (scope === 'jdkpi') selectedJdKpiDates = sorted;
+            else if (scope === 'attendance') selectedAttendanceDates = sorted;
+        }
+
+        function getAvailableDatesForScope(scope) {
+            if (scope === 'staff') return availableStaffDates;
+            if (scope === 'regional') return availableRegionalDates;
+            if (scope === 'inbound') return availableInboundReportDates;
+            if (scope === 'rma') return availableRmaDates;
+            if (scope === 'qc') return availableQcDates;
+            if (scope === 'jdkpi') return availableJdKpiDates;
+            if (scope === 'attendance') return availableAttendanceDates;
+            return [];
+        }
+
+        function triggerScopeRender(scope) {
             if (scope === 'jdkpi') render1hcDailyJdKpiView();
             else if (scope === 'attendance') renderAttendanceTable();
             else if (scope === 'regional') renderRegionalKpiView();
@@ -508,31 +542,88 @@
             else if (scope === 'staff') renderStaffModernDashboard();
         }
 
+        function confirmDateFilter(scope) {
+            let applied = pendingDateSelections[scope] !== null
+                ? [...pendingDateSelections[scope]]
+                : [...getSelectedDatesForScope(scope)];
+
+            setSelectedDatesForScope(scope, applied);
+            pendingDateSelections[scope] = null;
+
+            let dd = document.getElementById(`${scope}-date-dropdown`);
+            if (dd) dd.classList.add('hidden');
+
+            updateDatePickerButtonLabel(
+                scope,
+                scope === 'staff' ? 'All Dates (Summary)' : 'All Dates'
+            );
+
+            triggerScopeRender(scope);
+        }
+
         function toggleDateDropdown(dropdownId, event) {
             if (event) event.stopPropagation();
-            document.querySelectorAll('[id$="-date-dropdown"]').forEach(el => {
-                if (el.id !== dropdownId) el.classList.add('hidden');
-            });
+            let scope = dropdownId.replace('-date-dropdown', '');
             let target = document.getElementById(dropdownId);
-            if (target) target.classList.toggle('hidden');
+            let willOpen = target ? target.classList.contains('hidden') : false;
+
+            document.querySelectorAll('[id$="-date-dropdown"]').forEach(el => {
+                if (el.id !== dropdownId && !el.classList.contains('hidden')) {
+                    let otherScope = el.id.replace('-date-dropdown', '');
+                    pendingDateSelections[otherScope] = null;
+                    renderDateCheckboxList(
+                        otherScope,
+                        getAvailableDatesForScope(otherScope),
+                        getSelectedDatesForScope(otherScope),
+                        otherScope === 'staff' ? 'All Dates (Summary)' : 'All Dates'
+                    );
+                    el.classList.add('hidden');
+                }
+            });
+
+            if (target) {
+                if (willOpen) {
+                    pendingDateSelections[scope] = [...getSelectedDatesForScope(scope)];
+                    renderDateCheckboxList(
+                        scope,
+                        getAvailableDatesForScope(scope),
+                        pendingDateSelections[scope],
+                        scope === 'staff' ? 'All Dates (Summary)' : 'All Dates'
+                    );
+                    target.classList.remove('hidden');
+                } else {
+                    pendingDateSelections[scope] = null;
+                    renderDateCheckboxList(
+                        scope,
+                        getAvailableDatesForScope(scope),
+                        getSelectedDatesForScope(scope),
+                        scope === 'staff' ? 'All Dates (Summary)' : 'All Dates'
+                    );
+                    target.classList.add('hidden');
+                }
+            }
         }
 
         document.addEventListener('click', function(e) {
             if (!e.target.closest('[id$="-date-picker-wrapper"]')) {
-                document.querySelectorAll('[id$="-date-dropdown"]').forEach(el => el.classList.add('hidden'));
+                document.querySelectorAll('[id$="-date-dropdown"]').forEach(el => {
+                    if (!el.classList.contains('hidden')) {
+                        let scope = el.id.replace('-date-dropdown', '');
+                        pendingDateSelections[scope] = null;
+                        renderDateCheckboxList(
+                            scope,
+                            getAvailableDatesForScope(scope),
+                            getSelectedDatesForScope(scope),
+                            scope === 'staff' ? 'All Dates (Summary)' : 'All Dates'
+                        );
+                        el.classList.add('hidden');
+                    }
+                });
             }
         });
 
         function updateDatePickerButtonLabel(scope, defaultText) {
-            let list = [];
-            if (scope === 'staff') list = selectedStaffDates;
-            else if (scope === 'attendance') list = selectedAttendanceDates;
-            else if (scope === 'regional') list = selectedRegionalDates;
-            else if (scope === 'inbound') list = selectedInboundReportDates;
-            else if (scope === 'rma') list = selectedRmaDates;
-            else if (scope === 'qc') list = selectedQcDates;
-            else if (scope === 'jdkpi') list = selectedJdKpiDates;
-
+            let list = getSelectedDatesForScope(scope);
             let labelEl = document.getElementById(`${scope}-date-label`);
             if (!labelEl) return;
 
@@ -545,7 +636,7 @@
             }
         }
 
-        function renderDateCheckboxList(scope, datesArr, selectedArr, defaultText) {
+        function renderDateCheckboxList(scope, datesArr, checkedArr, defaultText) {
             let optsEl = document.getElementById(`${scope}-date-options`);
             if (!optsEl) return;
 
@@ -556,7 +647,7 @@
             }
 
             optsEl.innerHTML = datesArr.map(dt => {
-                let checked = selectedArr.includes(dt) ? 'checked' : '';
+                let checked = (checkedArr || []).includes(dt) ? 'checked' : '';
                 return `
                     <label class="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-slate-100 cursor-pointer text-xs font-bold text-slate-800 select-none">
                         <input type="checkbox" value="${dt}" ${checked} onchange="onDateCheckboxChange('${scope}', this.value, this.checked)" class="w-3.5 h-3.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer">
@@ -569,134 +660,42 @@
         }
 
         function onDateCheckboxChange(scope, dateVal, isChecked) {
-            if (scope === 'staff') {
-                if (isChecked) {
-                    if (!selectedStaffDates.includes(dateVal)) selectedStaffDates.push(dateVal);
-                } else {
-                    selectedStaffDates = selectedStaffDates.filter(d => d !== dateVal);
-                }
-                selectedStaffDates.sort();
-                updateDatePickerButtonLabel('staff', 'All Dates (Summary)');
-                renderStaffModernDashboard();
-            } else if (scope === 'regional') {
-                if (isChecked) {
-                    if (!selectedRegionalDates.includes(dateVal)) selectedRegionalDates.push(dateVal);
-                } else {
-                    selectedRegionalDates = selectedRegionalDates.filter(d => d !== dateVal);
-                }
-                selectedRegionalDates.sort();
-                updateDatePickerButtonLabel('regional', 'All Dates');
-                renderRegionalKpiView();
-            } else if (scope === 'inbound') {
-                if (isChecked) {
-                    if (!selectedInboundReportDates.includes(dateVal)) selectedInboundReportDates.push(dateVal);
-                } else {
-                    selectedInboundReportDates = selectedInboundReportDates.filter(d => d !== dateVal);
-                }
-                selectedInboundReportDates.sort();
-                updateDatePickerButtonLabel('inbound', 'All Dates');
-                renderInboundWeek(activeInboundWeek);
-            } else if (scope === 'rma') {
-                if (isChecked) {
-                    if (!selectedRmaDates.includes(dateVal)) selectedRmaDates.push(dateVal);
-                } else {
-                    selectedRmaDates = selectedRmaDates.filter(d => d !== dateVal);
-                }
-                selectedRmaDates.sort();
-                updateDatePickerButtonLabel('rma', 'All Dates');
-                renderRmaRepairView();
-            } else if (scope === 'qc') {
-                if (isChecked) {
-                    if (!selectedQcDates.includes(dateVal)) selectedQcDates.push(dateVal);
-                } else {
-                    selectedQcDates = selectedQcDates.filter(d => d !== dateVal);
-                }
-                selectedQcDates.sort();
-                updateDatePickerButtonLabel('qc', 'All Dates');
-                renderQcTestView();
-            } else if (scope === 'jdkpi') {
-                if (isChecked) {
-                    if (!selectedJdKpiDates.includes(dateVal)) selectedJdKpiDates.push(dateVal);
-                } else {
-                    selectedJdKpiDates = selectedJdKpiDates.filter(d => d !== dateVal);
-                }
-                selectedJdKpiDates.sort();
-                updateDatePickerButtonLabel('jdkpi', 'All Dates');
-                render1hcDailyJdKpiView();
-            } else if (scope === 'attendance') {
-                if (isChecked) {
-                    if (!selectedAttendanceDates.includes(dateVal)) selectedAttendanceDates.push(dateVal);
-                } else {
-                    selectedAttendanceDates = selectedAttendanceDates.filter(d => d !== dateVal);
-                }
-                selectedAttendanceDates.sort();
-                updateDatePickerButtonLabel('attendance', 'All Dates');
-                renderAttendanceTable();
+            let current = pendingDateSelections[scope] !== null
+                ? [...pendingDateSelections[scope]]
+                : [...getSelectedDatesForScope(scope)];
+
+            if (isChecked) {
+                if (!current.includes(dateVal)) current.push(dateVal);
+            } else {
+                current = current.filter(d => d !== dateVal);
             }
+            current.sort();
+            pendingDateSelections[scope] = current;
         }
 
         function selectAllDates(scope, selectAll) {
-            if (scope === 'staff') {
-                selectedStaffDates = selectAll ? [...availableStaffDates] : [];
-                renderDateCheckboxList('staff', availableStaffDates, selectedStaffDates, 'All Dates (Summary)');
-                renderStaffModernDashboard();
-            } else if (scope === 'regional') {
-                selectedRegionalDates = selectAll ? [...availableRegionalDates] : [];
-                renderDateCheckboxList('regional', availableRegionalDates, selectedRegionalDates, 'All Dates');
-                renderRegionalKpiView();
-            } else if (scope === 'inbound') {
-                selectedInboundReportDates = selectAll ? [...availableInboundReportDates] : [];
-                renderDateCheckboxList('inbound', availableInboundReportDates, selectedInboundReportDates, 'All Dates');
-                renderInboundWeek(activeInboundWeek);
-            } else if (scope === 'rma') {
-                selectedRmaDates = selectAll ? [...availableRmaDates] : [];
-                renderDateCheckboxList('rma', availableRmaDates, selectedRmaDates, 'All Dates');
-                renderRmaRepairView();
-            } else if (scope === 'qc') {
-                selectedQcDates = selectAll ? [...availableQcDates] : [];
-                renderDateCheckboxList('qc', availableQcDates, selectedQcDates, 'All Dates');
-                renderQcTestView();
-            } else if (scope === 'jdkpi') {
-                selectedJdKpiDates = selectAll ? [...availableJdKpiDates] : [];
-                renderDateCheckboxList('jdkpi', availableJdKpiDates, selectedJdKpiDates, 'All Dates');
-                render1hcDailyJdKpiView();
-            } else if (scope === 'attendance') {
-                selectedAttendanceDates = selectAll ? [...availableAttendanceDates] : [];
-                renderDateCheckboxList('attendance', availableAttendanceDates, selectedAttendanceDates, 'All Dates');
-                renderAttendanceTable();
-            }
+            let avail = getAvailableDatesForScope(scope);
+            let nextList = selectAll ? [...avail] : [];
+            pendingDateSelections[scope] = nextList;
+            renderDateCheckboxList(scope, avail, nextList, scope === 'staff' ? 'All Dates (Summary)' : 'All Dates');
         }
 
         function clearDateFilter(scope) {
-            if (scope === 'staff') {
-                selectedStaffDates = [];
-                renderDateCheckboxList('staff', availableStaffDates, selectedStaffDates, 'All Dates (Summary)');
-                renderStaffModernDashboard();
-            } else if (scope === 'regional') {
-                selectedRegionalDates = [];
-                renderDateCheckboxList('regional', availableRegionalDates, selectedRegionalDates, 'All Dates');
-                renderRegionalKpiView();
-            } else if (scope === 'inbound') {
-                selectedInboundReportDates = [];
-                renderDateCheckboxList('inbound', availableInboundReportDates, selectedInboundReportDates, 'All Dates');
-                renderInboundWeek(activeInboundWeek);
-            } else if (scope === 'rma') {
-                selectedRmaDates = [];
-                renderDateCheckboxList('rma', availableRmaDates, selectedRmaDates, 'All Dates');
-                renderRmaRepairView();
-            } else if (scope === 'qc') {
-                selectedQcDates = [];
-                renderDateCheckboxList('qc', availableQcDates, selectedQcDates, 'All Dates');
-                renderQcTestView();
-            } else if (scope === 'jdkpi') {
-                selectedJdKpiDates = [];
-                renderDateCheckboxList('jdkpi', availableJdKpiDates, selectedJdKpiDates, 'All Dates');
-                render1hcDailyJdKpiView();
-            } else if (scope === 'attendance') {
-                selectedAttendanceDates = [];
-                renderDateCheckboxList('attendance', availableAttendanceDates, selectedAttendanceDates, 'All Dates');
-                renderAttendanceTable();
-            }
+            setSelectedDatesForScope(scope, []);
+            pendingDateSelections[scope] = null;
+            let dd = document.getElementById(`${scope}-date-dropdown`);
+            if (dd) dd.classList.add('hidden');
+            renderDateCheckboxList(
+                scope,
+                getAvailableDatesForScope(scope),
+                [],
+                scope === 'staff' ? 'All Dates (Summary)' : 'All Dates'
+            );
+            triggerScopeRender(scope);
+        }
+
+        function escapeJsSingleQuote(str) {
+            return String(str || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
         }
 
         function getVal(rowObj, headerCandidates, fallbackIndex) {
@@ -727,7 +726,7 @@
 
             ['master-btn-1hc-jd-kpi', 'master-btn-inbound', 'master-btn-regional-kpi', 'master-btn-onu', 'master-btn-qc-test', 'master-btn-rma'].forEach(id => {
                 let el = document.getElementById(id);
-                if(el) el.className = 'px-3 py-1.5 text-xs font-bold rounded-md text-slate-200 hover:text-white transition';
+                if (el) el.className = 'px-3 py-1.5 text-xs font-bold rounded-md text-slate-200 hover:text-white transition';
             });
             btn.className = 'px-3 py-1.5 text-xs font-bold rounded-md bg-blue-600 text-white transition shadow';
 
@@ -841,34 +840,10 @@
             }
         }
 
-        function selectSingleJdKpiDate(dateStr) {
-            if (!dateStr) return;
-            selectedJdKpiDates = (selectedJdKpiDates.length === 1 && selectedJdKpiDates[0] === dateStr)
-                ? []
-                : [dateStr];
-            renderDateCheckboxList('jdkpi', availableJdKpiDates, selectedJdKpiDates, 'All Dates');
-            render1hcDailyJdKpiView();
-        }
-
-        function renderJdKpiQuickDatesBar(datesArr) {
-            let listEl = document.getElementById('jdkpi-quick-dates-list');
-            if (!listEl) return;
-            if (!datesArr || !datesArr.length) {
-                listEl.innerHTML = `<span class="text-[11px] font-bold text-slate-400">No dates</span>`;
-                return;
-            }
-            listEl.innerHTML = [...datesArr].reverse().map(dt => {
-                let active = selectedJdKpiDates.length === 1 && selectedJdKpiDates[0] === dt;
-                let cls = active
-                    ? 'bg-blue-600 text-white border-blue-600 shadow-2xs'
-                    : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-blue-50 hover:border-blue-300';
-                return `<button type="button" onclick="selectSingleJdKpiDate('${dt}')" class="px-2.5 py-1 rounded-lg text-[11px] font-black border shrink-0 cursor-pointer transition ${cls}">${dt}</button>`;
-            }).join('');
-        }
-
         function switchJdKpiSource(sourceVal) {
             activeJdKpiSource = sourceVal;
             selectedJdKpiDates = [];
+            pendingDateSelections.jdkpi = null;
             selectedJdKpiEmployee = "";
             updateJdKpiSourceButtonsUI();
             render1hcDailyJdKpiView();
@@ -883,6 +858,7 @@
         function switchJdKpiMonth(monthVal) {
             activeJdKpiMonth = monthVal;
             selectedJdKpiDates = [];
+            pendingDateSelections.jdkpi = null;
             render1hcDailyJdKpiView();
         }
 
@@ -923,11 +899,26 @@
             } else {
                 selectedJdKpiDates = [dt];
             }
+            pendingDateSelections.jdkpi = null;
             render1hcDailyJdKpiView();
         }
 
+        function buildLeaveLookupFromAttendance() {
+            let leaveByEmpDate = {};
+            (teamAttendanceRawRows || []).forEach(row => {
+                let dt = parseLocalDate(getVal(row, ['Date'], 0));
+                let emp = String(getVal(row, ['Name', 'Employee', 'Staff Name'], 1) || '').trim();
+                if (!dt || !emp) return;
+                let cls = classifyAttendanceRecord(row);
+                if (cls.status === 'Leave') {
+                    let key = `${emp.toLowerCase()}__${dt}`;
+                    leaveByEmpDate[key] = (leaveByEmpDate[key] || 0) + 1;
+                }
+            });
+            return leaveByEmpDate;
+        }
+
         function render1hcDailyJdKpiView() {
-            let quickDatesEl = null;
             let alertsEl = document.getElementById('jdkpi-alerts-container');
             let cardsEl = document.getElementById('jdkpi-cards-container');
             let detailEl = document.getElementById('jdkpi-detail-container');
@@ -1024,24 +1015,8 @@
 
             availableJdKpiDates = Array.from(new Set(monthScopedItems.map(i => i.date))).sort();
             selectedJdKpiDates = selectedJdKpiDates.filter(d => availableJdKpiDates.includes(d));
-            renderDateCheckboxList('jdkpi', availableJdKpiDates, selectedJdKpiDates, 'All Dates');
-
-            if (quickDatesEl) {
-                if (availableJdKpiDates.length > 0) {
-                    quickDatesEl.classList.remove('hidden');
-                    let recentDates = [...availableJdKpiDates].reverse().slice(0, 12).reverse();
-                    let allActive = selectedJdKpiDates.length === 0;
-                    let pillsHtml = `<span class="text-[11px] font-black uppercase text-slate-500 mr-1">Quick Date:</span>`;
-                    pillsHtml += `<button type="button" onclick="clearDateFilter('jdkpi')" class="px-2.5 py-1 rounded-lg text-[11px] font-black transition cursor-pointer ${allActive ? 'bg-slate-900 text-white shadow-2xs' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}">All (${availableJdKpiDates.length}d)</button>`;
-                    recentDates.forEach(dt => {
-                        let isAct = selectedJdKpiDates.includes(dt);
-                        pillsHtml += `<button type="button" onclick="quickSelectJdKpiDate('${dt}')" class="px-2.5 py-1 rounded-lg text-[11px] font-black transition cursor-pointer ${isAct ? 'bg-blue-600 text-white shadow-2xs' : 'bg-blue-50/70 text-blue-900 hover:bg-blue-100 border border-blue-200/70'}">${dt}</button>`;
-                    });
-                    quickDatesEl.innerHTML = pillsHtml;
-                } else {
-                    quickDatesEl.classList.add('hidden');
-                    quickDatesEl.innerHTML = '';
-                }
+            if (pendingDateSelections.jdkpi === null) {
+                renderDateCheckboxList('jdkpi', availableJdKpiDates, selectedJdKpiDates, 'All Dates');
             }
 
             let filteredItems = monthScopedItems.filter(item => {
@@ -1151,12 +1126,12 @@
                             <p class="text-xs text-slate-500 font-bold">Months: ${activeMonthHeading}</p>
                         </div>
                     </div>
-                    <div class="rounded-xl border border-slate-300 shadow-sm">
+                    <div class="rounded-xl border border-slate-300 shadow-sm overflow-x-auto">
                         <table class="w-full text-left border-collapse border border-slate-300 text-xs">
                             <thead class="bg-slate-800 text-white uppercase font-black">
                                 <tr>
                                     <th class="p-3 border border-slate-700 text-center">Month</th>
-                                    <th class="p-3 border border-slate-700">Employee Name</th>
+                                    <th class="p-3 border border-slate-700">STAFF</th>
                                     <th class="p-3 border border-slate-700 text-center">Days</th>
                                     <th class="p-3 border border-slate-700">JD Done</th>
                                     <th class="p-3 border border-slate-700 text-center">Total Units</th>
@@ -1171,6 +1146,7 @@
                         </table>
                     </div>
                 `;
+                renderAttendanceTable(monthScopedItems);
                 return;
             }
 
@@ -1231,6 +1207,9 @@
                 dObj.tasks[item.task].kpi += item.kpiPoints;
             });
 
+            let leaveByEmpDate = buildLeaveLookupFromAttendance();
+            let targetDatesForLeave = selectedJdKpiDates.length > 0 ? selectedJdKpiDates : availableJdKpiDates;
+
             let jdColumns = [
                 ...activeTaskOrder.filter(t => discoveredTasksSet.has(t)),
                 ...Array.from(discoveredTasksSet).filter(t => !activeTaskOrder.includes(t)).sort()
@@ -1245,7 +1224,7 @@
                 cardsEl.innerHTML = `<div class="col-span-full py-5 text-center text-slate-400 text-xs font-bold">No 1HC Daily JD &amp; KPI records found for the selected filter.</div>`;
                 detailEl.innerHTML = `
                     <div class="border-b border-slate-100 pb-2.5">
-                        <h3 class="text-sm font-black text-slate-900">Employee Daily JD &amp; KPI Breakdown</h3>
+                        <h3 class="text-sm font-black text-slate-900">Staff Daily JD &amp; KPI Breakdown</h3>
                         <p class="text-xs text-slate-500 font-bold">No records available to display.</p>
                     </div>
                 `;
@@ -1270,6 +1249,12 @@
                     : (activeDays > 0 ? (eObj.totalKpi / activeDays) : 0);
                 let isMeet = Math.round(scoreForStatus) >= DAILY_TARGET;
 
+                let empLeaveCount = 0;
+                targetDatesForLeave.forEach(dt => {
+                    let lKey = `${name.toLowerCase()}__${dt}`;
+                    empLeaveCount += (leaveByEmpDate[lKey] || 0);
+                });
+
                 if (isMeet) meetCount++;
                 else {
                     noMeetCount++;
@@ -1285,7 +1270,8 @@
                     ...eObj,
                     activeDays,
                     scoreForStatus,
-                    isMeet
+                    isMeet,
+                    leaveCount: empLeaveCount
                 };
             });
 
@@ -1305,8 +1291,9 @@
                                 let metricText = isSingleDayFilter
                                     ? `KPI: ${formatKpiScore(emp.totalKpi)}`
                                     : `Avg KPI: ${formatKpiScore(emp.avgKpi)} (${formatKpiScore(emp.totalKpi)} / ${emp.activeDays}d)`;
+                                let safeEmp = escapeJsSingleQuote(emp.name);
                                 return `
-                                    <button type="button" onclick="selectJdKpiEmployeeCard('${emp.name.replace(/'/g, "\\'")}')" class="px-2.5 py-1 rounded-lg bg-white border border-rose-300 text-rose-900 text-[11px] font-black hover:bg-rose-100 transition cursor-pointer">
+                                    <button type="button" onclick="selectJdKpiEmployeeCard('${safeEmp}')" class="px-2.5 py-1 rounded-lg bg-white border border-rose-300 text-rose-900 text-[11px] font-black hover:bg-rose-100 transition cursor-pointer">
                                         ${emp.name} — ${metricText}
                                     </button>
                                 `;
@@ -1317,7 +1304,7 @@
             } else {
                 alertsEl.innerHTML = `
                     <div class="bg-emerald-50 border-l-4 border-emerald-500 p-3 rounded-r-xl text-emerald-900 text-xs font-black">
-                        All ${empSummaryList.length} employees achieved MEET KPI (&ge; ${DAILY_TARGET}) for the selected filter.
+                        All ${empSummaryList.length} staff achieved MEET KPI (&ge; ${DAILY_TARGET}) for the selected filter.
                     </div>
                 `;
             }
@@ -1340,8 +1327,10 @@
                     ? `Units: ${formatUnitScore(emp.totalUnits)}`
                     : `${formatKpiScore(emp.totalKpi)} • ${emp.activeDays}d • U:${formatUnitScore(emp.totalUnits)}`;
 
+                let safeEmp = escapeJsSingleQuote(emp.name);
+
                 return `
-                    <button type="button" onclick="selectJdKpiEmployeeCard('${emp.name.replace(/'/g, "\\'")}')" class="text-left p-3 rounded-xl border ${borderStyle} bg-white shadow-2xs transition cursor-pointer space-y-1.5">
+                    <button type="button" onclick="selectJdKpiEmployeeCard('${safeEmp}')" class="text-left p-3 rounded-xl border ${borderStyle} bg-white shadow-2xs transition cursor-pointer space-y-1.5">
                         <div class="flex items-start justify-between gap-1.5">
                             <p class="text-xs font-black text-slate-900 truncate">${emp.name}</p>
                             ${statusBadge}
@@ -1378,10 +1367,13 @@
                         ? `<span class="px-1.5 py-0.5 rounded-full text-[10px] whitespace-nowrap font-black bg-emerald-100 text-emerald-800">MEET KPI</span>`
                         : `<span class="px-1.5 py-0.5 rounded-full text-[10px] whitespace-nowrap font-black bg-rose-100 text-rose-800">NO MEET KPI</span>`;
 
+                    let safeEmp = escapeJsSingleQuote(emp.name);
+
                     return `
-                        <tr onclick="selectJdKpiEmployeeCard('${emp.name.replace(/'/g, "\\'")}')" class="${rowHighlight} border-b border-slate-200 text-[11px] font-bold text-slate-800 cursor-pointer">
+                        <tr onclick="selectJdKpiEmployeeCard('${safeEmp}')" class="${rowHighlight} border-b border-slate-200 text-[11px] font-bold text-slate-800 cursor-pointer">
                             <td class="px-2 py-2 border border-slate-200 font-black text-slate-900 bg-slate-50">${emp.name}</td>
                             ${jdCellsHtml}
+                            <td class="px-1.5 py-2 border border-slate-200 text-center ${emp.leaveCount > 0 ? 'font-black text-amber-800 bg-amber-50/40' : 'text-slate-400 font-normal'}">${emp.leaveCount > 0 ? emp.leaveCount : '-'}</td>
                             <td class="px-1.5 py-2 border border-slate-200 text-center font-black text-slate-950 bg-slate-100/70">${formatUnitScore(emp.totalUnits)}</td>
                             <td class="px-1.5 py-2 border border-slate-200 text-center font-black ${rowMeet ? 'text-emerald-700 bg-emerald-50/30' : 'text-rose-700 bg-rose-50/30'}">${formatKpiScore(kpiValue)}</td>
                             <td class="px-1.5 py-2 border border-slate-200 text-center">${badge}</td>
@@ -1394,6 +1386,7 @@
                     return `<td class="px-1.5 py-2 border border-slate-300 text-center font-black ${totVal > 0 ? 'text-blue-950 bg-blue-100/60' : 'text-slate-400'}">${totVal > 0 ? totVal.toLocaleString() : '-'}</td>`;
                 }).join('');
 
+                let grandLeave = empSummaryList.reduce((acc, e) => acc + (e.leaveCount || 0), 0);
                 let grandUnits = empSummaryList.reduce((acc, e) => acc + e.totalUnits, 0);
                 let grandKpi = empSummaryList.reduce((acc, e) => acc + e.totalKpi, 0);
                 let grandStatusScore = isSingleDayFilter
@@ -1404,17 +1397,18 @@
                 detailEl.innerHTML = `
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-100 pb-3 gap-2">
                         <div>
-                            <h3 class="text-sm font-black text-slate-900">All Employees JD Column Breakdown — ${dateFilterLabel}</h3>
-                            <p class="text-[11px] text-slate-500 font-bold">JD Columns: ${jdColumns.length} • Total Staff: ${empSummaryList.length} • Total Units: ${formatUnitScore(grandUnits)} • Total KPI: ${formatKpiScore(grandKpi)}</p>
+                            <h3 class="text-sm font-black text-slate-900">All Staff JD Column Breakdown — ${dateFilterLabel}</h3>
+                            <p class="text-[11px] text-slate-500 font-bold">JD Columns: ${jdColumns.length} • Total Staff: ${empSummaryList.length} • Total Leave: ${grandLeave} • Total Units: ${formatUnitScore(grandUnits)} • Total KPI: ${formatKpiScore(grandKpi)}</p>
                         </div>
                         <button type="button" onclick="clearDateFilter('jdkpi')" class="px-3 py-1 rounded-lg text-[11px] font-black bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 cursor-pointer">Show All Dates</button>
                     </div>
-                    <div class="max-h-[540px] overflow-y-auto rounded-xl border border-slate-300 shadow-sm">
+                    <div class="max-h-[540px] overflow-x-auto overflow-y-auto rounded-xl border border-slate-300 shadow-sm">
                         <table class="w-full text-left border-collapse border border-slate-300 text-[11px]">
                             <thead class="bg-slate-800 text-white uppercase font-black sticky top-0 z-20">
                                 <tr>
-                                    <th class="px-2 py-2 border border-slate-700 bg-slate-900">Employee Name</th>
+                                    <th class="px-2 py-2 border border-slate-700 bg-slate-900">STAFF</th>
                                     ${jdColumns.map(col => `<th class="px-1.5 py-2 border border-slate-700 text-center leading-tight">${col}</th>`).join('')}
+                                    <th class="px-1.5 py-2 border border-slate-700 text-center bg-amber-800 leading-tight">LEAVE</th>
                                     <th class="px-1.5 py-2 border border-slate-700 text-center bg-slate-900 leading-tight">Total Units</th>
                                     <th class="px-1.5 py-2 border border-slate-700 text-center bg-blue-900 leading-tight">${isSingleDayFilter ? 'Daily KPI' : 'Avg KPI'}</th>
                                     <th class="px-1.5 py-2 border border-slate-700 text-center bg-slate-900 leading-tight">Status (150)</th>
@@ -1425,6 +1419,7 @@
                                 <tr class="bg-slate-200 font-black text-slate-900 text-[11px] border-t-2 border-slate-400 sticky bottom-0 z-20">
                                     <td class="px-2 py-2 border border-slate-300 text-right uppercase bg-slate-200">TOTAL (${empSummaryList.length} Staff)</td>
                                     ${jdFooterCellsHtml}
+                                    <td class="px-1.5 py-2 border border-slate-300 text-center text-amber-950 bg-amber-100/80">${grandLeave > 0 ? grandLeave.toLocaleString() : '-'}</td>
                                     <td class="px-1.5 py-2 border border-slate-300 text-center bg-slate-300/70">${formatUnitScore(grandUnits)}</td>
                                     <td class="px-1.5 py-2 border border-slate-300 text-center text-blue-950 bg-blue-100/80">${formatKpiScore(grandKpi)}</td>
                                     <td class="p-2.5 border border-slate-300 text-center ${grandMeet ? 'text-emerald-800 bg-emerald-100/80' : 'text-rose-800 bg-rose-100/80'} whitespace-nowrap">${grandMeet ? 'MEET KPI' : 'NO MEET KPI'}</td>
@@ -1446,10 +1441,13 @@
 
             let empColTotals = {};
             empJdCols.forEach(c => empColTotals[c] = 0);
+            let empTotalLeave = 0;
 
             let detailRowsHtml = sortedEmpDates.map(dt => {
                 let dObj = activeEmp.dates[dt];
                 let dayMeet = Math.round(dObj.kpi) >= DAILY_TARGET;
+                let dayLeave = leaveByEmpDate[`${activeEmp.name.toLowerCase()}__${dt}`] || 0;
+                empTotalLeave += dayLeave;
 
                 let dayJdCells = empJdCols.map(col => {
                     let uVal = dObj.tasks[col] ? dObj.tasks[col].units : 0;
@@ -1469,6 +1467,7 @@
                             <button type="button" onclick="quickSelectJdKpiDate('${dt}')" class="px-2 py-0.5 rounded bg-blue-50 hover:bg-blue-100 text-blue-900 border border-blue-200 cursor-pointer">${dt}</button>
                         </td>
                         ${dayJdCells}
+                        <td class="px-1.5 py-2 border border-slate-200 text-center ${dayLeave > 0 ? 'font-black text-amber-800 bg-amber-50/40' : 'text-slate-400 font-normal'}">${dayLeave > 0 ? dayLeave : '-'}</td>
                         <td class="px-1.5 py-2 border border-slate-200 text-center font-black text-slate-950 bg-slate-100/70">${formatUnitScore(dObj.units)}</td>
                         <td class="px-1.5 py-2 border border-slate-200 text-center font-black ${dayMeet ? 'text-emerald-700' : 'text-rose-700'}">${formatKpiScore(dObj.kpi)}</td>
                         <td class="px-1.5 py-2 border border-slate-200 text-center">${dayBadge}</td>
@@ -1488,19 +1487,20 @@
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-100 pb-3 gap-2">
                     <div>
                         <h3 class="text-sm font-black text-slate-900">${activeEmp.name} — Daily JD Column &amp; KPI Breakdown</h3>
-                        <p class="text-[11px] text-slate-500 font-bold">Total KPI: ${formatKpiScore(activeEmp.totalKpi)} • Active Days: ${sortedEmpDates.length} • Daily Avg KPI: ${formatKpiScore(empAvgScore)} • Tip: Click any Date pill to view all staff JD columns for that date</p>
+                        <p class="text-[11px] text-slate-500 font-bold">Total KPI: ${formatKpiScore(activeEmp.totalKpi)} • Active Days: ${sortedEmpDates.length} • Leave: ${empTotalLeave} • Daily Avg KPI: ${formatKpiScore(empAvgScore)} • Tip: Click any Date pill to view all staff JD columns for that date</p>
                     </div>
                     <span class="px-3 py-1 rounded-full text-[11px] font-black ${empOverallMeet ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}">
                         ${empOverallMeet ? 'MEET KPI' : 'NO MEET KPI'}
                     </span>
                 </div>
-                <div class="rounded-xl border border-slate-300 shadow-sm overflow-hidden">
+                <div class="rounded-xl border border-slate-300 shadow-sm overflow-x-auto">
                     <table class="w-full text-left border-collapse border border-slate-300 text-[11px]">
                         <thead class="bg-slate-800 text-white uppercase font-black">
                             <tr>
-                                <th class="px-2 py-2 border border-slate-700 bg-slate-900">Employee Name</th>
+                                <th class="px-2 py-2 border border-slate-700 bg-slate-900">STAFF</th>
                                 <th class="px-1.5 py-2 border border-slate-700 text-center leading-tight">Date</th>
                                 ${empJdCols.map(col => `<th class="px-1.5 py-2 border border-slate-700 text-center leading-tight">${col}</th>`).join('')}
+                                <th class="px-1.5 py-2 border border-slate-700 text-center bg-amber-800 leading-tight">LEAVE</th>
                                 <th class="px-1.5 py-2 border border-slate-700 text-center bg-slate-900 leading-tight">Total Units</th>
                                 <th class="px-1.5 py-2 border border-slate-700 text-center bg-blue-900 leading-tight">Daily KPI</th>
                                 <th class="px-1.5 py-2 border border-slate-700 text-center bg-slate-900 leading-tight">Status (150)</th>
@@ -1511,6 +1511,7 @@
                             <tr class="bg-slate-200 font-black text-slate-900 text-[11px] border-t-2 border-slate-400">
                                 <td colspan="2" class="px-2 py-2 border border-slate-300 text-right uppercase bg-slate-200">TOTAL (${sortedEmpDates.length} Days)</td>
                                 ${empFooterJdCells}
+                                <td class="px-1.5 py-2 border border-slate-300 text-center text-amber-950 bg-amber-100/80">${empTotalLeave > 0 ? empTotalLeave.toLocaleString() : '-'}</td>
                                 <td class="px-1.5 py-2 border border-slate-300 text-center bg-slate-300/70">${formatUnitScore(activeEmp.totalUnits)}</td>
                                 <td class="px-1.5 py-2 border border-slate-300 text-center text-blue-950 bg-blue-100/80">${formatKpiScore(activeEmp.totalKpi)}</td>
                                 <td class="p-2.5 border border-slate-300 text-center ${empOverallMeet ? 'text-emerald-800 bg-emerald-100/80' : 'text-rose-800 bg-rose-100/80'} whitespace-nowrap">${empOverallMeet ? 'MEET KPI' : 'NO MEET KPI'}</td>
@@ -1523,28 +1524,27 @@
         }
 
         function classifyAttendanceRecord(row) {
-            let catRaw = String(getVal(row, ['Categories', 'Category', 'After 8:30 AM/Leave', 'After 8:30 AM'], 2) || '').trim();
-            let kpiRaw = getVal(row, ['KPI', 'Status'], 3);
-            let kpiStr = String(kpiRaw === undefined || kpiRaw === null ? '' : kpiRaw).trim();
-            let catLower = catRaw.toLowerCase();
+            let after830Raw = String(getVal(row, ['After 8:30 AM', 'After 8:30 AM/Leave', 'Categories', 'Category'], 2) || '').trim();
+            let valLower = after830Raw.toLowerCase();
+            let displayCategory = after830Raw || 'After 8:30 AM';
 
-            if (catLower.includes('leave') || kpiStr.toLowerCase() === 'leave') {
+            if (valLower.includes('leave')) {
                 return {
                     status: 'Leave',
                     code: '0',
-                    rawCategory: catRaw || 'Leave',
+                    rawCategory: displayCategory,
                     badgeClass: 'bg-amber-100 text-amber-800',
                     textClass: 'text-amber-700'
                 };
             }
 
-            let numVal = parseFloat(kpiStr);
+            let numVal = parseFloat(after830Raw);
             if (!isNaN(numVal)) {
                 if (numVal === 1) {
                     return {
                         status: 'On Time',
                         code: '1',
-                        rawCategory: catRaw || 'After 8:30 AM',
+                        rawCategory: displayCategory,
                         badgeClass: 'bg-emerald-100 text-emerald-800',
                         textClass: 'text-emerald-700'
                     };
@@ -1553,18 +1553,18 @@
                     return {
                         status: 'Late',
                         code: '0',
-                        rawCategory: catRaw || 'After 8:30 AM',
+                        rawCategory: displayCategory,
                         badgeClass: 'bg-rose-100 text-rose-800',
                         textClass: 'text-rose-700'
                     };
                 }
             }
 
-            if (catLower.includes('on time') || kpiStr === '1') {
+            if (valLower.includes('on time') || valLower === 'true' || valLower === 'yes' || valLower === '1') {
                 return {
                     status: 'On Time',
                     code: '1',
-                    rawCategory: catRaw || 'After 8:30 AM',
+                    rawCategory: displayCategory,
                     badgeClass: 'bg-emerald-100 text-emerald-800',
                     textClass: 'text-emerald-700'
                 };
@@ -1573,7 +1573,7 @@
             return {
                 status: 'Late',
                 code: '0',
-                rawCategory: catRaw || 'After 8:30 AM',
+                rawCategory: displayCategory,
                 badgeClass: 'bg-rose-100 text-rose-800',
                 textClass: 'text-rose-700'
             };
@@ -1715,7 +1715,7 @@
                         <thead class="bg-slate-800 text-white uppercase font-black">
                             <tr>
                                 <th class="p-2.5 border border-slate-700 bg-slate-900 text-center whitespace-nowrap">Date</th>
-                                <th class="p-2.5 border border-slate-700 bg-slate-800 whitespace-nowrap">Name</th>
+                                <th class="p-2.5 border border-slate-700 bg-slate-800 whitespace-nowrap">STAFF</th>
                                 <th class="p-2.5 border border-slate-700 bg-indigo-900 text-center whitespace-nowrap">Categories</th>
                                 <th class="p-2.5 border border-slate-700 bg-purple-900 text-center whitespace-nowrap">Region</th>
                                 <th class="p-2.5 border border-slate-700 bg-emerald-900 text-center whitespace-nowrap">Attendance</th>
@@ -1727,7 +1727,9 @@
                     </table>
                 </div>
             `;
-            renderDateCheckboxList('attendance', availableAttendanceDates, selectedAttendanceDates, 'All Dates');
+            if (pendingDateSelections.attendance === null) {
+                renderDateCheckboxList('attendance', availableAttendanceDates, selectedAttendanceDates, 'All Dates');
+            }
         }
 
         function switchStaffMonth(monthKey) {
@@ -1739,6 +1741,7 @@
 
             staffGroupedData = staffGroupedDataByMonth[monthKey] || {};
             selectedStaffDates = [];
+            pendingDateSelections.staff = null;
             populateStaffDateFilter();
             renderStaffModernDashboard();
         }
@@ -1759,6 +1762,7 @@
             if (selectEl && selectEl.value !== monthKey) selectEl.value = monthKey;
             inboundLiveData = inboundLiveDataByMonth[monthKey] || getEmptyInboundMonthStructure();
             selectedInboundReportDates = [];
+            pendingDateSelections.inbound = null;
             renderInboundWeek(activeInboundWeek);
         }
 
@@ -1767,7 +1771,7 @@
             document.querySelectorAll('.reg-tab-btn').forEach(b => {
                 b.className = 'reg-tab-btn px-4 py-2 text-xs font-black rounded-xl bg-white text-slate-800 hover:bg-slate-100 border border-slate-300 transition';
             });
-            if(btn) {
+            if (btn) {
                 btn.className = 'reg-tab-btn px-4 py-2 text-xs font-black rounded-xl bg-blue-600 text-white shadow transition';
             }
             await renderRegionalKpiView();
@@ -1924,7 +1928,9 @@
 
             availableQcDates = Array.from(testDatesSet).sort();
             selectedQcDates = selectedQcDates.filter(d => availableQcDates.includes(d));
-            renderDateCheckboxList('qc', availableQcDates, selectedQcDates, 'All Dates');
+            if (pendingDateSelections.qc === null) {
+                renderDateCheckboxList('qc', availableQcDates, selectedQcDates, 'All Dates');
+            }
 
             let displayDates = selectedQcDates.length > 0 ? selectedQcDates : availableQcDates;
 
@@ -2314,6 +2320,7 @@
         function switchRmaMonth(monthKey) {
             activeRmaMonth = monthKey;
             selectedRmaDates = [];
+            pendingDateSelections.rma = null;
             renderRmaRepairView();
         }
 
@@ -2365,7 +2372,9 @@
                 monthFilteredRows.map(r => parseLocalDate(getVal(r, ['Date', 'Repair Date'], 0))).filter(Boolean)
             )).sort();
             selectedRmaDates = selectedRmaDates.filter(d => availableRmaDates.includes(d));
-            renderDateCheckboxList('rma', availableRmaDates, selectedRmaDates, 'All Dates');
+            if (pendingDateSelections.rma === null) {
+                renderDateCheckboxList('rma', availableRmaDates, selectedRmaDates, 'All Dates');
+            }
 
             let finalRows = monthFilteredRows.filter(row => {
                 let dt = parseLocalDate(getVal(row, ['Date', 'Repair Date'], 0));
@@ -2811,7 +2820,32 @@
             renderRmaRepairView();
         }
 
+        async function handleManualRefresh() {
+            let btn = document.getElementById('refresh-btn');
+            let updatedEl = document.getElementById('last-updated');
+            if (btn) {
+                btn.disabled = true;
+                btn.innerText = 'Syncing...';
+                btn.classList.add('opacity-60');
+            }
+            if (updatedEl) {
+                updatedEl.innerText = 'Syncing...';
+            }
+            try {
+                await loadAllData();
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerText = 'Refresh';
+                    btn.classList.remove('opacity-60');
+                }
+            }
+        }
+
         async function loadAllData() {
+            let updatedEl = document.getElementById('last-updated');
+            if (updatedEl) updatedEl.innerText = 'Syncing...';
+
             let octStaffRows = await fetchFlexibleSheet(STAFF_SHEET_ID, ["Oct 26", "Oct'26", "Oct", "Team KPI and Attendence"]);
             staffGroupedDataByMonth["Oct'26"] = processStaffPivotRows(octStaffRows);
 
@@ -2843,8 +2877,7 @@
             onuData.secondTest = await fetchFlexibleSheet(ONU_SS_ID, ["Second Test", "Second", "Sheet1"]);
             onuData.exchangeTest = await fetchFlexibleSheet(ONU_SS_ID, ["Exchange", "Exchange Devices", "Sheet1"]);
 
-            let updatedEl = document.getElementById('last-updated');
-            if(updatedEl) updatedEl.innerText = 'Synced: ' + new Date().toLocaleTimeString();
+            if (updatedEl) updatedEl.innerText = 'Synced: ' + new Date().toLocaleTimeString();
             updateOnuDashboard();
         }
 
@@ -2907,7 +2940,7 @@
 
             if (staffNames.length === 0) {
                 container.innerHTML = `<tr><td colspan="4" class="py-6 text-center text-slate-400">No staff KPI records found for ${activeStaffMonth}.</td></tr>`;
-                if(alertContainer) alertContainer.innerHTML = '';
+                if (alertContainer) alertContainer.innerHTML = '';
                 return;
             }
 
@@ -2986,13 +3019,13 @@
                 `;
             });
 
-            document.getElementById('card-total-staff').innerText = totalStaffCount;
-            document.getElementById('card-excellent-staff').innerText = excellentCount;
-            document.getElementById('card-attention-staff').innerText = attentionCount;
-            document.getElementById('card-kpi-issue-staff').innerText = kpiIssueCount;
+            if (document.getElementById('card-total-staff')) document.getElementById('card-total-staff').innerText = totalStaffCount;
+            if (document.getElementById('card-excellent-staff')) document.getElementById('card-excellent-staff').innerText = excellentCount;
+            if (document.getElementById('card-attention-staff')) document.getElementById('card-attention-staff').innerText = attentionCount;
+            if (document.getElementById('card-kpi-issue-staff')) document.getElementById('card-kpi-issue-staff').innerText = kpiIssueCount;
 
             container.innerHTML = tableHtml;
-            if(alertContainer) alertContainer.innerHTML = alertsHtml;
+            if (alertContainer) alertContainer.innerHTML = alertsHtml;
         }
 
         function getEmptyInboundMonthStructure() {
@@ -3069,7 +3102,9 @@
 
             availableRegionalDates = Array.from(datesSet).sort();
             selectedRegionalDates = selectedRegionalDates.filter(d => availableRegionalDates.includes(d));
-            renderDateCheckboxList('regional', availableRegionalDates, selectedRegionalDates, 'All Dates');
+            if (pendingDateSelections.regional === null) {
+                renderDateCheckboxList('regional', availableRegionalDates, selectedRegionalDates, 'All Dates');
+            }
         }
 
         function isValidRegionalMac(macRaw) {
@@ -3155,7 +3190,7 @@
 
         async function renderRegionalKpiView() {
             let container = document.getElementById('regional-kpi-container');
-            if(!container) return;
+            if (!container) return;
 
             let metricsByDate = await extractRegionalMetrics(activeRegionalTab, selectedRegionalDates);
             let sortedDates = Object.keys(metricsByDate).sort();
@@ -3171,7 +3206,7 @@
             let meetDaysCount = 0;
             let activeDaysCount = 0;
 
-            if(sortedDates.length === 0) {
+            if (sortedDates.length === 0) {
                 let dateDesc = selectedRegionalDates.length > 0 ? selectedRegionalDates.join(', ') : 'All Dates';
                 tableRowsHtml = `<tr><td colspan="14" class="p-8 text-center text-slate-400">No records found for ${activeRegionalTab} on ${dateDesc}</td></tr>`;
             } else {
@@ -3217,11 +3252,11 @@
 
                     let optionsHtml = (currentVal) => {
                         let opts = "";
-                        for(let i=0; i<=5; i++) {
+                        for (let i = 0; i <= 5; i++) {
                             let val1 = i;
                             opts += `<option value="${val1}" ${val1 === currentVal ? 'selected' : ''}>${val1}</option>`;
                             let val2 = i + 0.5;
-                            if(val2 <= 5) {
+                            if (val2 <= 5) {
                                 opts += `<option value="${val2}" ${val2 === currentVal ? 'selected' : ''}>${val2}</option>`;
                             }
                         }
@@ -3781,7 +3816,7 @@
 
             let dailyHcOptionsHtml = (currentVal) => {
                 let opts = `<option value="0" ${0 === currentVal ? 'selected' : ''}>0</option>`;
-                for(let i=1; i<=20; i++) {
+                for (let i = 1; i <= 20; i++) {
                     let val = i * 0.5;
                     opts += `<option value="${val}" ${val === currentVal ? 'selected' : ''}>${val}</option>`;
                 }
@@ -3862,257 +3897,325 @@
                     }
                 }
 
-                tableRowsHtml += `<tr class="bg-slate-100/90 font-black border-t-2 border-b-2 border-slate-300">`;
-                tableRowsHtml += `<td colspan="2" class="p-3 text-right text-xs uppercase text-slate-900">${regName} TOTAL:</td>`;
-                let calculatedRegTotQty = 0;
-                cpeTypesArr.forEach(cpe => {
-                    let val = regSubtotal[cpe] || 0;
-                    calculatedRegTotQty += val;
-                    tableRowsHtml += `<td class="p-3 text-center border border-slate-200 text-blue-900">${val ? val : '-'}</td>`;
-                });
                 tableRowsHtml += `
-                    <td class="p-3 text-center text-base border border-slate-200 text-blue-950">${calculatedRegTotQty.toLocaleString()}</td>
-                    <td class="p-3 text-center text-amber-950 bg-amber-100 border border-slate-200">${regTotalHc}</td>
-                    <td class="p-3 text-center text-blue-900 bg-blue-100 border border-slate-200">${regAvg1HcStr}</td>
-                    <td class="p-3 text-center bg-slate-200 border border-slate-200">${regTotalMeetBadge}</td>
-                </tr>`;
+                    <tr class="bg-slate-200/80 font-black text-slate-900 border-b-2 border-slate-300">
+                        <td colspan="2" class="p-2.5 text-right uppercase text-xs tracking-wider border border-slate-300">${regName} TOTAL</td>
+                        ${cpeTypesArr.map(c => `<td class="p-2.5 text-center border border-slate-300">${regSubtotal[c] || '-'}</td>`).join('')}
+                        <td class="p-2.5 text-center text-blue-900 border border-slate-300">${regTotalQty}</td>
+                        <td class="p-2.5 text-center text-amber-900 bg-amber-100/70 border border-slate-300">${regTotalHc}</td>
+                        <td class="p-2.5 text-center text-blue-900 bg-blue-100/70 border border-slate-300">${regAvg1HcStr}</td>
+                        <td class="p-2.5 text-center bg-slate-200 border border-slate-300">${regTotalMeetBadge}</td>
+                    </tr>
+                `;
             });
 
             if (tableRowsHtml === "") {
-                tableRowsHtml = `<tr><td colspan="${cpeTypesArr.length + 6}" class="p-6 text-center text-slate-400">No records found for selected filter.</td></tr>`;
+                tableRowsHtml = `<tr><td colspan="${cpeTypesArr.length + 6}" class="p-8 text-center text-slate-400">No inbound records matching selected region and date filters.</td></tr>`;
             }
 
+            let grandTotalHcAllRegions = 0;
+            filteredRows.forEach(r => {
+                let k = `inbound_${r.region}_${r.date}`;
+                if (inboundDailyHcInputs[k]) {
+                    grandTotalHcAllRegions += inboundDailyHcInputs[k];
+                }
+            });
+
+            let uniqueRegionDates = new Set(filteredRows.map(r => `${r.region}_${r.date}`));
+            grandTotalHcAllRegions = 0;
+            uniqueRegionDates.forEach(rdKey => {
+                let fullKey = `inbound_${rdKey}`;
+                if (inboundDailyHcInputs[fullKey]) {
+                    grandTotalHcAllRegions += inboundDailyHcInputs[fullKey];
+                }
+            });
+
+            let overall1HcVal = grandTotalHcAllRegions > 0 ? (filteredTotalQty / grandTotalHcAllRegions) : 0;
+            let overall1HcStr = grandTotalHcAllRegions > 0 ? Math.round(overall1HcVal) : 0;
+            let overallMeetBadge = "-";
+            if (grandTotalHcAllRegions > 0) {
+                overallMeetBadge = overall1HcVal >= 50
+                    ? `<span class="px-2 py-0.5 bg-emerald-500 text-white font-black rounded text-xs">YES</span>`
+                    : `<span class="px-2 py-0.5 bg-rose-500 text-white font-black rounded text-xs">NO</span>`;
+            }
+
+            let regionFilterButtonsHtml = ['All Region', ...VALID_REGIONS].map(reg => {
+                let isSelected = activeInboundReportRegion === reg;
+                let btnStyle = isSelected 
+                    ? 'bg-blue-600 text-white shadow' 
+                    : 'bg-slate-100 text-slate-800 hover:bg-slate-200 border border-slate-300';
+                return `<button type="button" onclick="activeInboundReportRegion='${reg}'; renderInboundWeek('${weekKey}')" class="px-3 py-1.5 text-xs font-black rounded-lg transition cursor-pointer ${btnStyle}">${reg}</button>`;
+            }).join('');
+
             container.innerHTML = `
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 font-bold">
-                    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-                        <h4 class="text-sm font-black text-slate-900 uppercase tracking-wide">CPE-TYPE COMPARISON (${activeInboundMonth} - ${weekKey})</h4>
-                        <div>${cpeBarsHtml}</div>
+                <div class='bg-white p-6 rounded-2xl border border-slate-200 shadow-sm font-bold space-y-6'>
+                    <div>
+                        <h3 class='text-lg font-black text-slate-950'>Inbound Quantity Breakdown by Device &amp; Region (${activeInboundMonth} - ${weekKey})</h3>
+                        <p class='text-xs text-slate-500 font-bold'>Dynamic summary derived directly from Live Google Sheet columns.</p>
                     </div>
-                    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
-                        <h4 class="text-sm font-black text-slate-900 uppercase tracking-wide mb-2">REGIONAL COMPARISON (${activeInboundMonth} - ${weekKey})</h4>
-                        <div class="w-full max-w-[280px] h-[180px] mx-auto flex justify-center items-center my-1">
-                            <canvas id="inboundPieChart"></canvas>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+                        <div class="p-5 rounded-xl border border-slate-200 bg-slate-50/50 space-y-4">
+                            <h4 class="text-xs font-black uppercase text-slate-900 tracking-wider">REGIONAL DISTRIBUTION (${activeInboundMonth})</h4>
+                            <div class="relative h-52"><canvas id="regionalPieChart"></canvas></div>
+                            <div class="pt-2 border-t border-slate-200">${regBarsHtml}</div>
                         </div>
-                        <div class="w-full pt-3 border-t border-slate-100 mt-2">
-                            ${regBarsHtml}
+                        <div class="p-5 rounded-xl border border-slate-200 bg-slate-50/50 space-y-4">
+                            <h4 class="text-xs font-black uppercase text-slate-900 tracking-wider">CPE-TYPE VOLUME BREAKDOWN</h4>
+                            <div>${cpeBarsHtml}</div>
                         </div>
                     </div>
-                </div>
-                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm font-bold space-y-4">
-                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 border-b border-slate-100 pb-4">
-                        <h3 class="text-base font-black text-slate-900">${activeInboundMonth} - ${weekKey} Detailed Inbound Report</h3>
-                        
-                        <div class="flex flex-wrap items-center gap-2">
-                            <div class="flex items-center gap-1 bg-slate-50 p-1 rounded-xl border border-slate-200">
-                                <button onclick="setInboundReportRegion('All Region', this)" class="inbound-rep-reg px-3 py-1 rounded-lg text-xs font-black transition ${activeInboundReportRegion === 'All Region' ? 'bg-indigo-600 text-white shadow' : 'bg-white text-slate-700 hover:bg-slate-100'}">All</button>
-                                <button onclick="setInboundReportRegion('ENUO', this)" class="inbound-rep-reg px-3 py-1 rounded-lg text-xs font-black transition ${activeInboundReportRegion === 'ENUO' ? 'bg-indigo-600 text-white shadow' : 'bg-white text-slate-700 hover:bg-slate-100'}">ENUO</button>
-                                <button onclick="setInboundReportRegion('HGAO', this)" class="inbound-rep-reg px-3 py-1 rounded-lg text-xs font-black transition ${activeInboundReportRegion === 'HGAO' ? 'bg-indigo-600 text-white shadow' : 'bg-white text-slate-700 hover:bg-slate-100'}">HGAO</button>
-                                <button onclick="setInboundReportRegion('MYFO', this)" class="inbound-rep-reg px-3 py-1 rounded-lg text-xs font-black transition ${activeInboundReportRegion === 'MYFO' ? 'bg-indigo-600 text-white shadow' : 'bg-white text-slate-700 hover:bg-slate-100'}">MYFO</button>
-                            </div>
-                            <div class="relative flex items-center gap-1.5" id="inbound-date-picker-wrapper">
-                                <button type="button" onclick="toggleDateDropdown('inbound-date-dropdown', event)" id="inbound-date-btn" class="px-3 py-1.5 text-xs font-extrabold rounded-xl bg-slate-50 text-slate-900 border border-slate-300 hover:bg-slate-100 focus:outline-none cursor-pointer flex items-center gap-1.5">
-                                    <span id="inbound-date-label">All Dates</span>
-                                    <span class="text-[10px]">▼</span>
-                                </button>
-                                <button type="button" onclick="clearDateFilter('inbound')" class="px-2.5 py-1.5 text-xs font-extrabold rounded-xl bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 cursor-pointer transition">Clear Filters</button>
-                                <div id="inbound-date-dropdown" class="hidden absolute right-0 top-full mt-1.5 w-60 bg-white rounded-xl shadow-xl border border-slate-200 z-50 p-2 space-y-1.5">
-                                    <div class="flex justify-between items-center px-2 py-1 border-b border-slate-100 text-[11px] font-black">
-                                        <button type="button" onclick="selectAllDates('inbound', true)" class="text-blue-600 hover:underline cursor-pointer">Select All</button>
-                                        <button type="button" onclick="clearDateFilter('inbound')" class="text-rose-600 hover:underline cursor-pointer">Clear Filters</button>
-                                    </div>
-                                    <div id="inbound-date-options" class="max-h-56 overflow-y-auto space-y-0.5 px-1"></div>
-                                    <div class="flex justify-end pt-1.5 px-1 border-t border-slate-100">
-                                        <button type="button" onclick="confirmDateFilter('inbound')" class="px-3 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-black cursor-pointer shadow-2xs transition">OK</button>
+                    <div class="space-y-3 pt-4">
+                        <div class="flex flex-wrap items-center justify-between gap-2 bg-slate-50 p-3 rounded-xl border border-slate-200">
+                            <h3 class="text-sm font-black uppercase text-slate-900">DAILY INBOUND REPORT (${activeInboundMonth})</h3>
+                            <div class="flex flex-wrap items-center gap-2">
+                                <div class="flex flex-wrap items-center gap-1.5">
+                                    ${regionFilterButtonsHtml}
+                                </div>
+                                <div class="relative flex items-center gap-1.5" id="inbound-date-picker-wrapper">
+                                    <button type="button" onclick="toggleDateDropdown('inbound-date-dropdown', event)" id="inbound-date-btn" class="px-3 py-1.5 text-xs font-extrabold rounded-lg bg-white text-slate-900 border border-slate-300 hover:bg-slate-100 cursor-pointer flex items-center gap-1.5">
+                                        <span id="inbound-date-label">All Dates</span>
+                                        <span class="text-[10px]">▼</span>
+                                    </button>
+                                    <button type="button" onclick="clearDateFilter('inbound')" class="px-2.5 py-1.5 text-xs font-extrabold rounded-lg bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 cursor-pointer transition">Clear Filters</button>
+                                    <div id="inbound-date-dropdown" class="hidden absolute right-0 top-full mt-1.5 w-64 bg-white rounded-xl shadow-xl border border-slate-200 z-50 p-2 space-y-1.5">
+                                        <div class="flex justify-between items-center px-2 py-1 border-b border-slate-100 text-[11px] font-black">
+                                            <button type="button" onclick="selectAllDates('inbound', true)" class="text-blue-600 hover:underline cursor-pointer">Select All</button>
+                                            <button type="button" onclick="clearDateFilter('inbound')" class="text-rose-600 hover:underline cursor-pointer">Clear Filters</button>
+                                        </div>
+                                        <div id="inbound-date-options" class="max-h-56 overflow-y-auto space-y-0.5 px-1"></div>
+                                        <div class="flex justify-end pt-1.5 px-1 border-t border-slate-100">
+                                            <button type="button" onclick="confirmDateFilter('inbound')" class="px-3 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-black cursor-pointer shadow-2xs transition">OK</button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                    <div class="overflow-x-auto rounded-xl border border-slate-300">
-                        <table class="w-full text-left border-collapse border border-slate-300 text-sm">
-                            <thead class="bg-slate-800 text-white uppercase text-xs font-black">
-                                <tr>
-                                    <th class="p-3 text-center border border-slate-600">REGIONAL</th>
-                                    <th class="p-3 text-center border border-slate-600">DATE</th>
-                                    ${cpeTypesArr.map(c => `<th class="p-3 text-center border border-slate-600">${c}</th>`).join('')}
-                                    <th class="p-3 text-center bg-slate-900 border border-slate-600">DAILY TOTAL</th>
-                                    <th class="p-3 text-center bg-amber-900 border border-slate-600">DAILY HC</th>
-                                    <th class="p-3 text-center bg-blue-950 border border-slate-600">1HC KPI</th>
-                                    <th class="p-3 text-center bg-emerald-950 border border-slate-600">MEET KPI</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${tableRowsHtml}
-                            </tbody>
-                        </table>
+                        <div class="overflow-x-auto rounded-xl border border-slate-300">
+                            <table class="w-full text-left border-collapse border border-slate-300 text-sm">
+                                <thead class="bg-slate-800 text-white uppercase text-xs font-black">
+                                    <tr>
+                                        <th class="p-3 text-center border border-slate-600">REGION</th>
+                                        <th class="p-3 text-center border border-slate-600">DATE</th>
+                                        ${cpeTypesArr.map(cpe => `<th class="p-3 text-center border border-slate-600">${cpe}</th>`).join('')}
+                                        <th class="p-3 text-center bg-slate-900 border border-slate-600">TOTAL</th>
+                                        <th class="p-3 text-center bg-amber-900 border border-slate-600">DAILY HC</th>
+                                        <th class="p-3 text-center bg-blue-950 border border-slate-600">1HC KPI</th>
+                                        <th class="p-3 text-center bg-emerald-950 border border-slate-600">MEET KPI</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${tableRowsHtml}
+                                    <tr class="bg-slate-900 text-white font-black text-sm">
+                                        <td colspan="2" class="p-3.5 text-right uppercase tracking-wider border border-slate-700">GRAND TOTAL (${activeInboundMonth})</td>
+                                        ${cpeTypesArr.map(c => `<td class="p-3.5 text-center border border-slate-700">${filteredCpeTotals[c] ? filteredCpeTotals[c].toLocaleString() : '-'}</td>`).join('')}
+                                        <td class="p-3.5 text-center text-emerald-400 border border-slate-700">${filteredTotalQty.toLocaleString()}</td>
+                                        <td class="p-3.5 text-center text-amber-300 border border-slate-700">${grandTotalHcAllRegions}</td>
+                                        <td class="p-3.5 text-center text-cyan-300 border border-slate-700">${overall1HcStr}</td>
+                                        <td class="p-3.5 text-center border border-slate-700">${overallMeetBadge}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             `;
 
-            renderDateCheckboxList('inbound', availableInboundReportDates, selectedInboundReportDates, 'All Dates');
+            if (pendingDateSelections.inbound === null) {
+                renderDateCheckboxList('inbound', availableInboundReportDates, selectedInboundReportDates, 'All Dates');
+            }
 
             setTimeout(() => {
-                let ctx = document.getElementById('inboundPieChart');
+                let ctx = document.getElementById('regionalPieChart');
                 if (ctx) {
                     if (pieChartInstance) pieChartInstance.destroy();
                     let regLabels = Object.keys(filteredRegionalTotals).sort();
-                    let regValues = regLabels.map(r => filteredRegionalTotals[r] || 0);
+                    let regValues = regLabels.map(r => filteredRegionalTotals[r]);
+                    let bgColors = regLabels.map(r => regColors[r] || '#64748b');
                     pieChartInstance = new Chart(ctx, {
                         type: 'doughnut',
-                        data: {
-                            labels: regLabels,
-                            datasets: [{
-                                data: regValues,
-                                backgroundColor: ['#2563eb', '#f59e0b', '#10b981', '#8b5cf6']
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: { legend: { position: 'bottom', labels: { font: { weight: 'bold', size: 11 }, color: '#0f172a' } } }
+                        data: { labels: regLabels, datasets: [{ data: regValues, backgroundColor: bgColors, borderWidth: 2, borderColor: '#ffffff' }] },
+                        options: { 
+                            responsive: true, 
+                            maintainAspectRatio: false, 
+                            plugins: { legend: { position: 'right', labels: { font: { weight: 'bold', size: 11 }, color: '#0f172a' } } }, 
+                            cutout: '62%' 
                         }
                     });
                 }
             }, 100);
         }
 
-        function setInboundReportRegion(reg, btn) {
-            activeInboundReportRegion = reg;
-            renderInboundWeek(activeInboundWeek);
+        function classifyFailure(statusRaw) {
+            if (!statusRaw) return null;
+            let s = String(statusRaw).toLowerCase();
+            if (s === 'pass' || s === 'ok' || s === 'true') return null;
+
+            if (s.includes('rx_power') || s.includes('rx power')) return 'Rx Power';
+            if (s.includes('tx_power') || s.includes('tx power')) return 'Tx Power';
+            if (s.includes('bias')) return 'Bias Current';
+            if (s.includes('volt')) return 'Voltage';
+            if (s.includes('temp')) return 'Temperature';
+            if (s.includes('online')) return 'Online';
+            if (s.includes('offline')) return 'Offline';
+            if (s.includes('bip8') || s.includes('bip')) return 'BIP8';
+            if (s.includes('dying') || s.includes('gasp')) return 'Dying Gasp';
+            if (s.includes('los') || s.includes('loss')) return 'LOS';
+
+            return 'Other';
         }
 
-        function isStrictPass(row) {
-            let rawArr = row['_rawArray'] || [];
-            let overallVal = String(rawArr[4] || '').trim().toLowerCase();
-            if (overallVal === 'fail' || overallVal.includes('fail')) return false;
-            if (overallVal === 'pass' || overallVal.includes('pass')) return true;
+        function detectOnuRegion(row) {
+            let regRaw = String(getVal(row, ['Region', 'Regional', 'Area', 'Branch'], -1)).trim().toUpperCase();
+            if (regRaw.includes('ENUO')) return 'ENUO';
+            if (regRaw.includes('HGAO')) return 'HGAO';
+            if (regRaw.includes('MYFO')) return 'MYFO';
 
-            let paramIndices = [5, 6, 7, 8, 9, 17, 19, 21, 23, 25];
-            for (let idx of paramIndices) {
-                let val = String(rawArr[idx] || '').trim().toLowerCase();
-                if (val === 'fail' || val.includes('fail') || val === 'f' || val === 'no' || val === '0') return false;
+            let olt = String(getVal(row, ['OLT'], 2)).trim().toUpperCase();
+            let pon = String(getVal(row, ['PON'], 3)).trim().toUpperCase();
+            let combined = `${olt} ${pon}`;
+            if (combined.includes('ENUO')) return 'ENUO';
+            if (combined.includes('HGAO')) return 'HGAO';
+            if (combined.includes('MYFO')) return 'MYFO';
+
+            if (olt.startsWith('10.22') || olt.startsWith('172.16')) return 'ENUO';
+            if (olt.startsWith('10.23') || olt.startsWith('172.17')) return 'HGAO';
+            if (olt.startsWith('10.24') || olt.startsWith('172.18')) return 'MYFO';
+
+            return 'HGAO';
+        }
+
+        function extractModelFromVersion(verRaw, fallbackModel) {
+            let vStr = String(verRaw || '').trim();
+            if (!vStr) return fallbackModel || 'Unknown';
+            let parts = vStr.split('_');
+            if (parts.length > 0 && parts[0].trim() !== '') {
+                return parts[0].trim().toUpperCase();
             }
-            return true;
-        }
-
-        function getDeviceName(row) {
-            let rawArr = row['_rawArray'] || [];
-            let devName = String(rawArr[28] || getVal(row, ['Device Name', 'Device'], 28)).trim().toUpperCase();
-            if (devName && !devName.toLowerCase().includes('name') && devName !== '-') {
-                return devName;
-            }
-            return 'FFO';
-        }
-
-        function getRowRegion(row) {
-            let rawArr = row['_rawArray'] || [];
-            let oltHostname = String(rawArr[1] || getVal(row, ['olt_hostname'], 1)).toUpperCase();
-            
-            if (oltHostname.includes("ENUO")) return "ENUO";
-            if (oltHostname.includes("MDY") || oltHostname.includes("MANDALAY") || oltHostname.includes("MYFO")) return "MYFO";
-            if (oltHostname.includes("HGAO")) return "HGAO";
-
-            let fullText = rawArr.join(' ').toUpperCase();
-            if (fullText.includes("ENUO")) return "ENUO";
-            if (fullText.includes("MDY") || fullText.includes("MANDALAY") || fullText.includes("MYFO")) return "MYFO";
-            if (fullText.includes("HGAO")) return "HGAO";
-
-            return "HGAO";
-        }
-
-        function checkParamFailIndex(row, colIndex) {
-            let rawArr = row['_rawArray'] || [];
-            let val = String(rawArr[colIndex] || '').trim().toLowerCase();
-            return (val === 'fail' || val === 'f' || val === 'no' || val === '0' || val.includes('fail'));
+            return vStr.toUpperCase();
         }
 
         function updateOnuDashboard() {
-            let rawData = [];
-            let testTitleText = "First Test";
-            if (currentTestType === 'first' || currentTestType === 'daily' || currentTestType === 'monthly') {
-                rawData = onuData.firstTest;
-                testTitleText = "First Test";
+            let activeRows = [];
+            let typeLabel = "First Test";
+
+            if (currentTestType === 'first') {
+                activeRows = onuData.firstTest;
+                typeLabel = "First Test";
             } else if (currentTestType === 'second') {
-                rawData = onuData.secondTest;
-                testTitleText = "Second Test";
+                activeRows = onuData.secondTest;
+                typeLabel = "Second Test";
             } else if (currentTestType === 'exchange') {
-                rawData = onuData.exchangeTest;
-                testTitleText = "Exchange Devices";
+                activeRows = onuData.exchangeTest;
+                typeLabel = "Exchange";
+            } else {
+                activeRows = [...onuData.firstTest, ...onuData.secondTest, ...onuData.exchangeTest];
+                typeLabel = currentTestType === 'daily' ? "Daily Combined" : "Monthly Combined";
             }
 
-            let filteredByPeriod = rawData;
-            if (currentTestType === 'daily') {
-                let dates = rawData.map(r => parseLocalDate(r['_rawArray'][0] || getVal(r, ['Date'], 0))).filter(Boolean).sort();
-                let latestDate = dates[dates.length - 1];
-                if (latestDate) {
-                    filteredByPeriod = rawData.filter(r => parseLocalDate(r['_rawArray'][0] || getVal(r, ['Date'], 0)) === latestDate);
-                }
-            }
-
-            let data = filteredByPeriod;
             if (currentOnuRegion !== 'All Region') {
-                data = data.filter(r => getRowRegion(r) === currentOnuRegion);
+                activeRows = activeRows.filter(row => detectOnuRegion(row) === currentOnuRegion);
             }
 
-            let total = data.length;
-            let passed = data.filter(r => isStrictPass(r)).length;
-            let failed = total - passed;
+            let totalTested = 0, passedCount = 0, failedCount = 0;
+            let oltStats = {};
+            let failureCounts = {
+                'Rx Power': 0, 'Tx Power': 0, 'Bias Current': 0, 'Voltage': 0, 'Temperature': 0,
+                'Online': 0, 'Offline': 0, 'BIP8': 0, 'Dying Gasp': 0, 'LOS': 0
+            };
+            let deviceModelStats = {};
+            let deviceParamMatrix = {};
+            let periodBreakdown = {};
 
-            let passRate = total > 0 ? ((passed / total) * 100) : 0;
-            let failRate = total > 0 ? ((failed / total) * 100) : 0;
+            activeRows.forEach(row => {
+                let dateStr = parseLocalDate(getVal(row, ['Date', 'Timestamp'], 0));
+                let olt = String(getVal(row, ['OLT'], 2) || 'Unknown OLT').trim();
+                let verRaw = String(getVal(row, ['Version', 'Software Version', 'FW Version'], 10)).trim();
+                let fallbackModel = String(getVal(row, ['Device', 'Model', 'ONU Type'], 5) || 'Unknown').trim();
+                let model = extractModelFromVersion(verRaw, fallbackModel);
 
-            let totEl = document.getElementById('kpi-total');
-            let passEl = document.getElementById('kpi-passed');
-            let failEl = document.getElementById('kpi-failed');
-            let passRateEl = document.getElementById('kpi-pass-rate');
-            let failRateEl = document.getElementById('kpi-fail-rate');
+                let status = String(getVal(row, ['Status'], 9) || getVal(row, ['Result'], 8) || '').trim();
+                let remark = String(getVal(row, ['Remark', 'Reason', 'Failure'], 11) || '').trim();
+                let checkText = `${status} ${remark}`;
 
-            if(totEl) totEl.innerText = total.toLocaleString();
-            if(passEl) passEl.innerText = passed.toLocaleString();
-            if(failEl) failEl.innerText = failed.toLocaleString();
-            if(passRateEl) passRateEl.innerText = passRate.toFixed(2) + '%';
-            if(failRateEl) failRateEl.innerText = failRate.toFixed(2) + '%';
+                if (!dateStr && !olt && !status) return;
+                totalTested++;
 
-            let chartTitleEl = document.getElementById('chart-comparison-title');
-            if(chartTitleEl) chartTitleEl.innerText = `${testTitleText} - Pass vs Fail & Total Comparison`;
+                let failReason = classifyFailure(checkText);
+                let isPass = (failReason === null && status.toLowerCase().includes('pass'));
 
-            renderOnuCharts(data);
-            renderSummaryTables(data);
-            renderOnuRegionalBreakdown(filteredByPeriod);
-        }
+                if (!oltStats[olt]) oltStats[olt] = { total: 0, pass: 0, fail: 0 };
+                oltStats[olt].total++;
 
-        function renderOnuCharts(data) {
-            let regions = ['HGAO', 'ENUO', 'MYFO'];
-            let totalArr = [], passedArr = [], failedArr = [];
+                if (!deviceModelStats[model]) deviceModelStats[model] = { total: 0, pass: 0, fail: 0 };
+                deviceModelStats[model].total++;
 
-            regions.forEach(reg => {
-                let rData = data.filter(r => getRowRegion(r) === reg);
-                let tot = rData.length;
-                let pas = rData.filter(r => isStrictPass(r)).length;
-                let fai = tot - pas;
+                if (!deviceParamMatrix[model]) {
+                    deviceParamMatrix[model] = {
+                        'Rx Power': 0, 'Tx Power': 0, 'Bias Current': 0, 'Voltage': 0, 'Temperature': 0,
+                        'Online': 0, 'Offline': 0, 'BIP8': 0, 'Dying Gasp': 0, 'LOS': 0, totalFail: 0
+                    };
+                }
 
-                totalArr.push(tot);
-                passedArr.push(pas);
-                failedArr.push(fai);
+                let periodKey = dateStr || 'Unknown';
+                if (currentTestType === 'monthly' && dateStr.length >= 7) {
+                    periodKey = dateStr.substring(0, 7);
+                }
+                if (!periodBreakdown[periodKey]) periodBreakdown[periodKey] = { total: 0, pass: 0, fail: 0 };
+                periodBreakdown[periodKey].total++;
+
+                if (isPass) {
+                    passedCount++;
+                    oltStats[olt].pass++;
+                    deviceModelStats[model].pass++;
+                    periodBreakdown[periodKey].pass++;
+                } else {
+                    failedCount++;
+                    oltStats[olt].fail++;
+                    deviceModelStats[model].fail++;
+                    periodBreakdown[periodKey].fail++;
+
+                    let cat = failReason || 'Other';
+                    if (failureCounts[cat] !== undefined) failureCounts[cat]++;
+                    if (deviceParamMatrix[model][cat] !== undefined) deviceParamMatrix[model][cat]++;
+                    deviceParamMatrix[model].totalFail++;
+                }
             });
 
-            if (oltChartInstance) oltChartInstance.destroy();
-            let oltCanvas = document.getElementById('oltChart');
-            if(oltCanvas) {
-                oltChartInstance = new Chart(oltCanvas, {
+            let passRate = totalTested > 0 ? ((passedCount / totalTested) * 100).toFixed(2) + '%' : '0.00%';
+            let failRate = totalTested > 0 ? ((failedCount / totalTested) * 100).toFixed(2) + '%' : '0.00%';
+
+            document.getElementById('kpi-total').innerText = totalTested.toLocaleString();
+            document.getElementById('kpi-passed').innerText = passedCount.toLocaleString();
+            document.getElementById('kpi-failed').innerText = failedCount.toLocaleString();
+            document.getElementById('kpi-pass-rate').innerText = passRate;
+            document.getElementById('kpi-fail-rate').innerText = failRate;
+
+            let regionLabelSuffix = currentOnuRegion === 'All Region' ? '' : ` (${currentOnuRegion})`;
+            let titleEl = document.getElementById('chart-comparison-title');
+            if (titleEl) titleEl.innerText = `${typeLabel}${regionLabelSuffix} - Pass vs Fail & Total Comparison`;
+
+            let oltLabels = Object.keys(oltStats).slice(0, 10);
+            let oltPassArr = oltLabels.map(k => oltStats[k].pass);
+            let oltFailArr = oltLabels.map(k => oltStats[k].fail);
+            let oltTotalArr = oltLabels.map(k => oltStats[k].total);
+
+            let ctxOlt = document.getElementById('oltChart');
+            if (ctxOlt) {
+                if (oltChartInstance) oltChartInstance.destroy();
+                oltChartInstance = new Chart(ctxOlt, {
                     type: 'bar',
                     data: {
-                        labels: ['HGAO', 'ENUO', 'MYFO'],
+                        labels: oltLabels,
                         datasets: [
-                            { label: 'Total Tested', data: totalArr, backgroundColor: '#2563EB', borderRadius: 4 },
-                            { label: 'Passed', data: passedArr, backgroundColor: '#10B981', borderRadius: 4 },
-                            { label: 'Failed', data: failedArr, backgroundColor: '#EF4444', borderRadius: 4 }
+                            { label: 'Passed', data: oltPassArr, backgroundColor: '#10b981', borderRadius: 4 },
+                            { label: 'Failed', data: oltFailArr, backgroundColor: '#f43f5e', borderRadius: 4 },
+                            { label: 'Total', data: oltTotalArr, backgroundColor: '#3b82f6', borderRadius: 4 }
                         ]
                     },
-                    options: { 
-                        responsive: true, 
+                    options: {
+                        responsive: true,
                         maintainAspectRatio: false,
-                        plugins: { legend: { position: 'top', labels: { font: { weight: 'bold' }, color: '#0f172a' } } },
+                        plugins: { legend: { position: 'bottom', labels: { font: { weight: 'bold', size: 11 }, color: '#0f172a' } } },
                         scales: {
                             x: { ticks: { font: { weight: 'bold' }, color: '#0f172a' } },
                             y: { ticks: { font: { weight: 'bold' }, color: '#0f172a' } }
@@ -4121,349 +4224,191 @@
                 });
             }
 
-            let rxFail = data.filter(r => checkParamFailIndex(r, 5)).length;
-            let txFail = data.filter(r => checkParamFailIndex(r, 6)).length;
-            let biasFail = data.filter(r => checkParamFailIndex(r, 7)).length;
-            let voltFail = data.filter(r => checkParamFailIndex(r, 8)).length;
-            let tempFail = data.filter(r => checkParamFailIndex(r, 9)).length;
-            let onlineFail = data.filter(r => checkParamFailIndex(r, 17)).length;
-            let offlineFail = data.filter(r => checkParamFailIndex(r, 19)).length;
-            let bip8Fail = data.filter(r => checkParamFailIndex(r, 21)).length;
-            let gaspFail = data.filter(r => checkParamFailIndex(r, 23)).length;
-            let losFail = data.filter(r => checkParamFailIndex(r, 25)).length;
+            let failLabels = Object.keys(failureCounts).filter(k => failureCounts[k] > 0);
+            let failValues = failLabels.map(k => failureCounts[k]);
+            let failColors = ['#f43f5e', '#fb923c', '#facc15', '#38bdf8', '#a855f7', '#ec4899', '#64748b', '#14b8a6', '#8b5cf6', '#ef4444'];
 
-            if (failureChartInstance) failureChartInstance.destroy();
-            let failCanvas = document.getElementById('failureChart');
-            if(failCanvas) {
-                failureChartInstance = new Chart(failCanvas, {
+            let ctxFail = document.getElementById('failureChart');
+            if (ctxFail) {
+                if (failureChartInstance) failureChartInstance.destroy();
+                failureChartInstance = new Chart(ctxFail, {
                     type: 'doughnut',
                     data: {
-                        labels: ['Rx', 'Tx', 'Bias', 'Volt', 'Temp', 'Online', 'Offline', 'BIP8', 'Gasp', 'LOS'],
-                        datasets: [{ 
-                            data: [rxFail, txFail, biasFail, voltFail, tempFail, onlineFail, offlineFail, bip8Fail, gaspFail, losFail], 
-                            backgroundColor: ['#3b82f6', '#6366f1', '#a855f7', '#ec4899', '#10b981', '#06b6d4', '#f97316', '#ef4444', '#eab308', '#8b5cf6'] 
-                        }]
+                        labels: failLabels.length ? failLabels : ['No Failures'],
+                        datasets: [{ data: failValues.length ? failValues : [1], backgroundColor: failValues.length ? failColors : ['#e2e8f0'], borderWidth: 2, borderColor: '#ffffff' }]
                     },
-                    options: { 
-                        responsive: true, 
-                        maintainAspectRatio: false, 
-                        plugins: { legend: { position: 'bottom', labels: { font: { weight: 'bold', size: 10 }, color: '#0f172a' } } } 
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { position: 'right', labels: { font: { weight: 'bold', size: 11 }, color: '#0f172a' } } },
+                        cutout: '60%'
                     }
                 });
             }
-        }
 
-        function renderSummaryTables(data) {
-            let deviceStats = {};
+            let paramTbody = document.getElementById('param-summary-tbody');
+            let sortedMatrixModels = Object.keys(deviceParamMatrix).sort();
+            let paramKeys = ['Rx Power', 'Tx Power', 'Bias Current', 'Voltage', 'Temperature', 'Online', 'Offline', 'BIP8', 'Dying Gasp', 'LOS'];
+            let colTotals = { 'Rx Power': 0, 'Tx Power': 0, 'Bias Current': 0, 'Voltage': 0, 'Temperature': 0, 'Online': 0, 'Offline': 0, 'BIP8': 0, 'Dying Gasp': 0, 'LOS': 0, totalFail: 0 };
 
-            data.forEach(r => {
-                if (!isStrictPass(r)) {
-                    let dev = getDeviceName(r);
-                    if (!deviceStats[dev]) {
-                        deviceStats[dev] = { rx: 0, tx: 0, bias: 0, volt: 0, temp: 0, online: 0, offline: 0, bip8: 0, gasp: 0, los: 0, totalFail: 0 };
-                    }
-
-                    if (checkParamFailIndex(r, 5)) deviceStats[dev].rx++;
-                    if (checkParamFailIndex(r, 6)) deviceStats[dev].tx++;
-                    if (checkParamFailIndex(r, 7)) deviceStats[dev].bias++;
-                    if (checkParamFailIndex(r, 8)) deviceStats[dev].volt++;
-                    if (checkParamFailIndex(r, 9)) deviceStats[dev].temp++;
-                    if (checkParamFailIndex(r, 17)) deviceStats[dev].online++;
-                    if (checkParamFailIndex(r, 19)) deviceStats[dev].offline++;
-                    if (checkParamFailIndex(r, 21)) deviceStats[dev].bip8++;
-                    if (checkParamFailIndex(r, 23)) deviceStats[dev].gasp++;
-                    if (checkParamFailIndex(r, 25)) deviceStats[dev].los++;
-
-                    deviceStats[dev].totalFail++;
-                }
-            });
-
-            let matrixTbody = document.getElementById('param-summary-tbody');
-            if(!matrixTbody) return;
-            let matrixRowsHtml = "";
-            let colTotals = { rx: 0, tx: 0, bias: 0, volt: 0, temp: 0, online: 0, offline: 0, bip8: 0, gasp: 0, los: 0, totalFail: 0 };
-
-            let activeDevicesWithFailures = Object.keys(deviceStats).filter(d => deviceStats[d].totalFail > 0).sort();
-
-            if (activeDevicesWithFailures.length === 0) {
-                matrixRowsHtml = `<tr><td colspan="12" class="p-4 text-center text-emerald-600 font-bold">No parameter failures recorded for selected filter.</td></tr>`;
-            } else {
-                activeDevicesWithFailures.forEach(dev => {
-                    let stat = deviceStats[dev];
-
-                    colTotals.rx += stat.rx;
-                    colTotals.tx += stat.tx;
-                    colTotals.bias += stat.bias;
-                    colTotals.volt += stat.volt;
-                    colTotals.temp += stat.temp;
-                    colTotals.online += stat.online;
-                    colTotals.offline += stat.offline;
-                    colTotals.bip8 += stat.bip8;
-                    colTotals.gasp += stat.gasp;
-                    colTotals.los += stat.los;
-                    colTotals.totalFail += stat.totalFail;
+            if (paramTbody) {
+                if (sortedMatrixModels.length === 0) {
+                    paramTbody.innerHTML = `<tr><td colspan="12" class="p-4 text-center text-slate-400">No parameter data found for ${currentOnuRegion}</td></tr>`;
+                } else {
+                    let matrixRowsHtml = sortedMatrixModels.map(m => {
+                        let d = deviceParamMatrix[m];
+                        paramKeys.forEach(pk => colTotals[pk] += d[pk]);
+                        colTotals.totalFail += d.totalFail;
+                        return `
+                            <tr class="hover:bg-slate-50 border-b border-slate-200">
+                                <td class="p-2 border border-slate-200 font-black text-slate-900 bg-slate-50/50">${m}</td>
+                                <td class="p-2 border border-slate-200 text-center ${d['Rx Power'] ? 'text-rose-600 font-black' : 'text-slate-400'}">${d['Rx Power']}</td>
+                                <td class="p-2 border border-slate-200 text-center ${d['Tx Power'] ? 'text-rose-600 font-black' : 'text-slate-400'}">${d['Tx Power']}</td>
+                                <td class="p-2 border border-slate-200 text-center ${d['Bias Current'] ? 'text-rose-600 font-black' : 'text-slate-400'}">${d['Bias Current']}</td>
+                                <td class="p-2 border border-slate-200 text-center ${d['Voltage'] ? 'text-rose-600 font-black' : 'text-slate-400'}">${d['Voltage']}</td>
+                                <td class="p-2 border border-slate-200 text-center ${d['Temperature'] ? 'text-rose-600 font-black' : 'text-slate-400'}">${d['Temperature']}</td>
+                                <td class="p-2 border border-slate-200 text-center ${d['Online'] ? 'text-rose-600 font-black' : 'text-slate-400'}">${d['Online']}</td>
+                                <td class="p-2 border border-slate-200 text-center ${d['Offline'] ? 'text-rose-600 font-black' : 'text-slate-400'}">${d['Offline']}</td>
+                                <td class="p-2 border border-slate-200 text-center ${d['BIP8'] ? 'text-rose-600 font-black' : 'text-slate-400'}">${d['BIP8']}</td>
+                                <td class="p-2 border border-slate-200 text-center ${d['Dying Gasp'] ? 'text-rose-600 font-black' : 'text-slate-400'}">${d['Dying Gasp']}</td>
+                                <td class="p-2 border border-slate-200 text-center ${d['LOS'] ? 'text-rose-600 font-black' : 'text-slate-400'}">${d['LOS']}</td>
+                                <td class="p-2 border border-slate-200 text-center font-black text-rose-700 bg-rose-50/40">${d.totalFail}</td>
+                            </tr>
+                        `;
+                    }).join('');
 
                     matrixRowsHtml += `
-                        <tr class="hover:bg-slate-50 border-b border-slate-200">
-                            <td class="p-2 border border-slate-200 font-black bg-slate-100 text-slate-900">${dev}</td>
-                            <td class="p-2 border border-slate-200 text-center font-bold text-blue-700 bg-blue-50/40">${stat.rx > 0 ? stat.rx.toLocaleString() : '-'}</td>
-                            <td class="p-2 border border-slate-200 text-center font-bold text-indigo-700 bg-indigo-50/40">${stat.tx > 0 ? stat.tx.toLocaleString() : '-'}</td>
-                            <td class="p-2 border border-slate-200 text-center font-bold text-purple-700 bg-purple-50/40">${stat.bias > 0 ? stat.bias.toLocaleString() : '-'}</td>
-                            <td class="p-2 border border-slate-200 text-center font-bold text-pink-700 bg-pink-50/40">${stat.volt > 0 ? stat.volt.toLocaleString() : '-'}</td>
-                            <td class="p-2 border border-slate-200 text-center font-bold text-emerald-700 bg-emerald-50/40">${stat.temp > 0 ? stat.temp.toLocaleString() : '-'}</td>
-                            <td class="p-2 border border-slate-200 text-center font-bold text-cyan-700 bg-cyan-50/40">${stat.online > 0 ? stat.online.toLocaleString() : '-'}</td>
-                            <td class="p-2 border border-slate-200 text-center font-bold text-orange-700 bg-orange-50/40">${stat.offline > 0 ? stat.offline.toLocaleString() : '-'}</td>
-                            <td class="p-2 border border-slate-200 text-center font-bold text-red-700 bg-red-50/40">${stat.bip8 > 0 ? stat.bip8.toLocaleString() : '-'}</td>
-                            <td class="p-2 border border-slate-200 text-center font-bold text-yellow-700 bg-yellow-50/40">${stat.gasp > 0 ? stat.gasp.toLocaleString() : '-'}</td>
-                            <td class="p-2 border border-slate-200 text-center font-bold text-violet-700 bg-violet-50/40">${stat.los > 0 ? stat.los.toLocaleString() : '-'}</td>
-                            <td class="p-2 border border-slate-200 text-center font-black bg-slate-200 text-slate-900">${stat.totalFail.toLocaleString()}</td>
+                        <tr class="bg-slate-200 font-black text-slate-900 border-t-2 border-slate-400">
+                            <td class="p-2 border border-slate-300 uppercase">TOTAL</td>
+                            ${paramKeys.map(pk => `<td class="p-2 border border-slate-300 text-center text-rose-700">${colTotals[pk]}</td>`).join('')}
+                            <td class="p-2 border border-slate-300 text-center text-rose-800 bg-rose-100">${colTotals.totalFail}</td>
                         </tr>
                     `;
-                });
-
-                matrixRowsHtml += `
-                    <tr class="bg-slate-900 text-white font-black border-t-2 border-slate-700">
-                        <td class="p-2.5 border border-slate-700 uppercase">TOTAL</td>
-                        <td class="p-2.5 border border-slate-700 text-center text-blue-300">${colTotals.rx > 0 ? colTotals.rx.toLocaleString() : '-'}</td>
-                        <td class="p-2.5 border border-slate-700 text-center text-indigo-300">${colTotals.tx > 0 ? colTotals.tx.toLocaleString() : '-'}</td>
-                        <td class="p-2.5 border border-slate-700 text-center text-purple-300">${colTotals.bias > 0 ? colTotals.bias.toLocaleString() : '-'}</td>
-                        <td class="p-2.5 border border-slate-700 text-center text-pink-300">${colTotals.volt > 0 ? colTotals.volt.toLocaleString() : '-'}</td>
-                        <td class="p-2.5 border border-slate-700 text-center text-emerald-300">${colTotals.temp > 0 ? colTotals.temp.toLocaleString() : '-'}</td>
-                        <td class="p-2.5 border border-slate-700 text-center text-cyan-300">${colTotals.online > 0 ? colTotals.online.toLocaleString() : '-'}</td>
-                        <td class="p-2.5 border border-slate-700 text-center text-orange-300">${colTotals.offline > 0 ? colTotals.offline.toLocaleString() : '-'}</td>
-                        <td class="p-2.5 border border-slate-700 text-center text-red-300">${colTotals.bip8 > 0 ? colTotals.bip8.toLocaleString() : '-'}</td>
-                        <td class="p-2.5 border border-slate-700 text-center text-yellow-300">${colTotals.gasp > 0 ? colTotals.gasp.toLocaleString() : '-'}</td>
-                        <td class="p-2.5 border border-slate-700 text-center text-violet-300">${colTotals.los > 0 ? colTotals.los.toLocaleString() : '-'}</td>
-                        <td class="p-2.5 border border-slate-700 text-center text-emerald-400">${colTotals.totalFail.toLocaleString()}</td>
-                    </tr>
-                `;
+                    paramTbody.innerHTML = matrixRowsHtml;
+                }
             }
-            matrixTbody.innerHTML = matrixRowsHtml;
 
-            setTimeout(() => {
-                let ctxParamBar = document.getElementById('paramBarChart');
-                if (ctxParamBar) {
-                    if (paramBarChartInstance) paramBarChartInstance.destroy();
-                    let paramLabels = ['Rx', 'Tx', 'Bias', 'Volt', 'Temp', 'Online', 'Offline', 'BIP8', 'Gasp', 'LOS'];
-                    let paramValues = [colTotals.rx, colTotals.tx, colTotals.bias, colTotals.volt, colTotals.temp, colTotals.online, colTotals.offline, colTotals.bip8, colTotals.gasp, colTotals.los];
-                    let barColors = ['#3b82f6', '#6366f1', '#a855f7', '#ec4899', '#10b981', '#06b6d4', '#f97316', '#ef4444', '#eab308', '#8b5cf6'];
-
-                    paramBarChartInstance = new Chart(ctxParamBar, {
-                        type: 'bar',
-                        data: {
-                            labels: paramLabels,
-                            datasets: [{
-                                label: 'Failures Count',
-                                data: paramValues,
-                                backgroundColor: barColors,
-                                borderRadius: 4
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: { legend: { display: false } },
-                            scales: {
-                                x: { ticks: { font: { weight: 'bold', size: 10 }, color: '#0f172a' } },
-                                y: { ticks: { font: { weight: 'bold' }, color: '#0f172a' } }
-                            }
+            let ctxParamBar = document.getElementById('paramBarChart');
+            if (ctxParamBar) {
+                if (paramBarChartInstance) paramBarChartInstance.destroy();
+                paramBarChartInstance = new Chart(ctxParamBar, {
+                    type: 'bar',
+                    data: {
+                        labels: paramKeys,
+                        datasets: [{
+                            label: `Failed Count (${currentOnuRegion})`,
+                            data: paramKeys.map(pk => colTotals[pk]),
+                            backgroundColor: '#f43f5e',
+                            borderRadius: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            x: { ticks: { font: { weight: 'bold', size: 10 }, color: '#0f172a' } },
+                            y: { beginAtZero: true, ticks: { font: { weight: 'bold' }, color: '#0f172a' } }
                         }
-                    });
-                }
-            }, 100);
-
-            let modelSummary = {};
-            data.forEach(r => {
-                let dev = getDeviceName(r);
-                if (!modelSummary[dev]) {
-                    modelSummary[dev] = { total: 0, passed: 0, failed: 0 };
-                }
-                modelSummary[dev].total++;
-                if (isStrictPass(r)) modelSummary[dev].passed++;
-                else modelSummary[dev].failed++;
-            });
-
-            let modelTbody = document.getElementById('device-model-tbody');
-            if(!modelTbody) return;
-            let modelRowsHtml = "";
-            let sumTot = 0, sumPas = 0, sumFai = 0;
-
-            let modelsSorted = Object.keys(modelSummary).sort();
-            if (modelsSorted.length === 0) {
-                modelRowsHtml = `<tr><td colspan="5" class="p-4 text-center text-slate-400">No models recorded.</td></tr>`;
-            } else {
-                modelsSorted.forEach(dev => {
-                    let m = modelSummary[dev];
-                    sumTot += m.total;
-                    sumPas += m.passed;
-                    sumFai += m.failed;
-
-                    let fRate = m.total > 0 ? ((m.failed / m.total) * 100).toFixed(2) : "0.00";
-                    let rateBadge = parseFloat(fRate) > 0 
-                        ? `<span class="text-rose-600 font-black">${fRate}%</span>` 
-                        : `<span class="text-emerald-700 font-black">${fRate}%</span>`;
-
-                    modelRowsHtml += `
-                        <tr class="hover:bg-slate-50 border-b border-slate-200">
-                            <td class="p-3 border border-slate-200 font-black text-slate-900 bg-slate-50/50">${dev}</td>
-                            <td class="p-3 border border-slate-200 text-center font-bold text-slate-900">${m.total.toLocaleString()}</td>
-                            <td class="p-3 border border-slate-200 text-center font-bold text-emerald-700 bg-emerald-50/30">${m.passed.toLocaleString()}</td>
-                            <td class="p-3 border border-slate-200 text-center font-bold text-rose-600 bg-rose-50/30">${m.failed.toLocaleString()}</td>
-                            <td class="p-3 border border-slate-200 text-center">${rateBadge}</td>
-                        </tr>
-                    `;
+                    }
                 });
-
-                let sumFailRate = sumTot > 0 ? ((sumFai / sumTot) * 100).toFixed(2) : "0.00";
-                modelRowsHtml += `
-                    <tr class="bg-slate-900 text-white font-black text-sm">
-                        <td class="p-3.5 text-right uppercase tracking-wider border border-slate-700">GRAND TOTAL</td>
-                        <td class="p-3.5 text-center border border-slate-700 text-blue-300">${sumTot.toLocaleString()}</td>
-                        <td class="p-3.5 text-center border border-slate-700 text-emerald-400">${sumPas.toLocaleString()}</td>
-                        <td class="p-3.5 text-center border border-slate-700 text-rose-400">${sumFai.toLocaleString()}</td>
-                        <td class="p-3.5 text-center border border-slate-700 text-amber-300">${sumFailRate}%</td>
-                    </tr>
-                `;
             }
-            modelTbody.innerHTML = modelRowsHtml;
 
-            setTimeout(() => {
-                let ctxModel = document.getElementById('deviceModelBarChart');
-                if (ctxModel && modelsSorted.length > 0) {
-                    if (deviceModelChartInstance) deviceModelChartInstance.destroy();
-                    let passVals = modelsSorted.map(d => modelSummary[d].passed);
-                    let failVals = modelsSorted.map(d => modelSummary[d].failed);
-                    deviceModelChartInstance = new Chart(ctxModel, {
-                        type: 'bar',
-                        data: {
-                            labels: modelsSorted,
-                            datasets: [
-                                { label: 'Passed', data: passVals, backgroundColor: '#10b981', borderRadius: 4 },
-                                { label: 'Failed', data: failVals, backgroundColor: '#ef4444', borderRadius: 4 }
-                            ]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: { legend: { position: 'top', labels: { font: { weight: 'bold' }, color: '#0f172a' } } },
-                            scales: {
-                                x: { ticks: { font: { weight: 'bold' }, color: '#0f172a' } },
-                                y: { ticks: { font: { weight: 'bold' }, color: '#0f172a' } }
-                            }
-                        }
-                    });
+            let devTbody = document.getElementById('device-model-tbody');
+            let sortedModels = Object.keys(deviceModelStats).sort();
+            if (devTbody) {
+                if (sortedModels.length === 0) {
+                    devTbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-slate-400">No device model records for ${currentOnuRegion}</td></tr>`;
+                } else {
+                    devTbody.innerHTML = sortedModels.map(m => {
+                        let d = deviceModelStats[m];
+                        let fRate = d.total > 0 ? ((d.fail / d.total) * 100).toFixed(2) + '%' : '0.00%';
+                        return `
+                            <tr class="hover:bg-slate-50 border-b border-slate-200">
+                                <td class="p-3 border border-slate-200 font-black text-slate-900">${m}</td>
+                                <td class="p-3 border border-slate-200 text-center font-black text-blue-900">${d.total}</td>
+                                <td class="p-3 border border-slate-200 text-center font-black text-emerald-600">${d.pass}</td>
+                                <td class="p-3 border border-slate-200 text-center font-black text-rose-600">${d.fail}</td>
+                                <td class="p-3 border border-slate-200 text-center font-black text-amber-700">${fRate}</td>
+                            </tr>
+                        `;
+                    }).join('');
                 }
-            }, 100);
-        }
+            }
 
-        function renderOnuRegionalBreakdown(data) {
+            let ctxDevBar = document.getElementById('deviceModelBarChart');
+            if (ctxDevBar) {
+                if (deviceModelChartInstance) deviceModelChartInstance.destroy();
+                deviceModelChartInstance = new Chart(ctxDevBar, {
+                    type: 'bar',
+                    data: {
+                        labels: sortedModels,
+                        datasets: [
+                            { label: 'Passed', data: sortedModels.map(m => deviceModelStats[m].pass), backgroundColor: '#10b981', borderRadius: 4 },
+                            { label: 'Failed', data: sortedModels.map(m => deviceModelStats[m].fail), backgroundColor: '#f43f5e', borderRadius: 4 }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { position: 'bottom', labels: { font: { weight: 'bold', size: 11 }, color: '#0f172a' } } },
+                        scales: {
+                            x: { ticks: { font: { weight: 'bold' }, color: '#0f172a' } },
+                            y: { beginAtZero: true, ticks: { font: { weight: 'bold' }, color: '#0f172a' } }
+                        }
+                    }
+                });
+            }
+
             let dynContainer = document.getElementById('onu-dynamic-container');
-            if(!dynContainer) return;
+            if (dynContainer) {
+                if (currentTestType === 'daily' || currentTestType === 'monthly') {
+                    let sortedPeriods = Object.keys(periodBreakdown).sort();
+                    let rowsHtml = sortedPeriods.map(p => {
+                        let d = periodBreakdown[p];
+                        let pRate = d.total > 0 ? ((d.pass / d.total) * 100).toFixed(2) + '%' : '0.00%';
+                        return `
+                            <tr class="hover:bg-slate-50 border-b border-slate-200 font-bold text-slate-800">
+                                <td class="p-3 border border-slate-200 font-black text-slate-900">${p}</td>
+                                <td class="p-3 border border-slate-200 text-center font-black text-blue-900">${d.total}</td>
+                                <td class="p-3 border border-slate-200 text-center font-black text-emerald-600">${d.pass}</td>
+                                <td class="p-3 border border-slate-200 text-center font-black text-rose-600">${d.fail}</td>
+                                <td class="p-3 border border-slate-200 text-center font-black text-cyan-700">${pRate}</td>
+                            </tr>
+                        `;
+                    }).join('');
 
-            let allModelsSet = new Set();
-            data.forEach(r => allModelsSet.add(getDeviceName(r)));
-            let sortedModels = Array.from(allModelsSet).sort();
-
-            let regions = ['ENUO', 'HGAO', 'MYFO'];
-            let regCardsHtml = "";
-
-            regions.forEach(regName => {
-                let rData = data.filter(r => getRowRegion(r) === regName);
-                let tot = rData.length;
-                let pas = rData.filter(r => isStrictPass(r)).length;
-                let fai = tot - pas;
-                let pRate = tot > 0 ? ((pas / tot) * 100).toFixed(2) : "0.00";
-                let fRate = tot > 0 ? ((fai / tot) * 100).toFixed(2) : "0.00";
-
-                let badgeColor = regName === 'ENUO' ? 'bg-blue-600' : (regName === 'HGAO' ? 'bg-amber-500' : 'bg-emerald-600');
-
-                let devRows = "";
-                sortedModels.forEach(mName => {
-                    let mData = rData.filter(r => getDeviceName(r) === mName);
-                    if(mData.length === 0) return;
-                    let mTot = mData.length;
-                    let mPas = mData.filter(r => isStrictPass(r)).length;
-                    let mFai = mTot - mPas;
-                    let mFailPct = mTot > 0 ? ((mFai / mTot) * 100).toFixed(1) : "0.0";
-
-                    devRows += `
-                        <tr class="hover:bg-slate-50 border-b border-slate-200 text-xs font-bold">
-                            <td class="p-2.5 border border-slate-200 text-slate-900 font-black">${mName}</td>
-                            <td class="p-2.5 border border-slate-200 text-center font-bold">${mTot}</td>
-                            <td class="p-2.5 border border-slate-200 text-center text-emerald-700 font-bold">${mPas}</td>
-                            <td class="p-2.5 border border-slate-200 text-center text-rose-600 font-bold">${mFai}</td>
-                            <td class="p-2.5 border border-slate-200 text-center text-amber-600 font-bold">${mFailPct}%</td>
-                        </tr>
+                    dynContainer.innerHTML = `
+                        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+                            <h3 class="text-sm font-black text-slate-900 uppercase">${currentTestType === 'daily' ? 'Daily' : 'Monthly'} ONU QC Breakdown (${currentOnuRegion})</h3>
+                            <div class="overflow-x-auto rounded-xl border border-slate-300">
+                                <table class="w-full text-left border-collapse border border-slate-300 text-xs">
+                                    <thead class="bg-slate-800 text-white uppercase font-black">
+                                        <tr>
+                                            <th class="p-3 border border-slate-600">${currentTestType === 'daily' ? 'Date' : 'Month'}</th>
+                                            <th class="p-3 border border-slate-600 text-center">Total Tested</th>
+                                            <th class="p-3 border border-slate-600 text-center">Passed</th>
+                                            <th class="p-3 border border-slate-600 text-center">Failed</th>
+                                            <th class="p-3 border border-slate-600 text-center">Pass Rate</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>${rowsHtml}</tbody>
+                                </table>
+                            </div>
+                        </div>
                     `;
-                });
-
-                if (devRows === "") {
-                    devRows = `<tr><td colspan="5" class="p-3 text-center text-slate-400 text-xs font-bold">No records</td></tr>`;
+                } else {
+                    dynContainer.innerHTML = '';
                 }
-
-                regCardsHtml += `
-                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-                        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-                            <span class="px-3.5 py-1 rounded-xl text-xs font-black text-white ${badgeColor}">${regName}</span>
-                            <span class="text-xs font-black text-slate-600">Total: <span class="text-slate-950 text-sm">${tot}</span></span>
-                        </div>
-                        <div class="grid grid-cols-2 gap-2 text-center text-xs font-bold bg-slate-50 p-3 rounded-xl border border-slate-200/70">
-                            <div><span class="text-slate-500">Passed:</span> <span class="text-emerald-700 font-black">${pas}</span></div>
-                            <div><span class="text-slate-500">Failed:</span> <span class="text-rose-600 font-black">${fai}</span></div>
-                            <div><span class="text-slate-500">Pass %:</span> <span class="text-emerald-800 font-black">${pRate}%</span></div>
-                            <div><span class="text-slate-500">Fail %:</span> <span class="text-rose-700 font-black">${fRate}%</span></div>
-                        </div>
-                        <div class="overflow-x-auto rounded-xl border border-slate-300">
-                            <table class="w-full text-left border-collapse border border-slate-300">
-                                <thead class="bg-slate-800 text-white uppercase text-[11px] font-black">
-                                    <tr>
-                                        <th class="p-2 border border-slate-600">Model</th>
-                                        <th class="p-2 border border-slate-600 text-center">Tot</th>
-                                        <th class="p-2 border border-slate-600 text-center">Pas</th>
-                                        <th class="p-2 border border-slate-600 text-center">Fai</th>
-                                        <th class="p-2 border border-slate-600 text-center">Fail%</th>
-                                    </tr>
-                                </thead>
-                                <tbody>${devRows}</tbody>
-                            </table>
-                        </div>
-                    </div>
-                `;
-            });
-
-            dynContainer.innerHTML = `
-                <div class="space-y-4">
-                    <h3 class="text-sm font-black uppercase text-slate-900">Regional Breakdown &amp; Model Analysis</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        ${regCardsHtml}
-                    </div>
-                </div>
-            `;
-        }
-
-        function startAutoReloadTimer() {
-            if (autoReloadTimerId) {
-                clearInterval(autoReloadTimerId);
-                autoReloadTimerId = null;
             }
-            autoReloadTimerId = setInterval(() => {
-                if (!document.hidden) {
-                    loadAllData();
-                }
-            }, AUTO_RELOAD_INTERVAL_MS);
         }
 
         window.addEventListener('DOMContentLoaded', () => {
-
-
-            let inboundSelect = document.getElementById('inbound-month-select');
-            if (inboundSelect) inboundSelect.value = activeInboundMonth;
-
-            updateJdKpiSourceButtonsUI();
-            updateJdKpiModeButtonsUI();
-
             loadAllData();
-            startAutoReloadTimer();
+            if (autoReloadTimerId) clearInterval(autoReloadTimerId);
+            autoReloadTimerId = setInterval(() => {
+                loadAllData();
+            }, AUTO_RELOAD_INTERVAL_MS);
         });
     </script>
 </body>
